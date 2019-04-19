@@ -1,0 +1,14 @@
+.git/
+.idea/
+.mvn/
+target/
+*.iml
+mvnw
+mvnw.*
+application-local.yml
+.project
+.classpath
+.settings/
+logs/*
+bin/
+HELP.MD
