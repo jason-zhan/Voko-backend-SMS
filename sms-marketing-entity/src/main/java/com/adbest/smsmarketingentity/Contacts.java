@@ -7,6 +7,7 @@ import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.Id;
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 /**
  * 联系人 [客户手动导入的联系人]
@@ -32,4 +33,6 @@ public class Contacts implements Serializable {
     private Boolean lock;  // 锁定(true:是)
     @Column(nullable = false)
     private  Boolean isDelete;  // 是否删除(true:已删除)
+    private Timestamp createTime;  // 创建时间
+    
 }

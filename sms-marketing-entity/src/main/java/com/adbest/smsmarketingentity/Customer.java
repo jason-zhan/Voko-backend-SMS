@@ -27,6 +27,11 @@ public class Customer implements Serializable {
     private String firstName;  // 名字
     @Column(nullable = false)
     private String lastName;  // 姓氏
+    @Column(nullable = false)
+    private UsArea state;  // 州
+    @Column(nullable = false)
+    private UsArea city;  // 城市
+    private String industry;  // 行业
     private String organization;  // 单位（公司/机构）
     @Column(nullable = false)
     private Timestamp registerTime;  // 注册时间
