@@ -33,6 +33,8 @@ public class MessageRecord implements Serializable {
     @Column(nullable = false)
     private String content;
     @Column(nullable = false)
+    private Integer segments;  // 被分割为多少条消息
+    @Column(nullable = false)
     private String mediaList;  // 资源列表 [资源url,多个以','分隔]
     /**
      * @see Contacts#id
