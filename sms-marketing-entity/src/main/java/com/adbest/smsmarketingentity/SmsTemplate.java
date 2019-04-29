@@ -2,10 +2,7 @@ package com.adbest.smsmarketingentity;
 
 import lombok.Data;
 
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
-import javax.persistence.Lob;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -17,7 +14,7 @@ import java.sql.Timestamp;
 public class SmsTemplate implements Serializable {
     
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     protected String subject;  // 主题
     @Lob

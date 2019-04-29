@@ -3,10 +3,7 @@ package com.adbest.smsmarketingentity;
 import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -18,7 +15,7 @@ import java.sql.Timestamp;
 public class SmsBill implements Serializable {
     
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     /**
      * @see Customer#id
@@ -26,7 +23,7 @@ public class SmsBill implements Serializable {
     @Column(nullable = false)
     private Long customerId;
     @Column(nullable = false)
-    private String describe;  // 描述
+    private String infoDescribe;  // 描述
     @Column(nullable = false)
     private Integer amount;  // 短信数量
     @Column(nullable = false)

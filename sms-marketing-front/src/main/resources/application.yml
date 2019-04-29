@@ -1,0 +1,19 @@
+spring:
+  profiles:
+    active: local
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  redis:
+    jedis:
+      pool:
+        max-idle: 50
+        min-idle: 10
+        max-active: 2000
+        max-wait: -1
+server:
+  tomcat:
+    uri-encoding: UTF-8
+

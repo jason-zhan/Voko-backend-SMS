@@ -2,10 +2,7 @@ package com.adbest.smsmarketingentity;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.io.Serializable;
 
 /**
@@ -16,7 +13,7 @@ import java.io.Serializable;
 public class ContactsLinkGroup implements Serializable {
     
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     /**
      * @see Contacts#id
