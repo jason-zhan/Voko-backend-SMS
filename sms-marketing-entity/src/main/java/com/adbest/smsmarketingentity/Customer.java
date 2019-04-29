@@ -2,10 +2,7 @@ package com.adbest.smsmarketingentity;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -17,7 +14,7 @@ import java.sql.Timestamp;
 public class Customer implements Serializable {
     
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;  // 主键
     @Column(unique = true, nullable = false)
     private String email;  // 邮箱 (作为用户名)

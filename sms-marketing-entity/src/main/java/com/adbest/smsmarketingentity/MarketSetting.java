@@ -1,17 +1,19 @@
 package com.adbest.smsmarketingentity;
 
-import javax.persistence.Column;
-import javax.persistence.GeneratedValue;
-import javax.persistence.Id;
+import lombok.Data;
+
+import javax.persistence.*;
 import java.io.Serializable;
 
 /**
  * 营销方案
  */
+@Data
+@Entity
 public class MarketSetting implements Serializable {
     
     @Id
-    @GeneratedValue
+    @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false)
     private String title;  // 名称

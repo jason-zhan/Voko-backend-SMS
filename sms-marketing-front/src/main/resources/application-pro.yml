@@ -1,0 +1,27 @@
+server:
+  port: 8087
+  servlet:
+    session:
+      timeout: 2h
+  tomcat:
+    basedir: /tmp/tomcat
+
+spring:
+  banner:
+    charset: UTF-8
+  datasource:
+    url: jdbc:mysql://localhost:3306/sms_marketing?useSSL=false&characterEncoding=UTF-8&allowMultiQueries=true&serverTimezone=GMT%2B8
+    username: root
+    password: root
+    driver-class-name: com.mysql.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    properties:
+      hibernate:
+        dialect : org.hibernate.dialect.MySQL5InnoDBDialect
+    show-sql: true
+  redis:
+    host: 127.0.0.1
+    port: 6390
+    password:
