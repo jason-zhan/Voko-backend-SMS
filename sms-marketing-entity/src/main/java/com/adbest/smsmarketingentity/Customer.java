@@ -20,13 +20,13 @@ public class Customer implements Serializable {
     private String email;  // 邮箱 (作为用户名)
     @Column(nullable = false)
     private String password;  // 密码
-    @Column(nullable = false)
     private String firstName;  // 名字
-    @Column(nullable = false)
     private String lastName;  // 姓氏
-    @Column(nullable = false)
+    /**
+     * 用户姓名
+     */
+    private String customerName;
     private UsArea state;  // 州
-    @Column(nullable = false)
     private UsArea city;  // 城市
     private String industry;  // 行业
     private String organization;  // 单位（公司/机构）

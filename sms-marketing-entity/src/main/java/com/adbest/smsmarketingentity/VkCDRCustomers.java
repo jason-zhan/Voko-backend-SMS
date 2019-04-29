@@ -6,14 +6,16 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
 
 @Data
 @Table(name = "vkCDR_Customers")
 @Entity
 public class VkCDRCustomers implements Serializable {
     @Id
-    private String id;
-    private String i_env;
+    private Integer id;
+    private Integer i_env;
     private String h323_conf_id;
     /**
      * 用户电话号码
@@ -21,33 +23,33 @@ public class VkCDRCustomers implements Serializable {
     private String CLI;
     private String CLD;
     private String setup_time;
-    private String connect_time;
-    private String disconnect_time;
-    private String disconnect_cause;
-    private String voice_quality;
-    private String i_customer;
-    private String i_dest;
+    private Timestamp connect_time;
+    private Timestamp disconnect_time;
+    private Integer disconnect_cause;
+    private Integer voice_quality;
+    private Integer i_customer;
+    private Integer i_dest;
     private String charged_time;
-    private String charged_amount;
+    private BigDecimal charged_amount;
     private String history;
-    private String i_vendor;
-    private String cost;
+    private Integer i_vendor;
+    private BigDecimal cost;
     private String call_id;
-    private String i_tariff;
-    private String i_rate;
-    private String i_service;
-    private String bill_time;
-    private String charged_quantity;
-    private String used_quantity;
-    private String bit_flags;
+    private Integer i_tariff;
+    private Integer i_rate;
+    private Integer i_service;
+    private Timestamp bill_time;
+    private Long charged_quantity;
+    private Long used_quantity;
+    private Integer bit_flags;
     private String h323_incoming_conf_id;
     private String rating_pattern;
     private String originating_ip;
-    private String split_order;
-    private String peak_level;
-    private String i_dest_group;
-    private String i_accessibility;
-    private String i_invoice;
+    private Integer split_order;
+    private Integer peak_level;
+    private Integer i_dest_group;
+    private Integer i_accessibility;
+    private Integer i_invoice;
     /**
      * 是否已发送短信通知
      */
