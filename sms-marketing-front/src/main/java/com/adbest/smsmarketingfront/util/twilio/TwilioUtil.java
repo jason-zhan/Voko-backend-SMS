@@ -13,6 +13,7 @@ import com.twilio.twiml.messaging.Body;
 import com.twilio.twiml.messaging.Media;
 import com.twilio.type.PhoneNumber;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -30,18 +31,15 @@ import java.io.IOException;
 @Slf4j
 public class TwilioUtil {
     
-    @Value("${accountSid}")
-    private String accountSid;  // 账户sid
-    @Value("${authToken}")
-    private String authToken;
-    @Value("${msgUrl}")
+    @Value("${twilio.msgUrl}")
     private String msgUrl;  // 接收消息路径
-    @Value("${msgStatusCallback}")
+    @Value("${twilio.msgStatusCallback}")
     private String msgStatusCallback;  // 消息状态回调路径
-    @Value("${viewFileUrl}")
+    @Value("${twilio.viewFileUrl}")
     private String viewFileUrl;  // 外部访问文件路径
     
-    public TwilioUtil() {
+    @Autowired
+    public TwilioUtil(@Value("${twilio.accountSid}")String accountSid, @Value("${twilio.authToken}")String authToken) {
         Twilio.init(accountSid, authToken);
     }
     
