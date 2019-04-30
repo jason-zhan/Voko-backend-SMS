@@ -9,5 +9,5 @@ public interface CustomerDao extends JpaRepository<Customer, Long> , JpaSpecific
 
     Customer findByEmail(String s);
 
-    Customer findFirstByUsername(String email);
+    Customer findFirstByEmail(String email);
 }

@@ -5,6 +5,7 @@ import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.util.CommonMessage;
+import com.adbest.smsmarketingfront.util.EncryptTools;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -22,6 +23,9 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    private EncryptTools encryptTools;
 
     @Override
     public Customer save(Customer customer) {
@@ -50,10 +54,10 @@ public class CustomerServiceImpl implements  CustomerService {
         // 用户名、密码正则校验
         Assert.isTrue(Customer.checkEmail(createSysUser.getEmail()), "邮箱格式有误");
         Assert.isTrue(Customer.checkPassword(createSysUser.getPassword()), "密码必须为5-25位的字母或数字");
-        Customer repeat = customerDao.findFirstByUsername(createSysUser.getEmail());
+        Customer repeat = customerDao.findFirstByEmail(createSysUser.getEmail());
         Assert.isNull(repeat, "该邮箱已存在");
         Customer customer = new Customer();
-
+        customer.setPassword(encryptTools.encrypt(createSysUser.getPassword()));
         customerDao.save(customer);
         return true;
     }
