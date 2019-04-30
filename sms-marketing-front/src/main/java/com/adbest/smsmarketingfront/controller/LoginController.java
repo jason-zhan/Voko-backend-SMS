@@ -25,6 +25,6 @@ public class LoginController {
     @PostMapping("/register")
     public ReturnEntity register(CustomerVo vo) {
         boolean is = customerService.register(vo);
-        return ReturnEntity.fail(ResponseCode.T401);
+        return ReturnEntity.success(is);
     }
 }
