@@ -1,6 +1,7 @@
-package com.adbest.smsmarketingfront.util;
+package com.adbest.smsmarketingfront.util.twilio;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import com.adbest.smsmarketingfront.util.UrlTools;
 import com.twilio.Twilio;
 import com.twilio.base.ResourceSet;
 import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletResponse;
+import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
 
@@ -28,17 +30,19 @@ import java.io.IOException;
 @Slf4j
 public class TwilioUtil {
     
-    @Value("")
-    private String account_sid;
-    @Value("")
-    private String auth_token;
-    @Value("")
-    private String msg_status_callback;
-    @Value("")
-    private String view_file_url;
+    @Value("${accountSid}")
+    private String accountSid;  // 账户sid
+    @Value("${authToken}")
+    private String authToken;
+    @Value("${msgUrl}")
+    private String msgUrl;  // 接收消息路径
+    @Value("${msgStatusCallback}")
+    private String msgStatusCallback;  // 消息状态回调路径
+    @Value("${viewFileUrl}")
+    private String viewFileUrl;  // 外部访问文件路径
     
     public TwilioUtil() {
-        Twilio.init(account_sid, auth_token);
+        Twilio.init(accountSid, authToken);
     }
     
     /**
@@ -48,7 +52,7 @@ public class TwilioUtil {
      * @param areaCode
      * @return
      */
-    ResourceSet<Local> fetchNumbersByAreaCode(@NotNull Integer areaCode) {
+    public ResourceSet<Local> fetchNumbersByAreaCode(@NotNull Integer areaCode) {
         return Local.reader("US")
                 .setAreaCode(areaCode)
                 .setSmsEnabled(true)
@@ -58,11 +62,12 @@ public class TwilioUtil {
     
     /**
      * 购买手机号
+     * 使用默认接收消息路径和消息状态回调路径
      *
      * @param number
      */
-    IncomingPhoneNumber purchaseNumber(@NotNull String number) {
-        return IncomingPhoneNumber.creator(new PhoneNumber(number)).create();
+    public IncomingPhoneNumber purchaseNumber(@NotEmpty String number) {
+        return purchaseNumber(new PhoneNumber(number));
     }
     
     /**
@@ -70,28 +75,31 @@ public class TwilioUtil {
      *
      * @param number
      */
-    IncomingPhoneNumber purchaseNumber(@NotNull PhoneNumber number) {
-        return IncomingPhoneNumber.creator(number).create();
+    public IncomingPhoneNumber purchaseNumber(@NotNull PhoneNumber number) {
+        return IncomingPhoneNumber.creator(number)
+                .setSmsUrl(msgUrl)
+//                .setSmsMethod(HttpMethod.POST)  // default: post
+                .setStatusCallback(msgStatusCallback)
+//                .setStatusCallbackMethod(HttpMethod.POST)  // default: post
+                .create();
     }
     
     /**
      * 发送消息
-     * @param record 要发送的消息
+     *
+     * @param preSendMsg 要发送的消息
      * @return
      */
-    Message sendMessage(@NotNull MessageRecord record) {
+    public Message sendMessage(@NotNull PreSendMsg preSendMsg) {
         MessageCreator creator = Message.creator(
-                new PhoneNumber(record.getContactsNumber()),
-                new PhoneNumber(record.getCustomerNumber()),
-                record.getContent());
-        if (StringUtils.hasText(record.getMediaList())) {
-            creator.setMediaUrl(UrlTools.getUriList(record.getMediaList()));
+                new PhoneNumber(preSendMsg.getRecord().getContactsNumber()),
+                new PhoneNumber(preSendMsg.getRecord().getCustomerNumber()),
+                preSendMsg.getRecord().getContent());
+        if (preSendMsg.getMediaUriList() != null) {
+            creator.setMediaUrl(preSendMsg.getMediaUriList());
         }
         return creator.create();
     }
-    
-    // 消息状态处理
-    // TODO
     
     /**
      * 查询消息状态
@@ -99,7 +107,7 @@ public class TwilioUtil {
      * @param sid 消息sid
      * @return
      */
-    Message fetchMessage(@NotNull String sid) {
+    public Message fetchMessage(@NotEmpty String sid) {
         return Message.fetcher(sid).fetch();
     }
     
@@ -107,9 +115,9 @@ public class TwilioUtil {
      * 消息回复
      *
      * @param response
-     * @param record   要回复的消息内容
+     * @param record   要回复的消息
      */
-    void replyMessage(@NotNull HttpServletResponse response, @NotNull MessageRecord record) {
+    public void replyMessage(@NotNull HttpServletResponse response, @NotNull MessageRecord record) {
         com.twilio.twiml.messaging.Message.Builder msgBuilder = new com.twilio.twiml.messaging.Message.Builder().body(
                 new Body.Builder(record.getContent()).build()
         );

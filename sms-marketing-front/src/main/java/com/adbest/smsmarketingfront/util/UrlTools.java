@@ -47,6 +47,26 @@ public class UrlTools {
     }
     
     /**
+     * 获取uri列表
+     *
+     * @param prefix 路径前缀 如 https://scan.abc.com/view?fn=
+     * @param urls 以','分隔的url路径字符串
+     * @return
+     */
+    public static @NotNull List<URI> getUriList(String prefix, String urls) {
+        if (StringUtils.hasText(urls)) {
+            List<URI> uriList = new ArrayList<>();
+            String[] strings = urls.split(",");
+            for (String s : strings) {
+                uriList.add(URI.create(prefix + s));
+            }
+            return uriList;
+        } else {
+            return new ArrayList<>();
+        }
+    }
+    
+    /**
      * 获取url列表字符串
      * 【注意】url间以','分隔
      *

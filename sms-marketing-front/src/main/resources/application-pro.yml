@@ -25,3 +25,10 @@ spring:
     host: 127.0.0.1
     port: 6390
     password:
+# twilio config
+twilio:
+  accountSid: axxxx
+  authToken: ahxxxx
+  msgUrl: /a/b
+  msgStatusCallback: /a/b
+  viewFileUrl: /file/view
