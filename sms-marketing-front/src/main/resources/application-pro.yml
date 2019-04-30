@@ -25,3 +25,6 @@ spring:
     host: 127.0.0.1
     port: 6390
     password:
+encrypt:
+  salt:
+    password: Aasda65asd58wd
