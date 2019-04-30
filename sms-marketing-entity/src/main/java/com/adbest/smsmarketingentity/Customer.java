@@ -1,10 +1,13 @@
 package com.adbest.smsmarketingentity;
 
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 客户 [本系统服务对象，比如商场老板]
@@ -20,18 +23,31 @@ public class Customer implements Serializable {
     private String email;  // 邮箱 (作为用户名)
     @Column(nullable = false)
     private String password;  // 密码
-    @Column(nullable = false)
     private String firstName;  // 名字
-    @Column(nullable = false)
     private String lastName;  // 姓氏
-    @Column(nullable = false)
+    /**
+     * 用户姓名
+     */
+    private String customerName;
     private UsArea state;  // 州
-    @Column(nullable = false)
     private UsArea city;  // 城市
     private String industry;  // 行业
     private String organization;  // 单位（公司/机构）
     @Column(nullable = false)
+    @CreationTimestamp
     private Timestamp registerTime;  // 注册时间
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用
+
+    public static boolean checkEmail(String email) {
+        Pattern pattern = Pattern.compile("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(email);
+        return matcher.matches();
+    }
+
+    public static boolean checkPassword(String password) {
+        Pattern pattern = Pattern.compile("^[A-Z0-9]{5,25}$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(password);
+        return matcher.matches();
+    }
 }
