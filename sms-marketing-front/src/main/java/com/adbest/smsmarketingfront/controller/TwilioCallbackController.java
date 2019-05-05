@@ -22,10 +22,14 @@ public class TwilioCallbackController {
         
     }
     
-    // 消息状态回调
+    /**
+     * 消息状态回调
+     * @param request
+     * @param response
+     */
     @RequestMapping("/message-status-callback")
     public void messageStatusCallback(HttpServletRequest request, HttpServletResponse response){
-    
+        System.out.println(request);
     }
     
     
