@@ -3,7 +3,7 @@ package com.adbest.smsmarketingfront.entity.vo;
 import lombok.Data;
 
 @Data
-public class CustomerVo {
+public class CustomerForm {
     private String email;  // 邮箱 (作为用户名)
     private String password;  // 密码
     private String firstName;  // 名字

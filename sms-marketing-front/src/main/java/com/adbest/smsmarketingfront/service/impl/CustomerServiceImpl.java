@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
-import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
+import com.adbest.smsmarketingfront.entity.vo.CustomerForm;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.service.UsAreaService;
@@ -14,6 +14,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -50,7 +51,8 @@ public class CustomerServiceImpl implements  CustomerService {
     }
 
     @Override
-    public boolean register(CustomerVo createSysUser) {
+    @Transactional
+    public boolean register(CustomerForm createSysUser) {
         ServiceException.notNull(createSysUser, CommonMessage.PARAM_IS_NULL);
         ServiceException.hasText(createSysUser.getEmail(), "邮箱" + CommonMessage.CAN_NOT_EMPTY);
         ServiceException.hasText(createSysUser.getPassword(), "密码" + CommonMessage.CAN_NOT_EMPTY);
