@@ -1,7 +1,11 @@
 package com.adbest.smsmarketingfront.handler.twilio;
 
+import com.adbest.smsmarketingfront.util.HttpTools;
+import com.adbest.smsmarketingfront.util.ResponseCode;
+import com.adbest.smsmarketingfront.util.ReturnEntity;
 import com.twilio.security.RequestValidator;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.Filter;
@@ -26,9 +30,12 @@ public class TwilioRequestFilter implements Filter {
     
     private RequestValidator requestValidator;
     
+    @Value("${twilio.authToken}")
+    private String twilio_auth_token;
+    
     @Override
     public void init(FilterConfig filterConfig) throws ServletException {
-        requestValidator = new RequestValidator(System.getenv("twilio.authToken"));
+        requestValidator = new RequestValidator(twilio_auth_token);
     }
     
     @Override
@@ -51,7 +58,8 @@ public class TwilioRequestFilter implements Filter {
             filterChain.doFilter(servletRequest, servletResponse);
         } else {
             log.warn("twilio request FORBIDDEN: valid failed");
-            ((HttpServletResponse) servletResponse).sendError(HttpServletResponse.SC_FORBIDDEN);
+            HttpTools.responseForJson((HttpServletResponse) servletResponse, ReturnEntity.fail(ResponseCode.T403));
+//            ((HttpServletResponse) servletResponse).sendError(HttpServletResponse.SC_FORBIDDEN);
         }
     }
     
