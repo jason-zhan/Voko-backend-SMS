@@ -25,4 +25,9 @@ public class ContactsLinkGroupServiceImpl implements ContactsLinkGroupService {
     public void saveAll(List<ContactsLinkGroup> list) {
         contactsLinkGroupDao.saveAll(list);
     }
+
+    @Override
+    public Integer deleteByContactsGroupIdIn(List<Long> ids) {
+        return contactsLinkGroupDao.deleteByContactsGroupIdIn(ids);
+    }
 }

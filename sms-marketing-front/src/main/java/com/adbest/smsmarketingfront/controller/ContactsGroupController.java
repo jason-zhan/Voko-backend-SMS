@@ -1,5 +1,6 @@
 package com.adbest.smsmarketingfront.controller;
 
+import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingfront.entity.vo.ContactsGroupForm;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
@@ -7,6 +8,7 @@ import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -39,9 +41,21 @@ public class ContactsGroupController {
         return ReturnEntity.success(is);
     }
 
-    @RequestMapping("/view-lis")
+    @RequestMapping("/view-list")
     public ReturnEntity list(String page,String pageSize){
         Page<ContactsGroup> list = contactsGroupService.findAll(page, pageSize);
+        return ReturnEntity.success(list);
+    }
+
+    @RequestMapping("/delete")
+    public ReturnEntity delete(ContactsGroupForm contactsGroupForm){
+        Integer row = contactsGroupService.delete(contactsGroupForm.getGroupIds());
+        return ReturnEntity.success(row);
+    }
+
+    @RequestMapping("/{id}")
+    public ReturnEntity info(@PathVariable("id")String id, String page, String pageSize){
+        Page<Contacts> list = contactsGroupService.contacts(id,page, pageSize);
         return ReturnEntity.success(list);
     }
 }
