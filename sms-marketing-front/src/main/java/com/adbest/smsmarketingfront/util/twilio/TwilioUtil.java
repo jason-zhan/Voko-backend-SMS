@@ -39,7 +39,7 @@ public class TwilioUtil {
     private String viewFileUrl;  // 外部访问文件路径
     
     @Autowired
-    public TwilioUtil(@Value("${twilio.accountSid}")String accountSid, @Value("${twilio.authToken}")String authToken) {
+    public TwilioUtil(@Value("${twilio.accountSid}") String accountSid, @Value("${twilio.authToken}") String authToken) {
         Twilio.init(accountSid, authToken);
     }
     
@@ -96,6 +96,7 @@ public class TwilioUtil {
         if (preSendMsg.getMediaUriList() != null) {
             creator.setMediaUrl(preSendMsg.getMediaUriList());
         }
+        creator.setStatusCallback(msgStatusCallback);
         return creator.create();
     }
     

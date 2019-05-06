@@ -12,27 +12,40 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ResourceBundle;
+
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class SmsMarketingFrontApplicationTests {
     
     @Autowired
     TwilioUtil twilioUtil;
+    @Autowired
+    ResourceBundle res;
     
-
     @Test
     public void contextLoads() {
-        QContacts qContacts = QContacts.contacts;
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qContacts.customerId.eq(2L));
-//        PreSendMsg preSendMsg = new PreSendMsg();
-//        MessageRecord record = new MessageRecord();
-//        record.setContactsNumber("+8615669052722");
-//        record.setCustomerNumber("+16782758458");
-//        record.setContent("From twilio, Use Test Credentials -- test message");
-//        preSendMsg.setRecord(record);
-//        Message message = twilioUtil.sendMessage(preSendMsg);
-//        System.out.println(message);
+//        QContacts qContacts = QContacts.contacts;
+//        BooleanBuilder builder = new BooleanBuilder();
+//        builder.and(qContacts.customerId.eq(2L));
+        PreSendMsg preSendMsg = new PreSendMsg();
+        MessageRecord record = new MessageRecord();
+        record.setContactsNumber("+12144051403");
+        record.setCustomerNumber("+16782758458");
+        record.setContent("From twilio -- test message");
+        preSendMsg.setRecord(record);
+        Message message = twilioUtil.sendMessage(preSendMsg);
+        System.out.println(message);
     }
-
+    
+    @Test
+    public void testBundle() throws UnsupportedEncodingException {
+        System.out.println(res.getLocale());
+        System.out.println(res.getString("lang-test"));
+        System.out.println(new String(res.getString("lang-test").getBytes(StandardCharsets.ISO_8859_1), "GBK"));
+    }
+    
 }
