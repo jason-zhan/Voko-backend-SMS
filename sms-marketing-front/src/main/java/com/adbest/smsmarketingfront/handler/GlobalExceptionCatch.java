@@ -57,9 +57,14 @@ public class GlobalExceptionCatch implements ErrorController {
      */
     private void forJson(HttpServletRequest request, HttpServletResponse response, int status, Throwable ex) {
         ReturnEntity returnEntity;
-//        String message = ex.getMessage();
         log.error("error:{}",ex);
-        returnEntity = ReturnEntity.fail(status, ResponseCode.getMessage(status));
+        String msg = "";
+        if (ex instanceof ServiceException) {
+            ServiceException e = (ServiceException)ex;
+            status = e.getCode();
+            msg = e.getMessage();
+        }
+        returnEntity = ReturnEntity.fail(status, "".equals(msg)?ResponseCode.getMessage(status):msg);
         HttpTools.responseForJson(response, returnEntity);
     }
     

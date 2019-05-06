@@ -25,4 +25,12 @@ public class ContactsLinkGroup implements Serializable {
      */
     @Column(nullable = false)
     private Long groupId;
+
+    public ContactsLinkGroup(Long contactsId, Long groupId) {
+        this.contactsId = contactsId;
+        this.groupId = groupId;
+    }
+
+    public ContactsLinkGroup() {
+    }
 }

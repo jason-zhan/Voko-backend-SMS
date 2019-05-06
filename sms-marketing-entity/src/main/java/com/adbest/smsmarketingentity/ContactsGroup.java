@@ -10,6 +10,7 @@ import java.io.Serializable;
  */
 @Entity
 @Data
+@Table(name="contacts_group",uniqueConstraints = {@UniqueConstraint(columnNames={"customerId", "title"})})
 public class ContactsGroup implements Serializable {
     
     @Id

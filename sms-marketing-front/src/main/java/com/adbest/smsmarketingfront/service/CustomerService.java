@@ -1,7 +1,7 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.Customer;
-import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
+import com.adbest.smsmarketingfront.entity.vo.CustomerForm;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;
@@ -16,5 +16,5 @@ public interface CustomerService extends UserDetailsService {
 
     Customer findFirstByEmailAndPassword(String username, String encrypt);
 
-    boolean register(CustomerVo vo);
+    boolean register(CustomerForm vo);
 }
