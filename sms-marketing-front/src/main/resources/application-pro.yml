@@ -28,10 +28,3 @@ spring:
 encrypt:
   salt:
     password: Aasda65asd58wd
-# twilio config
-twilio:
-  accountSid: axxxx
-  authToken: ahxxxx
-  msgUrl: /a/b
-  msgStatusCallback: /a/b
-  viewFileUrl: /file/view

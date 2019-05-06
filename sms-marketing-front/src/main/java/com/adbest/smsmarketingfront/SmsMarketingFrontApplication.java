@@ -6,8 +6,7 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.RestController;
 
-@Configuration
-@EntityScan(basePackages = "com.adbest.smsmarketingentity")
+
 @SpringBootApplication
 public class SmsMarketingFrontApplication {
 
