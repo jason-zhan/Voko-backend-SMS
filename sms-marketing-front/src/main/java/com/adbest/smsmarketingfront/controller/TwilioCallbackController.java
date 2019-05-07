@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.controller;
 
 import com.adbest.smsmarketingfront.util.twilio.InboundMsg;
+import com.adbest.smsmarketingfront.util.twilio.StatusCallbackParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -19,7 +20,7 @@ public class TwilioCallbackController {
     @RequestMapping("/receive-message")
     public void receiveMessage(HttpServletRequest request, HttpServletResponse response){
         InboundMsg inboundMsg = InboundMsg.parse(request);
-        
+        System.out.println(inboundMsg);
     }
     
     /**
@@ -29,7 +30,8 @@ public class TwilioCallbackController {
      */
     @RequestMapping("/message-status-callback")
     public void messageStatusCallback(HttpServletRequest request, HttpServletResponse response){
-        System.out.println(request);
+        StatusCallbackParam statusCallbackParam = StatusCallbackParam.parse(request);
+        System.out.println(statusCallbackParam);
     }
     
     

@@ -24,7 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-@WebFilter(urlPatterns = "/twilio/*", filterName = "twilioRequestFilter")
+//@WebFilter(urlPatterns = "/twilio/*", filterName = "twilioRequestFilter")
 @Slf4j
 public class TwilioRequestFilter implements Filter {
     
