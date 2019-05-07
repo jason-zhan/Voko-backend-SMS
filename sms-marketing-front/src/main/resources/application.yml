@@ -25,3 +25,4 @@ twilio:
   msgUrl: https://13430596.ngrok.io/twilio/receive-message
   msgStatusCallback: https://13430596.ngrok.io/twilio/message-status-callback
   viewFileUrl: https://13430596.ngrok.io/file/view
+  maxMediaNum: 10

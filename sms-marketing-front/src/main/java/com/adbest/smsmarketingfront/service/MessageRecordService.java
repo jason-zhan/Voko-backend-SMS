@@ -17,7 +17,7 @@ public interface MessageRecordService {
     int updateMessage(MessageRecord update);
     
     // 根据id查询消息
-    MessageRecord findById(Integer id);
+    MessageRecord findById(Long id);
     
     // 根据条件查询
     Page<MessageRecord> findByConditions(GetMessageRecordPage getMessagePage);
