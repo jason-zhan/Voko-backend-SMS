@@ -1,5 +1,6 @@
 package com.adbest.smsmarketingfront.service.impl;
 
+import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingentity.ContactsLinkGroup;
 import com.adbest.smsmarketingfront.dao.ContactsGroupDao;
@@ -7,6 +8,7 @@ import com.adbest.smsmarketingfront.entity.vo.ContactsGroupForm;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.ContactsLinkGroupService;
+import com.adbest.smsmarketingfront.service.ContactsService;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.ErrorMag;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +32,9 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Autowired
     private ContactsLinkGroupService contactsLinkGroupService;
 
+    @Autowired
+    private ContactsService contactsService;
+
     @Override
     @Transactional
     public ContactsGroup save(ContactsGroupForm contactsGroup) {
@@ -46,8 +51,9 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
             if (contactsLinkGroups.size()>0){
                 List<Long> contactsIds = contactsLinkGroups.stream().map(s -> s.getContactsId()).distinct().collect(Collectors.toList());
                 List<ContactsLinkGroup> list = new ArrayList<>();
+                ContactsLinkGroup clg = null;
                 for (Long id:contactsIds) {
-                    ContactsLinkGroup clg = new ContactsLinkGroup(id, co.getId());
+                    clg = new ContactsLinkGroup(id, co.getId());
                     list.add(clg);
                 }
                 contactsLinkGroupService.saveAll(list);
@@ -62,12 +68,6 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     }
 
     @Override
-    @Transactional
-    public Long del(List<Long> ids) {
-        return  contactsGroupDao.deleteByIdInAndCustomerId(ids, Current.getUserDetails().getId());
-    }
-
-    @Override
     public Boolean checkName(Long customerId, String name) {
         return countByCustomerIdAndTitle(customerId, name)<=0;
     }
@@ -75,7 +75,7 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     public Page<ContactsGroup> findAll(String page, String pageSize) {
         Pageable pageable = PageRequest.of(Integer.valueOf(page), Integer.valueOf(pageSize));
-        Page<ContactsGroup> data = contactsGroupDao.findByCustomerId(Current.getUserDetails().getId(), pageable);
+        Page<ContactsGroup> data = contactsGroupDao.findByCustomerIdAndIsDelete(Current.getUserDetails().getId(), false, pageable);
         return data;
     }
 
@@ -90,6 +90,24 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
         ContactsGroup contactsGroup = optionalContactsGroup.get();
         contactsGroup.setTitle(contactsGroupForm.getName());
         return contactsGroupDao.save(contactsGroup);
+    }
+
+    @Override
+    @Transactional
+    public Integer delete(List<String> groupIds) {
+        ServiceException.isTrue(groupIds!=null, ErrorMag.GROUP_INFO_NOT_EXISTS);
+        Long customerId = Current.getUserDetails().getId();
+        List<Long> ids = groupIds.stream().map(s -> Long.valueOf(s)).collect(Collectors.toList());
+        Long count = contactsGroupDao.countByIdInAndCustomerId(ids, customerId);
+        ServiceException.isTrue(count==ids.size(), ErrorMag.GROUP_INFO_ERROR);
+        Integer row = contactsGroupDao.deleteByIdIn(ids);
+        contactsLinkGroupService.deleteByContactsGroupIdIn(ids);
+        return row;
+    }
+
+    @Override
+    public Page<Contacts> contacts(String id, String page, String pageSize) {
+        return contactsService.findByContactsGroupId(id, page, pageSize);
     }
 
 }
