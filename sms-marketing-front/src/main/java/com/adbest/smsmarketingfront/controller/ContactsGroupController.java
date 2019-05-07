@@ -1,18 +1,16 @@
 package com.adbest.smsmarketingfront.controller;
 
-import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsGroup;
-import com.adbest.smsmarketingfront.entity.vo.ContactsGroupForm;
+import com.adbest.smsmarketingfront.entity.form.ContactsGroupForm;
+import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.util.Current;
+import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/contacts-group")
@@ -42,8 +40,8 @@ public class ContactsGroupController {
     }
 
     @RequestMapping("/view-list")
-    public ReturnEntity list(String page,String pageSize){
-        Page<ContactsGroup> list = contactsGroupService.findAll(page, pageSize);
+    public ReturnEntity list(PageBase page){
+        PageDataVo list = contactsGroupService.findAll(page);
         return ReturnEntity.success(list);
     }
 
@@ -54,8 +52,8 @@ public class ContactsGroupController {
     }
 
     @RequestMapping("/{id}")
-    public ReturnEntity info(@PathVariable("id")String id, String page, String pageSize){
-        Page<Contacts> list = contactsGroupService.contacts(id,page, pageSize);
+    public ReturnEntity info(@PathVariable("id")String id, PageBase page){
+        PageDataVo list = contactsGroupService.contacts(id,page);
         return ReturnEntity.success(list);
     }
 }

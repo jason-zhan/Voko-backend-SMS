@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.entity.vo;
+package com.adbest.smsmarketingfront.entity.form;
 
 import lombok.Data;
 

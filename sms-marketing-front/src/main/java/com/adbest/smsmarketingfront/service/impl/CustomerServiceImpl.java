@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
-import com.adbest.smsmarketingfront.entity.vo.CustomerForm;
+import com.adbest.smsmarketingfront.entity.form.CustomerForm;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.service.UsAreaService;

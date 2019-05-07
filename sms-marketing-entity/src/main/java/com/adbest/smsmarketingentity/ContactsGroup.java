@@ -24,7 +24,5 @@ public class ContactsGroup implements Serializable {
     private Long customerId;
     @Column(nullable = false)
     private String title;  // 名称
-    @Column(nullable = false)
-    private  Boolean isDelete;  // 是否删除(true:已删除)
     
 }

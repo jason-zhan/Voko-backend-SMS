@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.entity.vo;
+package com.adbest.smsmarketingfront.entity.form;
 
 import com.adbest.smsmarketingentity.ContactsGroup;
 import lombok.Data;
@@ -20,7 +20,6 @@ public class ContactsGroupForm {
         ContactsGroup contactsGroup = new ContactsGroup();
         contactsGroup.setTitle(this.name);
         contactsGroup.setCustomerId(this.getCustomerId());
-        contactsGroup.setIsDelete(false);
         return contactsGroup;
     }
 }

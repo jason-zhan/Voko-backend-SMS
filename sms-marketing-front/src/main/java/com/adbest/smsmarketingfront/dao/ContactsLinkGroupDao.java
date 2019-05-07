@@ -16,4 +16,9 @@ public interface ContactsLinkGroupDao extends JpaRepository<ContactsLinkGroup, L
     @Transactional
     @Query(value = "delete from ContactsLinkGroup c where c.groupId in :ids")
     Integer deleteByContactsGroupIdIn(List<Long> ids);
+
+    @Modifying
+    @Transactional
+    @Query(value = "delete from ContactsLinkGroup c where c.contactsId in :ids")
+    Integer deleteByContactsIdIn(List<Long> ids);
 }
