@@ -14,6 +14,7 @@ import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.TimeTools;
+import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -43,8 +44,6 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     ResourceBundle bundle;
     @Autowired
     RedisTemplate redisTemplate;
-    @Value("${twilio.maxMediaNum}")
-    private int maxMediaNum;
     
     @Transactional
     @Override
@@ -102,7 +101,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         
         ServiceException.hasText(create.getText(), bundle.getString("msg-plan-content"));
         
-        ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= maxMediaNum,
+        ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM,
                 bundle.getString("msg-plan-media-list"));
         
         ServiceException.isTrue((create.getContactsIdList() != null && create.getContactsIdList().size() > 0) ||
@@ -118,12 +117,18 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             Contacts contacts = optional.get();
             Customer cur = Current.getUserDetails();
             // 计算实际消息内容
-            text
+            String content = text
                     .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName())
-                    .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName());
-//                    .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.get)
+                    .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName())
+                    .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.getFirstName())
+                    .replace(MsgTemplateVariable.CON_LASTNAME.getTitle(), contacts.getLastName());
+            if (MessageTools.isGsm7(content)) {
+            
+            }
         }
         return messageRecord;
     }
+    
+    
     
 }

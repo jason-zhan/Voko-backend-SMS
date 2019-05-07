@@ -29,7 +29,7 @@ public class SpringInitializer implements InitializingBean {
     
     @Bean
     public ResourceBundle resourceBundle(){
-        return ResourceBundle.getBundle("lang",Locale.US);
+        return ResourceBundle.getBundle("lang",Locale.CHINA);
     }
     
     @Bean
