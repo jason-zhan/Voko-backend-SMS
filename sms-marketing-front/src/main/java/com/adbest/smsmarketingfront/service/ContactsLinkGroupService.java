@@ -11,4 +11,8 @@ public interface ContactsLinkGroupService {
     void saveAll(List<ContactsLinkGroup> list);
 
     Integer deleteByContactsGroupIdIn(List<Long> ids);
+
+    void createContactsLinkGroup(List<Long> contactsIds, List<Long> groupIds);
+
+    void deleteByContactsIdIn(List<Long> asList);
 }

@@ -24,12 +24,19 @@ public class Contacts implements Serializable {
     private Long customerId;
     @Column(nullable = false)
     private String phone; // 号码
-    private String customerName;  // 姓名
+    private String firstName;  // 名字
+    private String lastName;  // 姓氏
     private String email;  // 邮箱
+    private String notes;  // 备注
     @Column(nullable = false)
     private Boolean inLock;  // 锁定(true:是)
+    private Timestamp inLockTime;  // 锁定时间
     @Column(nullable = false)
     private  Boolean isDelete;  // 是否删除(true:已删除)
     private Timestamp createTime;  // 创建时间
-    
+    /**
+     * @see ContactsSource
+     */
+    private Integer source;  // 来源
+
 }

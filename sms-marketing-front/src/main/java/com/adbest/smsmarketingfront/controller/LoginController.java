@@ -1,6 +1,6 @@
 package com.adbest.smsmarketingfront.controller;
 
-import com.adbest.smsmarketingfront.entity.vo.CustomerForm;
+import com.adbest.smsmarketingfront.entity.form.CustomerForm;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.util.ResponseCode;
 import com.adbest.smsmarketingfront.util.ReturnEntity;

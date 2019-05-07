@@ -7,7 +7,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class ContactsLinkGroupServiceImpl implements ContactsLinkGroupService {
@@ -27,7 +29,28 @@ public class ContactsLinkGroupServiceImpl implements ContactsLinkGroupService {
     }
 
     @Override
+    @Transactional
     public Integer deleteByContactsGroupIdIn(List<Long> ids) {
         return contactsLinkGroupDao.deleteByContactsGroupIdIn(ids);
+    }
+
+    @Override
+    @Transactional
+    public void createContactsLinkGroup(List<Long> contactsIds, List<Long> groupIds) {
+        List<ContactsLinkGroup> list = new ArrayList<>();
+        ContactsLinkGroup contactsLinkGroup = null;
+        for (Long contactsId : contactsIds) {
+            for (Long groupId : groupIds) {
+                contactsLinkGroup = new ContactsLinkGroup(contactsId, groupId);
+                list.add(contactsLinkGroup);
+            }
+        }
+        contactsLinkGroupDao.saveAll(list);
+    }
+
+    @Override
+    @Transactional
+    public void deleteByContactsIdIn(List<Long> asList) {
+        contactsLinkGroupDao.deleteByContactsIdIn(asList);
     }
 }

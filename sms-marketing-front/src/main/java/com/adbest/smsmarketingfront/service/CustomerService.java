@@ -1,7 +1,7 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.Customer;
-import com.adbest.smsmarketingfront.entity.vo.CustomerForm;
+import com.adbest.smsmarketingfront.entity.form.CustomerForm;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import java.util.List;

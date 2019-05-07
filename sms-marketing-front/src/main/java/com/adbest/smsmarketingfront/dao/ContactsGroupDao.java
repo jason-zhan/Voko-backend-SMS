@@ -22,10 +22,5 @@ public interface ContactsGroupDao extends JpaRepository<ContactsGroup, Long> {
 
     Long deleteByIdInAndCustomerId(List<Long> ids, Long id);
 
-    Page<ContactsGroup> findByCustomerIdAndIsDelete(Long customerId, boolean disable, Pageable pageable);
-
-    @Modifying
-    @Transactional
-    @Query(value = "update ContactsGroup c set c.isDelete = true where c.customerId = :customerId and c.id in :ids")
-    Integer updateIsDisableByCustomerAndIdIn(Long customerId, List<Long> ids);
+    Page<ContactsGroup> findByCustomerId(Long customerId, Pageable pageable);
 }
