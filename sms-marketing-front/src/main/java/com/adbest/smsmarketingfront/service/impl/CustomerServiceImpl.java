@@ -8,6 +8,7 @@ import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.service.UsAreaService;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.EncryptTools;
+import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -15,9 +16,11 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.ResourceBundle;
 
 @Service
 public class CustomerServiceImpl implements  CustomerService {
@@ -30,6 +33,9 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Autowired
     private UsAreaService usAreaService;
+
+    @Autowired
+    private ReturnMsgUtil returnMsgUtil;
 
     @Override
     public Customer save(Customer customer) {
@@ -53,14 +59,14 @@ public class CustomerServiceImpl implements  CustomerService {
     @Override
     @Transactional
     public boolean register(CustomerForm createSysUser) {
-        ServiceException.notNull(createSysUser, CommonMessage.PARAM_IS_NULL);
-        ServiceException.hasText(createSysUser.getEmail(), "邮箱" + CommonMessage.CAN_NOT_EMPTY);
-        ServiceException.hasText(createSysUser.getPassword(), "密码" + CommonMessage.CAN_NOT_EMPTY);
+        ServiceException.notNull(createSysUser, returnMsgUtil.msg("PARAM_IS_NULL"));
+        ServiceException.hasText(createSysUser.getEmail(), returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
+        ServiceException.hasText(createSysUser.getPassword(), returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
         // 用户名、密码正则校验
-        ServiceException.isTrue(Customer.checkEmail(createSysUser.getEmail()), "邮箱格式有误");
-        ServiceException.isTrue(Customer.checkPassword(createSysUser.getPassword()), "密码必须为5-25位的字母或数字");
+        ServiceException.isTrue(Customer.checkEmail(createSysUser.getEmail()), returnMsgUtil.msg("EMAIL_INCORRECT_FORMAT"));
+        ServiceException.isTrue(Customer.checkPassword(createSysUser.getPassword()), returnMsgUtil.msg("PASSWORD_INCORRECT_FORMAT"));
         Customer repeat = customerDao.findFirstByEmail(createSysUser.getEmail());
-        ServiceException.isNull(repeat, "该邮箱已存在");
+        ServiceException.isNull(repeat, returnMsgUtil.msg("EMAIL_EXISTS"));
         Customer customer = new Customer();
         customer.setPassword(encryptTools.encrypt(createSysUser.getPassword()));
         customer.setDisable(false);

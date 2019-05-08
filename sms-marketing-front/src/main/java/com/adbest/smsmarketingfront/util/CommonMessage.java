@@ -12,7 +12,7 @@ public class CommonMessage {
     public final static  String PARAM_IS_INVALID = "参数无效";
 
     public final static String CAN_NOT_EMPTY = "不能为空";
-    
+
     public final static String OBJECT_NOT_FOUND = "OBJECT_NOT_FOUND";
     
 }

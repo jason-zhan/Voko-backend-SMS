@@ -24,4 +24,6 @@ public interface ContactsGroupService {
     PageDataVo contacts(String id, PageBase pageBase);
 
     Long countByIdInAndCustomerId(List<Long> gids, Long customerId);
+
+    ContactsGroup findById(Long groupId);
 }

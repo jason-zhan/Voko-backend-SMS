@@ -1,7 +1,10 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.Contacts;
+import com.adbest.smsmarketingfront.entity.form.AddContactsToGroupsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsForm;
+import com.adbest.smsmarketingfront.entity.form.ContactsProcessForm;
+import com.adbest.smsmarketingfront.entity.form.SelectContactsForm;
 import com.adbest.smsmarketingfront.entity.vo.ContactsVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.util.PageBase;
@@ -17,4 +20,16 @@ public interface ContactsService {
     Integer delete(String ids);
 
     Boolean updateLock(String id, Boolean isLock);
+
+    Boolean addContactsToGroups(AddContactsToGroupsForm addContactsToGroupsForm);
+
+    Boolean outContactsToGroups(AddContactsToGroupsForm addContactsToGroupsForm);
+
+    Long countByIdInAndCustomerId(List<Long> contactsIds, Long customerId);
+
+    PageDataVo select(SelectContactsForm selectContactsForm);
+
+    PageDataVo selectAll(SelectContactsForm selectContactsForm);
+
+    boolean process(ContactsProcessForm contactsProcessForm);
 }

@@ -1,16 +1,19 @@
 package com.adbest.smsmarketingfront.controller;
 
-import com.adbest.smsmarketingentity.Contacts;
-import com.adbest.smsmarketingfront.entity.form.ContactsForm;
+import com.adbest.smsmarketingentity.ContactsTemp;
+import com.adbest.smsmarketingfront.entity.form.*;
 import com.adbest.smsmarketingfront.entity.vo.ContactsVo;
+import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.service.ContactsService;
+import com.adbest.smsmarketingfront.service.ContactsTempService;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
+import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/contacts")
@@ -18,6 +21,9 @@ public class ContactsController {
 
     @Autowired
     private ContactsService contactsService;
+
+    @Autowired
+    private ContactsTempService contactsTempService;
 
     @RequestMapping("/save")
     public ReturnEntity add(ContactsForm contactsForm){
@@ -37,9 +43,33 @@ public class ContactsController {
         return ReturnEntity.success(is);
     }
 
-    @RequestMapping("/view-list")
-    public ReturnEntity list(){
+    @RequestMapping("/addGroup")
+    public ReturnEntity addContactsToGroups(AddContactsToGroupsForm addContactsToGroupsForm){
+        Boolean is = contactsService.addContactsToGroups(addContactsToGroupsForm);
+        return ReturnEntity.success(is);
+    }
 
-        return ReturnEntity.success("");
+    @RequestMapping("/outGroup")
+    public ReturnEntity outContactsToGroups(AddContactsToGroupsForm addContactsToGroupsForm){
+        Boolean is = contactsService.outContactsToGroups(addContactsToGroupsForm);
+        return ReturnEntity.success(is);
+    }
+
+    @RequestMapping("/view-list")
+    public ReturnEntity list(SelectContactsForm selectContactsForm){
+        PageDataVo vo = contactsService.selectAll(selectContactsForm);
+        return ReturnEntity.success(vo);
+    }
+
+    @RequestMapping("/import")
+    public ReturnEntity importContacts(ContactsImportForm contactsImportForm){
+        String tempSign = contactsTempService.importContacts(contactsImportForm);
+        return ReturnEntity.success(tempSign);
+    }
+
+    @RequestMapping("/upload/process")
+    public ReturnEntity process(ContactsProcessForm contactsProcessForm){
+        boolean is = contactsService.process(contactsProcessForm);
+        return ReturnEntity.success(is);
     }
 }

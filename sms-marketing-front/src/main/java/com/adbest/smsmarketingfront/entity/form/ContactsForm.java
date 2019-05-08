@@ -1,8 +1,7 @@
 package com.adbest.smsmarketingfront.entity.form;
 
 import com.adbest.smsmarketingentity.Contacts;
-import com.adbest.smsmarketingfront.handler.ServiceException;
-import com.adbest.smsmarketingfront.util.ErrorMag;
+import com.adbest.smsmarketingentity.ContactsTemp;
 import lombok.Data;
 
 import java.util.List;
@@ -22,7 +21,6 @@ public class ContactsForm {
     }
 
     public Contacts getContacts(){
-        ServiceException.notNull(phone, ErrorMag.PHONE_NOT_EMPTY);
         Contacts contacts = new Contacts();
         contacts.setEmail(email);
         contacts.setFirstName(firstName);
@@ -33,12 +31,23 @@ public class ContactsForm {
     }
 
     public Contacts getContacts(Contacts contacts){
-        ServiceException.notNull(phone, ErrorMag.PHONE_NOT_EMPTY);
         contacts.setEmail(email);
         contacts.setFirstName(firstName);
         contacts.setLastName(lastName);
         contacts.setNotes(notes);
         contacts.setPhone(phone);
+        return contacts;
+    }
+
+    public ContactsTemp getContactsTemp(Long customerId, String tempSign) {
+        ContactsTemp contacts = new ContactsTemp();
+        contacts.setEmail(email);
+        contacts.setFirstName(firstName);
+        contacts.setLastName(lastName);
+        contacts.setNotes(notes);
+        contacts.setPhone(phone);
+        contacts.setCustomerId(customerId);
+        contacts.setTempSign(tempSign);
         return contacts;
     }
 }
