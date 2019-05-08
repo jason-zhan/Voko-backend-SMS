@@ -1,23 +1,23 @@
 package com.adbest.smsmarketingentity;
 
 /**
- * 消息状态 [本系统自定义]
+ * 定时任务状态
+ * @see MessagePlan#status
  */
-public enum MessageStatus {
+public enum MessagePlanStatus {
     
-    draft(0, "DRAFT"),  // 草稿
-    planning(1, "PLANNING"),  // 计划中
-    queue(2, "QUEUE"),  // 队列中
-    sent(3, "SENT"),  // 已发送
-    DELIVERED(4, "DELIVERED"),  // 已送达
-    UNDELIVERED(5, "UNDELIVERED"),  // 未送达
-    FAILED(6, "FAILED"),  // 发送失败
+    EDITING(0, "EDITING"),  // 编辑中
+    SCHEDULING(1, "SCHEDULING"),  // 计划中
+    QUEUING(2, "QUEUING"),  // 队列中
+    EXECUTING(3, "EXECUTING"),  // 执行中
+    EXECUTION_COMPLETED(4, "EXECUTION_COMPLETED"),  // 执行完毕
+    FINISHED(5, "FINISHED"),  // 已完成(全部执行完成，不再修改)
     ;
     
     private int value;
     private String title;
     
-    MessageStatus(int value, String title) {
+    MessagePlanStatus(int value, String title) {
         this.value = value;
         this.title = title;
     }

@@ -19,12 +19,23 @@ public class MessagePlan implements Serializable {
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false)
+    private Long customerId;  // 用户id
+    @Column(nullable = false)
     private String title;  // 标题
+    @Column(nullable = false)
+    @Lob
+    private String text;  // 内容
+    private String mediaIdList;  // 媒体id列表，多个以','分隔
     @Column(nullable = false)
     private Timestamp execTime;  // 执行时间
     private String remark;  // 备注
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
+    /**
+     * 定时任务状态
+     * @see
+     */
+    private Integer status;
     @Column(nullable = false)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间

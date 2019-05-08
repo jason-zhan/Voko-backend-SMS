@@ -14,8 +14,13 @@ public interface MessagePlanService {
     // 新增定时任务
     int create(CreateMessagePlan create);
     
+    // 修改定时任务（编辑中状态）
+    
     // 取消定时任务
     int cancel(Long id);
+    
+    // 重启定时任务
+    int restart(Long id);
     
     // 根据id查询定时任务
     MessagePlan findById(Long id);

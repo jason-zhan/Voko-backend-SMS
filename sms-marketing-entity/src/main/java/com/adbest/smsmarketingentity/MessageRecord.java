@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingentity;
 
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -28,6 +29,7 @@ public class MessageRecord implements Serializable {
     @Column(nullable = false)
     private String customerNumber;  // 客户号码
     @Column(nullable = false)
+    @Lob
     private String content;
     @Column(nullable = false)
     private Integer segments;  // 被分割为多少条消息
@@ -42,6 +44,7 @@ public class MessageRecord implements Serializable {
     @Column(nullable = false)
     private Boolean inbox; // 是否收件（true:是）
     @Column(nullable = false)
+    @CreationTimestamp
     private Timestamp createTime;  // 创建时间
     private Timestamp sendTime;  // 发送时间
     private Timestamp arrivedTime;  // 送达时间

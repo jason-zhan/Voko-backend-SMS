@@ -18,6 +18,11 @@ public class MessagePlanServiceImplTest {
         System.out.println("== ==");
     }
     
+    @Test
+    public void testRemainder(){
+        System.out.println(5%5);
+    }
+    
     // 根据Unicode编码完美的判断中文汉字和符号
     private static boolean isGsm7(String str) {
         int strLen = str.length();
