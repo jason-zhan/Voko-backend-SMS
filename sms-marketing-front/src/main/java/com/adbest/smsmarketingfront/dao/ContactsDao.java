@@ -21,4 +21,8 @@ public interface ContactsDao extends JpaRepository<Contacts, Long>, JpaSpecifica
     @Transactional
     @Query(value = "update Contacts c set c.isDelete = true where c.customerId = :customerId and c.id in :ids")
     Integer updateIsDisableByCustomerIdAndIdIn(Long customerId, List<Long> ids);
+
+    Long countByIdInAndCustomerId(List<Long> contactsIds, Long customerId);
+
+    List<Contacts> findByCustomerId(Long customerId);
 }

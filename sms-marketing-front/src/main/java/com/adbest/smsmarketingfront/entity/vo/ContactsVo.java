@@ -18,6 +18,7 @@ public class ContactsVo {
     @Column(nullable = false)
     private Boolean inLock;  // 锁定(true:是)
     private Timestamp createTime;  // 创建时间
+    private Timestamp inLockTime;  // 锁定时间
     public ContactsVo(Contacts contacts){
         this.id = contacts.getId();
         this.phone = contacts.getPhone();
@@ -27,6 +28,7 @@ public class ContactsVo {
         this.notes = contacts.getNotes();
         this.inLock = contacts.getInLock();
         this.createTime = contacts.getCreateTime();
+        this.inLockTime = contacts.getInLockTime();
     }
 
     public ContactsVo() {

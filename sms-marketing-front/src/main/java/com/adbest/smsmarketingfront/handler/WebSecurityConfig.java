@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.handler;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.util.HttpTools;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
+import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -25,6 +26,8 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
+import java.util.ResourceBundle;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -39,6 +42,8 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     AuthenticationAccessDeniedHandler deniedHandler;
     @Autowired
     CustomAuthenticationProvider authenticationProvider;
+    @Autowired
+    private ReturnMsgUtil returnMsgUtil;
 
     @Override
     public void configure(WebSecurity web) throws Exception {
@@ -69,7 +74,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                     @Override
                     public void onLogoutSuccess(HttpServletRequest req, HttpServletResponse resp, Authentication authentication) throws IOException, ServletException {
                         resp.setContentType("application/json;charset=utf-8");
-                        ReturnEntity respBean = ReturnEntity.success("注销成功!");
+                        ReturnEntity respBean = ReturnEntity.success(returnMsgUtil.msg("LOGOUT_SUCCESS"));
                         ObjectMapper om = new ObjectMapper();
                         PrintWriter out = resp.getWriter();
                         out.write(om.writeValueAsString(respBean));
@@ -90,7 +95,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     protected AuthenticationSuccessHandler successHandler() {
         return (HttpServletRequest request, HttpServletResponse response, Authentication authentication) ->
-                HttpTools.responseForJson(response, ReturnEntity.success("登录成功"));
+                HttpTools.responseForJson(response, ReturnEntity.success(returnMsgUtil.msg("LOGIN_SUCCESS")));
     }
 
     @Bean
