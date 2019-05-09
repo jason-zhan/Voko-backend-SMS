@@ -8,6 +8,7 @@ import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.rest.api.v2010.account.MessageCreator;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
+import com.twilio.rest.api.v2010.account.availablephonenumbercountry.LocalReader;
 import com.twilio.twiml.MessagingResponse;
 import com.twilio.twiml.messaging.Body;
 import com.twilio.twiml.messaging.Media;
@@ -44,18 +45,20 @@ public class TwilioUtil {
     }
     
     /**
-     * 查询可用手机号
+     * 查询美国可用手机号
      * 具有收发短信和彩信功能
      *
      * @param areaCode
      * @return
      */
-    public ResourceSet<Local> fetchNumbersByAreaCode(@NotNull Integer areaCode) {
-        return Local.reader("US")
-                .setAreaCode(areaCode)
+    public ResourceSet<Local> fetchNumbersByAreaCode(Integer areaCode) {
+        LocalReader reader = Local.reader("US")
                 .setSmsEnabled(true)
-                .setMmsEnabled(true)
-                .read();
+                .setMmsEnabled(true);
+        if (areaCode != null) {
+            reader.setAreaCode(areaCode);
+        }
+        return reader.read();
     }
     
     /**

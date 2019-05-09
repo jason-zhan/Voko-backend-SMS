@@ -10,16 +10,13 @@ import org.springframework.data.domain.Page;
  */
 public interface MessageRecordService {
     
-    // 新增消息(草稿)
-    int createMessage(MessageRecord create);
-    
-    // 修改消息(草稿)
-    int updateMessage(MessageRecord update);
-    
     // 根据id查询消息
     MessageRecord findById(Long id);
     
-    // 根据条件查询
-    Page<MessageRecord> findByConditions(GetMessageRecordPage getMessagePage);
+    // 根据条件查询收件
+    Page<MessageRecord> findInboxByConditions(GetMessageRecordPage getMessagePage);
+    
+    // 根据条件查询发件
+    Page<MessageRecord> findOutboxByConditions(GetMessageRecordPage getMessagePage);
     
 }

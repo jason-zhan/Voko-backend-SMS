@@ -11,7 +11,7 @@ import java.sql.Timestamp;
  */
 @Entity
 @Data
-public class MbNumberLib implements Serializable {
+public class MobileNumber implements Serializable {
     
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
