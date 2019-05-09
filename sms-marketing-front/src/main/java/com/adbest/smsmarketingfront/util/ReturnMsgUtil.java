@@ -13,6 +13,7 @@ public class ReturnMsgUtil {
     private ResourceBundle resourceBundle;
 
     public String msg(String key){
-        return new String(resourceBundle.getString(key).getBytes(StandardCharsets.ISO_8859_1));
+//        return new String(resourceBundle.getString(key).getBytes(StandardCharsets.ISO_8859_1));
+        return resourceBundle.getString(key);
     }
 }

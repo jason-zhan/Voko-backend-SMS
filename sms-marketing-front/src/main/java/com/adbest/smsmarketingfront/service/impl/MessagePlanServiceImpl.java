@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.Customer;
-import com.adbest.smsmarketingentity.MbNumberLib;
+import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.MessageRecord;
@@ -224,8 +224,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     private List<String> validFromNumberLi(List<Long> numberIdList) {
         Map<Long, String> validNumberMap = new HashMap<>();
         for (Long numberId : numberIdList) {
-            Optional<MbNumberLib> optional = mbNumberLibDao.findById(numberId);
-            optional.ifPresent(mbNumberLib -> validNumberMap.put(numberId, mbNumberLib.getNumber()));
+            Optional<MobileNumber> optional = mbNumberLibDao.findById(numberId);
+            optional.ifPresent(mobileNumber -> validNumberMap.put(numberId, mobileNumber.getNumber()));
         }
         return (List<String>) validNumberMap.values();
     }
