@@ -7,6 +7,9 @@ import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import javax.persistence.EntityManager;
 import java.util.Locale;
@@ -26,9 +29,21 @@ public class SpringInitializer implements InitializingBean {
     
     @Bean
     public ResourceBundle resourceBundle(){
-        return ResourceBundle.getBundle("lang",Locale.US);
+        return ResourceBundle.getBundle("lang",Locale.CHINA);
     }
     
+    @Bean
+    public RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory redisConnectionFactory) {
+        RedisTemplate<String, Object> redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionFactory(redisConnectionFactory);
+        // 使用Jackson2JsonRedisSerialize 替换默认序列化
+//        Jackson2JsonRedisSerializer jackson2JsonRedisSerializer = new Jackson2JsonRedisSerializer(Object.class);
+        // 设置value的序列化规则和 key的序列化规则
+        redisTemplate.setKeySerializer(new StringRedisSerializer());
+//        redisTemplate.setValueSerializer(jackson2JsonRedisSerializer);
+        redisTemplate.afterPropertiesSet();
+        return redisTemplate;
+    }
     
     @Override
     public void afterPropertiesSet() throws Exception {

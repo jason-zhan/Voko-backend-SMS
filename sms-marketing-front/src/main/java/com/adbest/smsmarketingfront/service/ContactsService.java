@@ -8,6 +8,7 @@ import com.adbest.smsmarketingfront.entity.form.SelectContactsForm;
 import com.adbest.smsmarketingfront.entity.vo.ContactsVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.util.PageBase;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -32,4 +33,6 @@ public interface ContactsService {
     PageDataVo selectAll(SelectContactsForm selectContactsForm);
 
     boolean process(ContactsProcessForm contactsProcessForm);
+
+    List<ContactsVo> upload(MultipartFile file);
 }

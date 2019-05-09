@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.MessagePlan;
+import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import org.springframework.data.domain.Page;
 
@@ -11,13 +12,13 @@ import org.springframework.data.domain.Page;
 public interface MessagePlanService {
     
     // 新增定时任务
-    int create(MessagePlan create);
+    int create(CreateMessagePlan create);
     
-    // 修改定时任务
-    int update(MessagePlan update);
+    // 取消定时任务
+    int cancel(Long id);
     
     // 根据id查询定时任务
-    MessagePlan findById(Integer id);
+    MessagePlan findById(Long id);
     
     // 根据条件查询定时任务
     Page<MessagePlan> findByConditions(GetMessagePlanPage getPlanPage);

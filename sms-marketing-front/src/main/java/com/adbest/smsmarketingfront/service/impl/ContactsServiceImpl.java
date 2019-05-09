@@ -14,30 +14,32 @@ import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.ContactsLinkGroupService;
 import com.adbest.smsmarketingfront.service.ContactsService;
 import com.adbest.smsmarketingfront.service.ContactsTempService;
-import com.adbest.smsmarketingfront.util.Current;
-import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
+import com.adbest.smsmarketingfront.util.*;
 import com.google.common.collect.Lists;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
+@Slf4j
 public class ContactsServiceImpl implements ContactsService {
 
     @Autowired
@@ -57,6 +59,9 @@ public class ContactsServiceImpl implements ContactsService {
 
     @Autowired
     private ContactsTempService contactsTempService;
+
+    @Autowired
+    private RedisLockUtil redisLockUtil;
 
     @Override
     public PageDataVo findByContactsGroupId(String contactsGroupId, PageBase pageBase) {
@@ -211,6 +216,36 @@ public class ContactsServiceImpl implements ContactsService {
         return true;
     }
 
+    @Override
+    public List<ContactsVo> upload(MultipartFile file) {
+        ServiceException.notNull(file,returnMsgUtil.msg("FILE_NOT_EMPTY"));
+        try {
+            String type = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".")+1, file.getOriginalFilename().length());
+            ServiceException.isTrue("xls".equals(type)||"xlsx".equals(type),returnMsgUtil.msg("FILE_INCORRECT_FORMAT"));
+            InputStream in = file.getInputStream();
+            List<List<Object>> listob = new ArrayList<List<Object>>();
+            listob = new ImportExcelUtil().getBankListByExcel(in, file.getOriginalFilename());
+            List<ContactsVo> list = Lists.newArrayList();
+            ContactsVo vo = null;
+            if (listob.size()>1)
+                for (int i = 1;i<listob.size();i++){
+                    List<Object> objects = listob.get(i);
+                    if (objects.size()==0)continue;
+                    vo = new ContactsVo();
+                    vo.setPhone(objects.get(0)==null?null:objects.get(0).toString());
+                    vo.setFirstName(objects.get(1)==null?null:objects.get(1).toString());
+                    vo.setLastName(objects.get(2)==null?null:objects.get(2).toString());
+                    vo.setEmail(objects.get(3)==null?null:objects.get(3).toString());
+                    vo.setNotes(objects.get(4)==null?null:objects.get(4).toString());
+                    list.add(vo);
+                }
+            return list;
+        }catch(Exception e){
+            log.error("excel导入错误",e);
+            throw new ServiceException(returnMsgUtil.msg("T500"));
+        }
+    }
+
     @Transactional
     public void saveData(List<ContactsTemp> list,Long customerId,String groupId){
         if (list.size()<=0)return;
@@ -219,6 +254,8 @@ public class ContactsServiceImpl implements ContactsService {
         contacts = Lists.newArrayList();
         Contacts c = null;
         for (ContactsTemp contactsTemp:list) {
+            boolean lock = redisLockUtil.lock(customerId + contactsTemp.getPhone(), 60 * 5);
+            if (!lock)continue;
             c = map.get(contactsTemp.getPhone());
             if (c==null){
                 c = new Contacts();

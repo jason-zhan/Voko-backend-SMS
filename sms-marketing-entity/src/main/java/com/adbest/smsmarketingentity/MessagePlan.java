@@ -1,6 +1,8 @@
 package com.adbest.smsmarketingentity;
 
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -24,5 +26,8 @@ public class MessagePlan implements Serializable {
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
     @Column(nullable = false)
+    @CreationTimestamp
     private Timestamp createTime;  // 创建时间
+    @UpdateTimestamp
+    private Timestamp updateTime;  // 更新时间
 }
