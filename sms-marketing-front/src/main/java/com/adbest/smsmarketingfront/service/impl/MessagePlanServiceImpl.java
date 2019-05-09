@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.Customer;
+import com.adbest.smsmarketingentity.MessageStatus;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
@@ -111,7 +112,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     public int cancel(Long id) {
         log.info("enter cancel, id=" + id);
         // 参数校验
-        Assert.notNull(id, "id can't by empty!");
+        Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         Optional<MessagePlan> optional = messagePlanDao.findById(id);
         ServiceException.isTrue(optional.isPresent(), bundle.getString("msg-plan-not-exists"));
         MessagePlan plan = optional.get();
@@ -136,7 +137,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Override
     public int restart(Long id) {
         log.info("enter restart, id=" + id);
-        Assert.notNull(id, "id can't by empty!");
+        Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         Optional<MessagePlan> optional = messagePlanDao.findById(id);
         ServiceException.isTrue(optional.isPresent(), "msg-plan-not-exists");
         MessagePlan plan = optional.get();
@@ -160,8 +161,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Override
     public MessagePlan findById(Long id) {
         log.info("enter findById, id=" + id);
-        log.info("enter restart, id=" + id);
-        Assert.notNull(id, "id can't by empty!");
+        Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         Optional<MessagePlan> optional = messagePlanDao.findById(id);
         if (optional.isPresent()) {
             log.info("leave findById");
@@ -253,6 +253,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         messageRecord.setContactsId(contacts.getId());
         messageRecord.setContactsNumber(contacts.getPhone());
         messageRecord.setInbox(false);
+        messageRecord.setExpectedSendTime(plan.getExecTime());
+        messageRecord.setStatus(MessageStatus.PLANNING.getValue());
+        messageRecord.setDisable(false);
         return messageRecord;
     }
     

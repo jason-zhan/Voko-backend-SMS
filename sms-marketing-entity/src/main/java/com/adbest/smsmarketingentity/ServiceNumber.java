@@ -1,6 +1,9 @@
 package com.adbest.smsmarketingentity;
 
+import lombok.Data;
+
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -10,6 +13,8 @@ import java.sql.Timestamp;
 /**
  * 服务短号库
  */
+@Entity
+@Data
 public class ServiceNumber implements Serializable {
     
     @Id
