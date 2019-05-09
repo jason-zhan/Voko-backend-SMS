@@ -27,6 +27,9 @@ public class ContactsController {
     @Autowired
     private ContactsTempService contactsTempService;
 
+    @Autowired
+    private ReturnMsgUtil returnMsgUtil;
+
     @RequestMapping("/save")
     public ReturnEntity add(ContactsForm contactsForm){
         ContactsVo contacts = contactsService.save(contactsForm);
@@ -77,7 +80,7 @@ public class ContactsController {
 //    ]
 //    }
     @RequestMapping("/import")
-    public ReturnEntity importContacts(@RequestBody ContactsImportForm contactsImportForm){
+    public ReturnEntity importContacts(@RequestBody(required=false) ContactsImportForm contactsImportForm){
         String tempSign = contactsTempService.importContacts(contactsImportForm);
         return ReturnEntity.success(tempSign);
     }
@@ -85,7 +88,7 @@ public class ContactsController {
     @RequestMapping("/upload/process")
     public ReturnEntity process(ContactsProcessForm contactsProcessForm){
         boolean is = contactsService.process(contactsProcessForm);
-        return ReturnEntity.success(is);
+        return ReturnEntity.success(returnMsgUtil.msg("UPLOADING_CONTACTS"));
     }
 
     @PostMapping(value = "/upload")

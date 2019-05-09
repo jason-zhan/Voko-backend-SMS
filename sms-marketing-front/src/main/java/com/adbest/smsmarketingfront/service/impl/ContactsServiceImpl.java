@@ -207,12 +207,13 @@ public class ContactsServiceImpl implements ContactsService {
         ServiceException.isTrue(contactsProcessForm.getGroupId()!=null && contactsProcessForm.getTempSign()!=null,returnMsgUtil.msg("MISSING_PARAMETER"));
         Long customerId = Current.getUserDetails().getId();
         List<ContactsTemp> list = contactsTempService.findByTempSign(contactsProcessForm.getTempSign());
-        new Runnable() {
+        Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                saveData(list, customerId,contactsProcessForm.getGroupId());
+                saveData(list, customerId, contactsProcessForm.getGroupId());
             }
         };
+        runnable.run();;
         return true;
     }
 

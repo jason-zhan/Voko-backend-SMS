@@ -31,6 +31,7 @@ public class ContactsTempServiceImpl implements ContactsTempService {
     @Override
     @Transactional
     public String importContacts(ContactsImportForm contactsImportForm) {
+        ServiceException.notNull(contactsImportForm,returnMsgUtil.msg("INFO_NOT_EMPTY"));
         ServiceException.notNull(contactsImportForm.getContactsForms(),returnMsgUtil.msg("INFO_NOT_EMPTY"));
         Long customerId = Current.getUserDetails().getId();
         List<ContactsTemp> list = Lists.newArrayList();
@@ -38,6 +39,7 @@ public class ContactsTempServiceImpl implements ContactsTempService {
         Pattern pattern = Pattern.compile("[0-9]*");
         ContactsTemp contactsTemp = null;
         for (ContactsForm contactsForm:contactsImportForm.getContactsForms()) {
+            if (contactsForm.getPhone()==null)continue;
             contactsTemp = contactsForm.getContactsTemp(customerId, tempSign);
             Matcher isNum = pattern.matcher(contactsTemp.getPhone());
             if (isNum.matches())list.add(contactsTemp);
