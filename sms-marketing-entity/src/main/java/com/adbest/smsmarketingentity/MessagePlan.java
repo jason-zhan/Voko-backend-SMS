@@ -25,6 +25,7 @@ public class MessagePlan implements Serializable {
     @Column(nullable = false)
     @Lob
     private String text;  // 内容
+    @Lob
     private String mediaIdList;  // 媒体id列表，多个以','分隔
     @Column(nullable = false)
     private Timestamp execTime;  // 执行时间

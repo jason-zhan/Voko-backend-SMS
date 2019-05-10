@@ -9,6 +9,8 @@ public class CommonMessage {
 
     public  final static String PARAM_IS_NULL = "PARAM IS NULL";
     
+    public  final static String ID_CANNOT_EMPTY = "id can't be empty!";
+    
     public final static  String PARAM_IS_INVALID = "PARAM IS NULL";
     
     public final static String OBJECT_NOT_FOUND = "OBJECT NOT FOUND";

@@ -15,7 +15,7 @@ import java.sql.Timestamp;
 public class MessageRecord implements Serializable {
     
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     /**
      * @see MessagePlan#id
@@ -34,6 +34,7 @@ public class MessageRecord implements Serializable {
     @Column(nullable = false)
     private Integer segments;  // 被分割为多少条消息
     private String mediaList;  // 资源列表 [资源url,多个以','分隔]
+    private Boolean sms;  // 是否短信(true:是)
     /**
      * @see Contacts#id
      */
@@ -41,12 +42,26 @@ public class MessageRecord implements Serializable {
     private Long contactsId;
     @Column(nullable = false)
     private String contactsNumber;  // 联系人号码
+    private Long contactsGroupId;  // 联系人分组id
     @Column(nullable = false)
     private Boolean inbox; // 是否收件（true:是）
     @Column(nullable = false)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间
     private Timestamp sendTime;  // 发送时间
+    @Column(nullable = false)
+    private Timestamp expectedSendTime;  // 预期发送时间
     private Timestamp arrivedTime;  // 送达时间
+    /**
+     * @see InboxStatus
+     * @see OutboxStatus
+     */
+    @Column(nullable = false)
+    private Integer status;  // 消息状态
+    /**
+     * @see MessageReturnCode
+     */
     private Integer returnCode;  // 状态码
+    @Column(nullable = false)
+    private Boolean disable;  // 是否禁用(true:是)
 }

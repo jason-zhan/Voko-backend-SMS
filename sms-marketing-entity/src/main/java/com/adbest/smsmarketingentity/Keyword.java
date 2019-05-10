@@ -22,11 +22,14 @@ public class Keyword implements Serializable {
      */
     @Column(nullable = false)
     private String customerId;
-//    @ManyToOne
-//    @JoinColumn(nullable = false)
-//    private ServiceNumber serviceNumber;  // 服务短号
+    @ManyToOne
+    @JoinColumn(nullable = false)
+    private ServiceNumber serviceNumber;  // 服务短号
     @Column(nullable = false)
     private String title;  // 关键字名称
-    private String content;  // 文字内容
+    @Lob
+    private String content;  // 回复消息文本内容
+    @Lob
+    private String mediaIdList;  // 回复消息携带的媒体id列表
     private Timestamp updateTime;  // 最近修改时间
 }
