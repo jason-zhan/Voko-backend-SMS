@@ -53,7 +53,8 @@ public class MessageRecord implements Serializable {
     private Timestamp expectedSendTime;  // 预期发送时间
     private Timestamp arrivedTime;  // 送达时间
     /**
-     * @see MessageStatus
+     * @see InboxStatus
+     * @see OutboxStatus
      */
     @Column(nullable = false)
     private Integer status;  // 消息状态

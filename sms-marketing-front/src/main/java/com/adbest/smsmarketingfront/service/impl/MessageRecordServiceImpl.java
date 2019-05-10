@@ -100,6 +100,6 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 .fetchResults();
         Page<MessageRecord> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
         log.info("leave findOutboxByConditions");
-        return null;
+        return messagePage;
     }
 }

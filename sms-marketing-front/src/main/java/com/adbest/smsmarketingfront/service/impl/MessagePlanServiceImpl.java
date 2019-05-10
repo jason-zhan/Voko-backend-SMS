@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.Customer;
-import com.adbest.smsmarketingentity.MessageStatus;
+import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
@@ -254,7 +254,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         messageRecord.setContactsNumber(contacts.getPhone());
         messageRecord.setInbox(false);
         messageRecord.setExpectedSendTime(plan.getExecTime());
-        messageRecord.setStatus(MessageStatus.PLANNING.getValue());
+        messageRecord.setStatus(OutboxStatus.PLANNING.getValue());
         messageRecord.setDisable(false);
         return messageRecord;
     }

@@ -1,10 +1,10 @@
 package com.adbest.smsmarketingentity;
 
 /**
- * 消息状态 [本系统自定义]
+ * 收件消息状态 [本系统自定义]
  * @see MessageRecord#status
  */
-public enum MessageStatus {
+public enum OutboxStatus {
     
     // 发件状态
     DRAFT(0, "DRAFT"),  // 草稿
@@ -15,15 +15,12 @@ public enum MessageStatus {
     UNDELIVERED(5, "UNDELIVERED"),  // 未送达
     FAILED(6, "FAILED"),  // 发送失败
     
-    // 收件状态
-    UNREAD(8, "UNREAD"),  // 未读
-    ALREADY_READ(9, "ALREADY_READ"),  // 已读
     ;
     
     private int value;
     private String title;
     
-    MessageStatus(int value, String title) {
+    OutboxStatus(int value, String title) {
         this.value = value;
         this.title = title;
     }
