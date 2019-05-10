@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import javax.transaction.Transactional;
+
 
 @Component
 @Slf4j
@@ -29,5 +31,11 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         smsBillDao.save(smsBill);
         log.info("leave saveSmsBill");
         return 1;
+    }
+
+    @Override
+    @Transactional
+    public SmsBill save(SmsBill smsBill) {
+        return smsBillDao.save(smsBill);
     }
 }

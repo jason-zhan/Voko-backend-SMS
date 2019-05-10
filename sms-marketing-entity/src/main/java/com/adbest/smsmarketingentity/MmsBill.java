@@ -29,4 +29,13 @@ public class MmsBill implements Serializable {
     @Column(nullable = false)
     @CreationTimestamp
     private Timestamp time;  // 产生时间
+
+    public MmsBill() {
+    }
+
+    public MmsBill(Long customerId, String infoDescribe, Integer amount) {
+        this.customerId = customerId;
+        this.infoDescribe = infoDescribe;
+        this.amount = amount;
+    }
 }

@@ -16,10 +16,13 @@ public class ContactsGroupForm {
 
     Long customerId;
 
+    String description;
+
     public ContactsGroup getContactsGroup() {
         ContactsGroup contactsGroup = new ContactsGroup();
         contactsGroup.setTitle(this.name);
-        contactsGroup.setCustomerId(this.getCustomerId());
+        contactsGroup.setCustomerId(this.customerId);
+        contactsGroup.setDescription(this.description);
         return contactsGroup;
     }
 }

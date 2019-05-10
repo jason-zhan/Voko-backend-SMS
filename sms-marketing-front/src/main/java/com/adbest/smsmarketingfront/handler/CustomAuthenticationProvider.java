@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.handler;
 
 import com.adbest.smsmarketingentity.Customer;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.util.EncryptTools;
 import com.adbest.smsmarketingfront.util.JsonTools;
@@ -57,7 +58,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, null, null);
         sysUser.setPassword("");
-        authenticationToken.setDetails(sysUser);
+        authenticationToken.setDetails(new CustomerVo(sysUser));
         return authenticationToken;
     }
 

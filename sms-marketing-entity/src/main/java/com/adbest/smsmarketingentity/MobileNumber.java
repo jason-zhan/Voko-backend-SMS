@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingentity;
 
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -31,5 +32,6 @@ public class MobileNumber implements Serializable {
      */
     private Long cityId;
     private Boolean disable;  // 是否可用(true:禁用)
+    @CreationTimestamp
     private Timestamp createTime;  // 创建时间
 }

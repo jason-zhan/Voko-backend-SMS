@@ -5,10 +5,11 @@ import com.adbest.smsmarketingentity.Customer;
 import lombok.Data;
 
 import javax.persistence.Column;
+import java.io.Serializable;
 import java.sql.Timestamp;
 
 @Data
-public class ContactsVo {
+public class ContactsVo implements Serializable {
     private Long id;  // 主键
     private String phone; // 号码
     private String firstName;  // 名字

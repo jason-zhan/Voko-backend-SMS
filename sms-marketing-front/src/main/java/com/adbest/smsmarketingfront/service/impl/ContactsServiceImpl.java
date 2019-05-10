@@ -28,6 +28,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 import javax.persistence.criteria.*;
@@ -176,11 +177,11 @@ public class ContactsServiceImpl implements ContactsService {
         BooleanBuilder builder = new BooleanBuilder();
         QContacts qContacts = QContacts.contacts;
         QContactsLinkGroup qContactsLinkGroup = QContactsLinkGroup.contactsLinkGroup;
-        if(selectContactsForm.getKeyWord()!=null){
+        if(StringUtils.isEmpty(selectContactsForm.getKeyWord())){
                 builder.and(qContacts.phone.containsIgnoreCase(selectContactsForm.getKeyWord()).or(qContacts.firstName.containsIgnoreCase
                         (selectContactsForm.getKeyWord())));
         }
-        if(selectContactsForm.getSource()!=null){
+        if(StringUtils.isEmpty(selectContactsForm.getSource())){
             builder.and(qContacts.source.eq(Integer.valueOf(selectContactsForm.getSource())));
         }
         if(selectContactsForm.getInLock()!=null){
@@ -189,7 +190,7 @@ public class ContactsServiceImpl implements ContactsService {
         builder.and(qContacts.customerId.eq(customerId));
         builder.and(qContacts.isDelete.isFalse());
         JPAQuery<Contacts> jpaQuery = null;
-        if (selectContactsForm.getGroupId()!=null){
+        if (StringUtils.isEmpty(selectContactsForm.getGroupId())){
             builder.and(qContactsLinkGroup.id.eq(Long.valueOf(selectContactsForm.getGroupId())));
             jpaQuery = jpaQueryFactory.select(qContacts)
                     .from(qContacts).rightJoin(qContactsLinkGroup).on(qContacts.id.eq(qContactsLinkGroup.contactsId));

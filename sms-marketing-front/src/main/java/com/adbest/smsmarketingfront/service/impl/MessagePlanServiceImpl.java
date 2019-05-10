@@ -14,6 +14,7 @@ import com.adbest.smsmarketingfront.dao.MbNumberLibDao;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.entity.enums.RedisKey;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
@@ -231,7 +232,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     private MessageRecord generateMessage(CreateMessagePlan plan, Contacts contacts) {
-        Customer cur = Current.getUserDetails();
+        CustomerVo cur = Current.getUserDetails();
         // 计算实际消息内容
         String content = plan.getText()
                 .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName())

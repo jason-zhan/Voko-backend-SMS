@@ -63,4 +63,12 @@ public class PageDataVo {
 		this.start = page.getNumber();
 		this.pages = (int) (count%size==0?count/size:count/size+1);
 	}
+
+	public PageDataVo(Page page, List<?> list){
+		this.list = list;
+		this.count = page.getTotalElements();
+		this.size = page.getSize();
+		this.start = page.getNumber();
+		this.pages = (int) (count%size==0?count/size:count/size+1);
+	}
 }

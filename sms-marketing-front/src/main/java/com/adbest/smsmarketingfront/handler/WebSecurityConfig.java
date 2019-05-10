@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.handler;
 
 import com.adbest.smsmarketingfront.service.CustomerService;
+import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.HttpTools;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
@@ -95,7 +96,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     protected AuthenticationSuccessHandler successHandler() {
         return (HttpServletRequest request, HttpServletResponse response, Authentication authentication) ->
-                HttpTools.responseForJson(response, ReturnEntity.success(returnMsgUtil.msg("LOGIN_SUCCESS")));
+                HttpTools.responseForJson(response, ReturnEntity.success(Current.getUserDetails()));
     }
 
     @Bean

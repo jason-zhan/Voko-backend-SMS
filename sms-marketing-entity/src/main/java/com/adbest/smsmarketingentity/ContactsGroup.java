@@ -24,5 +24,6 @@ public class ContactsGroup implements Serializable {
     private Long customerId;
     @Column(nullable = false)
     private String title;  // 名称
-    
+    private String description;  // 描述
+
 }

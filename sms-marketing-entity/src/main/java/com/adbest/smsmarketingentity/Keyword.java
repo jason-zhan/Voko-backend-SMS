@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingentity;
 
 import lombok.Data;
+import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
@@ -21,9 +22,9 @@ public class Keyword implements Serializable {
      * @see Customer#id
      */
     @Column(nullable = false)
-    private String customerId;
+    private Long customerId;
     @ManyToOne
-    @JoinColumn(nullable = false)
+    @JoinColumn(nullable = true)
     private ServiceNumber serviceNumber;  // 服务短号
     @Column(nullable = false)
     private String title;  // 关键字名称
@@ -31,5 +32,14 @@ public class Keyword implements Serializable {
     private String content;  // 回复消息文本内容
     @Lob
     private String mediaIdList;  // 回复消息携带的媒体id列表
+    @UpdateTimestamp
     private Timestamp updateTime;  // 最近修改时间
+
+    public Keyword() {
+    }
+
+    public Keyword(Long customerId, String title) {
+        this.customerId = customerId;
+        this.title = title;
+    }
 }

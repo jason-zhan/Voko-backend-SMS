@@ -10,4 +10,6 @@ public interface SmsBillComponent {
     
     // 产生一条短信账单
     int saveSmsBill(String describe, Integer amount);
+
+    SmsBill save(SmsBill smsBill);
 }

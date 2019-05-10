@@ -10,5 +10,6 @@ public interface MmsBillComponent {
     
     // 产生一条彩信账单
     int saveMmsBill(String describe, Integer amount);
-    
+
+    MmsBill save(MmsBill mmsBill);
 }

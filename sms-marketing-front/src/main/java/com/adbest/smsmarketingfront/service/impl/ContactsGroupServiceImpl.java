@@ -94,6 +94,7 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
         ServiceException.isTrue(optionalContactsGroup.get().getCustomerId()== Current.getUserDetails().getId(),returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
         ContactsGroup contactsGroup = optionalContactsGroup.get();
         contactsGroup.setTitle(contactsGroupForm.getName());
+        contactsGroup.setDescription(contactsGroupForm.getDescription());
         return contactsGroupDao.save(contactsGroup);
     }
 
