@@ -128,4 +128,9 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
         return null;
     }
 
+    @Override
+    public List<ContactsGroup> findAll() {
+        return contactsGroupDao.findAll();
+    }
+
 }

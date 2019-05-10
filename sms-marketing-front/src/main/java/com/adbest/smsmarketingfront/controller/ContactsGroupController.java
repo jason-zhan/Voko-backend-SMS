@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/contacts-group")
 public class ContactsGroupController {
@@ -54,6 +56,12 @@ public class ContactsGroupController {
     @RequestMapping("/{id}")
     public ReturnEntity info(@PathVariable("id")String id, PageBase page){
         PageDataVo list = contactsGroupService.contacts(id,page);
+        return ReturnEntity.success(list);
+    }
+
+    @RequestMapping("/all")
+    public ReturnEntity selectAll(){
+        List<ContactsGroup> list = contactsGroupService.findAll();
         return ReturnEntity.success(list);
     }
 }

@@ -66,19 +66,6 @@ public class ContactsController {
         return ReturnEntity.success(vo);
     }
 
-//    {
-//        "contactsForms":[
-//        {
-//            "id":null,
-//                "phone":null,
-//                "firstName":null,
-//                "lastName":null,
-//                "email":null,
-//                "notes":null,
-//                "groupIds":null
-//        }
-//    ]
-//    }
     @RequestMapping("/import")
     public ReturnEntity importContacts(@RequestBody(required=false) ContactsImportForm contactsImportForm){
         String tempSign = contactsTempService.importContacts(contactsImportForm);

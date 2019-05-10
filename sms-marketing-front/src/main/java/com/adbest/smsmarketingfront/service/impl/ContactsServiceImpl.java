@@ -84,6 +84,7 @@ public class ContactsServiceImpl implements ContactsService {
             contacts.setSource(ContactsSource.Manually_Added.getValue());
         }else {
             contacts = contactsForm.getContacts(ct);
+            contacts.setIsDelete(false);
         }
         contactsDao.save(contacts);
         if (contactsForm.getGroupIds()!=null){
@@ -186,6 +187,7 @@ public class ContactsServiceImpl implements ContactsService {
             builder.and(qContacts.inLock.eq(selectContactsForm.getInLock()));
         }
         builder.and(qContacts.customerId.eq(customerId));
+        builder.and(qContacts.isDelete.isFalse());
         JPAQuery<Contacts> jpaQuery = null;
         if (selectContactsForm.getGroupId()!=null){
             builder.and(qContactsLinkGroup.id.eq(Long.valueOf(selectContactsForm.getGroupId())));

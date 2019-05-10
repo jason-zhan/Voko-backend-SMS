@@ -26,4 +26,7 @@ public interface ContactsGroupService {
     Long countByIdInAndCustomerId(List<Long> gids, Long customerId);
 
     ContactsGroup findById(Long groupId);
+
+    List<ContactsGroup> findAll();
+
 }
