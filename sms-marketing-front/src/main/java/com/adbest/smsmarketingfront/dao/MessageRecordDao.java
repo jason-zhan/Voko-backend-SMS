@@ -18,4 +18,7 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     // 根据计划id统计实际发送消息条数
     @Query("select sum(segments) from MessageRecord where planId = ?1")
     int sumMsgNumByPlanId(Long planId);
+    
+    @Query("select MessageRecord from MessageRecord where id = ?1 and disable = false")
+    MessageRecord getOneUsable(Long id);
 }

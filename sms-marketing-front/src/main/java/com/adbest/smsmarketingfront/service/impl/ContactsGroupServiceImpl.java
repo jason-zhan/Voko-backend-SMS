@@ -19,11 +19,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
-import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 @Service
@@ -80,18 +77,18 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     public PageDataVo findAll(PageBase page) {
         Pageable pageable = PageRequest.of(page.getPage(), page.getSize());
-        Page<ContactsGroup> data = contactsGroupDao.findByCustomerId(Current.getUserDetails().getId(), pageable);
+        Page<ContactsGroup> data = contactsGroupDao.findByCustomerId(Current.get().getId(), pageable);
         return new PageDataVo(data);
     }
 
     @Override
     @Transactional
     public ContactsGroup update(ContactsGroupForm contactsGroupForm) {
-        Long count = countByCustomerIdAndTitle(Current.getUserDetails().getId(), contactsGroupForm.getName());
+        Long count = countByCustomerIdAndTitle(Current.get().getId(), contactsGroupForm.getName());
         ServiceException.isTrue(count<=0, returnMsgUtil.msg("GROUP_NAME_EXISTS"));
         Optional<ContactsGroup> optionalContactsGroup = contactsGroupDao.findById(contactsGroupForm.getId());
         ServiceException.isTrue(optionalContactsGroup.isPresent(),returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
-        ServiceException.isTrue(optionalContactsGroup.get().getCustomerId()== Current.getUserDetails().getId(),returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
+        ServiceException.isTrue(optionalContactsGroup.get().getCustomerId()== Current.get().getId(),returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
         ContactsGroup contactsGroup = optionalContactsGroup.get();
         contactsGroup.setTitle(contactsGroupForm.getName());
         return contactsGroupDao.save(contactsGroup);
@@ -101,7 +98,7 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Transactional
     public Integer delete(List<String> groupIds) {
         ServiceException.isTrue(groupIds!=null, returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         List<Long> ids = groupIds.stream().map(s -> Long.valueOf(s)).collect(Collectors.toList());
         Long count = contactsGroupDao.countByIdInAndCustomerId(ids, customerId);
         ServiceException.isTrue(count==ids.size(), returnMsgUtil.msg("GROUP_INFO_ERROR"));

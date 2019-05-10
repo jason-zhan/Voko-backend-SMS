@@ -12,7 +12,7 @@ public class Current {
      * 获取当前系统登录用户详情
      * @return
      */
-    public static Customer getUserDetails() {
+    public static Customer get() {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         return (Customer) authentication.getDetails();
     }

@@ -13,7 +13,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -32,7 +31,7 @@ public class ContactsTempServiceImpl implements ContactsTempService {
     @Transactional
     public String importContacts(ContactsImportForm contactsImportForm) {
         ServiceException.notNull(contactsImportForm.getContactsForms(),returnMsgUtil.msg("INFO_NOT_EMPTY"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         List<ContactsTemp> list = Lists.newArrayList();
         String tempSign = UUID.randomUUID().toString();
         Pattern pattern = Pattern.compile("[0-9]*");

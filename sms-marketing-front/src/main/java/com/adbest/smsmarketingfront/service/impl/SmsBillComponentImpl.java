@@ -23,7 +23,7 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
         SmsBill smsBill = new SmsBill();
-        smsBill.setCustomerId(Current.getUserDetails().getId());
+        smsBill.setCustomerId(Current.get().getId());
         smsBill.setInfoDescribe(describe);
         smsBill.setAmount(amount);
         smsBillDao.save(smsBill);

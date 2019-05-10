@@ -67,7 +67,7 @@ public class ContactsLinkGroupServiceImpl implements ContactsLinkGroupService {
     @Override
     @Transactional
     public void createContactsLinkGroup(Long contactsId, List<Long> groupIds) {
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Long count = contactsService.countByIdInAndCustomerId(Arrays.asList(contactsId), customerId);
         ServiceException.isTrue(count==1,returnMsgUtil.msg("CONTACTS_NOT_EXISTS"));
         count = contactsGroupService.countByIdInAndCustomerId(groupIds, customerId);
@@ -93,7 +93,7 @@ public class ContactsLinkGroupServiceImpl implements ContactsLinkGroupService {
     }
 
     private void checkParam(Long groupId, List<Long> contactsIds){
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Long count = contactsService.countByIdInAndCustomerId(contactsIds, customerId);
         ServiceException.isTrue(count==contactsIds.size(),returnMsgUtil.msg("CONTACTS_NOT_EXISTS"));
         ContactsGroup contactsGroup = contactsGroupService.findById(groupId);

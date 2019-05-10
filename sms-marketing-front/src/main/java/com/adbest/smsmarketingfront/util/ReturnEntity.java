@@ -8,12 +8,16 @@ import org.springframework.util.StringUtils;
  * 统一返回包装类
  * 包含请求失败信息
  */
-public class ReturnEntity implements Serializable{
-	private static final long serialVersionUID = -4063913645474828216L;
-	private Object result;
+public class ReturnEntity implements Serializable {
+    
+    private Object result;
     private Integer status;
     private String message;
-
+    
+    public static ReturnEntity success() {
+        return success("success");
+    }
+    
     /**
      * encourage this method return response entity.
      *
@@ -23,7 +27,7 @@ public class ReturnEntity implements Serializable{
     public static ReturnEntity success(Object result) {
         return success(result, 200);
     }
-
+    
     /**
      * custom response entity's status.
      *
@@ -36,7 +40,11 @@ public class ReturnEntity implements Serializable{
         ReturnEntity returnEntity = new ReturnEntity(result, status, "success");
         return returnEntity;
     }
-
+    
+    public static ReturnEntity fail() {
+        return fail("failed");
+    }
+    
     /**
      * not recommended this method.
      *
@@ -46,7 +54,7 @@ public class ReturnEntity implements Serializable{
     public static ReturnEntity fail(String message) {
         return fail(500, message);
     }
-
+    
     /**
      * use this method specifies status
      *
@@ -66,37 +74,45 @@ public class ReturnEntity implements Serializable{
         ReturnEntity returnEntity = new ReturnEntity(null, status, message);
         return returnEntity;
     }
-
+    
     public static ReturnEntity fail(ResponseCode responseCode) {
         return fail(responseCode.getStauts(), responseCode.getMessage());
     }
-
+    
+    public static ReturnEntity successIfTrue(boolean bol) {
+        if (bol) {
+            return success();
+        } else {
+            return fail();
+        }
+    }
+    
     protected ReturnEntity(Object result, Integer status, String message) {
         this.result = result;
         this.status = status;
         this.message = message;
     }
-
+    
     public Object getResult() {
         return result;
     }
-
+    
     public void setResult(Object result) {
         this.result = result;
     }
-
+    
     public Integer getStatus() {
         return status;
     }
-
+    
     public void setStatus(Integer status) {
         this.status = status;
     }
-
+    
     public String getMessage() {
         return message;
     }
-
+    
     public void setMessage(String message) {
         this.message = message;
     }

@@ -18,7 +18,6 @@ import com.adbest.smsmarketingfront.util.*;
 import com.google.common.collect.Lists;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
-import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQuery;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
@@ -33,7 +32,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,7 +72,7 @@ public class ContactsServiceImpl implements ContactsService {
     @Transactional
     public ContactsVo save(ContactsForm contactsForm) {
         ServiceException.notNull(contactsForm.getPhone(), returnMsgUtil.msg("PHONE_NOT_EMPTY"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Contacts contacts = contactsForm.getContacts();
         Contacts ct = contactsDao.findFirstByPhoneAndCustomerId(contactsForm.getPhone(), customerId);
         if (ct==null){
@@ -98,7 +96,7 @@ public class ContactsServiceImpl implements ContactsService {
     @Transactional
     public Integer delete(String ids) {
         ServiceException.notNull(ids, returnMsgUtil.msg("CONTACTS_NOT_EMPTY"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         List<String> id = Arrays.asList(ids.split(","));
         List<Long> idList = id.stream().map(s -> Long.valueOf(s)).collect(Collectors.toList());
         Integer row = contactsDao.updateIsDisableByCustomerIdAndIdIn(customerId, idList);
@@ -112,7 +110,7 @@ public class ContactsServiceImpl implements ContactsService {
     public Boolean updateLock(String id, Boolean isLock) {
         ServiceException.notNull(id, returnMsgUtil.msg("CONTACTS_NOT_EMPTY"));
         ServiceException.notNull(isLock, returnMsgUtil.msg("INLOCK_NOT_EMPTY"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Optional<Contacts> Optional = contactsDao.findById(Long.valueOf(id));
         ServiceException.isTrue(Optional.isPresent(), returnMsgUtil.msg("CONTACTS_NOT_EXISTS"));
         Contacts contacts = Optional.get();
@@ -148,7 +146,7 @@ public class ContactsServiceImpl implements ContactsService {
 
     @Override
     public PageDataVo select(SelectContactsForm selectContactsForm) {
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Specification querySpecifi = new Specification<Contacts>() {
             @Override
             public Predicate toPredicate(Root root, CriteriaQuery criteriaQuery, CriteriaBuilder criteriaBuilder) {
@@ -171,7 +169,7 @@ public class ContactsServiceImpl implements ContactsService {
     }
 
     public PageDataVo selectAll(SelectContactsForm selectContactsForm) {
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         BooleanBuilder builder = new BooleanBuilder();
         QContacts qContacts = QContacts.contacts;
         QContactsLinkGroup qContactsLinkGroup = QContactsLinkGroup.contactsLinkGroup;
@@ -205,7 +203,7 @@ public class ContactsServiceImpl implements ContactsService {
     @Override
     public boolean process(ContactsProcessForm contactsProcessForm) {
         ServiceException.isTrue(contactsProcessForm.getGroupId()!=null && contactsProcessForm.getTempSign()!=null,returnMsgUtil.msg("MISSING_PARAMETER"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         List<ContactsTemp> list = contactsTempService.findByTempSign(contactsProcessForm.getTempSign());
         new Runnable() {
             @Override

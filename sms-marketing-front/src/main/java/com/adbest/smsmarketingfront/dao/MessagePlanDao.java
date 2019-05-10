@@ -9,4 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 public interface MessagePlanDao extends JpaRepository<MessagePlan, Long>, JpaSpecificationExecutor<MessagePlan> {
 
+    @Query("select MessagePlan from MessagePlan where id = ?1 and disable = false ")
+    MessagePlan getOneUsable(Long id);
 }
