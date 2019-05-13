@@ -1,5 +1,9 @@
 package com.adbest.smsmarketingfront;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,8 +32,18 @@ public class SpringInitializer implements InitializingBean {
     }
     
     @Bean
-    public ResourceBundle resourceBundle(){
-        return ResourceBundle.getBundle("lang",Locale.CHINA);
+    public ResourceBundle resourceBundle() {
+//        return ResourceBundle.getBundle("lang", Locale.CHINA);
+        return ResourceBundle.getBundle("lang", Locale.US);
+    }
+    
+    @Bean
+    public ObjectMapper objectMapper() {
+        ObjectMapper objectMapper = new ObjectMapper();
+        objectMapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
+        objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
+        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
+        return objectMapper;
     }
     
     @Bean

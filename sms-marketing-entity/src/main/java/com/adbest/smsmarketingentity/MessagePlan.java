@@ -34,7 +34,7 @@ public class MessagePlan implements Serializable {
     private Boolean disable;  // 是否禁用(true:禁用)
     /**
      * 定时任务状态
-     * @see
+     * @see MessagePlanStatus
      */
     private Integer status;
     @Column(nullable = false)

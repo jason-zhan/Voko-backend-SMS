@@ -41,6 +41,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         Optional<MessageRecord> optional = messageRecordDao.findById(id);
         ServiceException.isTrue(optional.isPresent(), bundle.getString("msg-record-not-exists"));
+        Assert.isTrue(Current.get().getId().equals(optional.get().getCustomerId()), bundle.getString("permission denied"));
         int result = messageRecordDao.disableById(id, true);
         log.info("leave deleteOneMessage");
         return result;
@@ -50,13 +51,9 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     public MessageRecord findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        Optional<MessageRecord> optional = messageRecordDao.findById(id);
-        if (optional.isPresent()) {
-            log.info("leave findById");
-            return optional.get();
-        }
-        log.info("leave findById [null]");
-        return null;
+        MessageRecord messageRecord = messageRecordDao.getOneUsable(id);
+        log.info("leave findById");
+        return messageRecord;
     }
     
     @Override
@@ -66,7 +63,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
         BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qMessageRecord.customerId.eq(Current.getUserDetails().getId()));
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
         QueryResults<MessageRecord> queryResults = jpaQueryFactory.select(qMessageRecord)
                 .from(qMessageRecord)
@@ -88,7 +85,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
         BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qMessageRecord.customerId.eq(Current.getUserDetails().getId()));
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getOutboxPage.fillConditions(builder, qMessageRecord, qContacts);
         QueryResults<MessageRecord> queryResults = jpaQueryFactory.select(qMessageRecord)
                 .from(qMessageRecord)

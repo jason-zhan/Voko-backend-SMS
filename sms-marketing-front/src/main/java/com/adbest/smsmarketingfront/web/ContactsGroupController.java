@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.controller;
+package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingfront.entity.form.ContactsGroupForm;
@@ -23,21 +23,21 @@ public class ContactsGroupController {
 
     @RequestMapping("/save")
     public ReturnEntity add(ContactsGroupForm contactsGroupForm){
-        contactsGroupForm.setCustomerId(Current.getUserDetails().getId());
+        contactsGroupForm.setCustomerId(Current.get().getId());
         ContactsGroup con = contactsGroupService.save(contactsGroupForm);
         return ReturnEntity.success(con);
     }
 
     @RequestMapping("/update")
     public ReturnEntity update(ContactsGroupForm contactsGroupForm){
-        contactsGroupForm.setCustomerId(Current.getUserDetails().getId());
+        contactsGroupForm.setCustomerId(Current.get().getId());
         ContactsGroup con = contactsGroupService.update(contactsGroupForm);
         return ReturnEntity.success(con);
     }
 
     @RequestMapping("/checkName")
     public ReturnEntity checkName(String name){
-        Boolean is = contactsGroupService.checkName(Current.getUserDetails().getId(),name);
+        Boolean is = contactsGroupService.checkName(Current.get().getId(),name);
         return ReturnEntity.success(is);
     }
 

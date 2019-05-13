@@ -24,6 +24,7 @@ import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
+import com.adbest.smsmarketingfront.util.QueryDslTools;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
@@ -32,6 +33,7 @@ import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -72,6 +74,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Autowired
     RedisTemplate redisTemplate;
     
+    @Value("${twilio.planExecTimeDelay}")
+    private int planExecTimeDelay;
+    
     @Transactional
     @Override
     public int create(CreateMessagePlan createPlan) {
@@ -79,22 +84,22 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 参数检查
         checkMessagePlan(createPlan);
         // 检查客户有效号码
-        List<String> fromNumList = validFromNumberLi(createPlan.getFromIdList());
+        List<String> fromNumList = validFromNumberLi(createPlan.getFromList());
         ServiceException.isTrue(fromNumList.size() > 0, bundle.getString("msg-plan-from-invalid"));
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
-        plan.setCustomerId(Current.getUserDetails().getId());
+        plan.setCustomerId(Current.get().getId());
         plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         plan.setDisable(false);
         messagePlanDao.save(plan);
         // 消息入库
         int msgTotal = 0;
-        if (createPlan.getContactsIdList() != null) {
-            msgTotal += batchSaveMessage(createPlan.getContactsIdList(), createPlan, plan.getId());
+        if (createPlan.getToList() != null) {
+            msgTotal += batchSaveMessage(createPlan.getToList(), createPlan, plan.getId());
         }
-        if (createPlan.getContactsGroupIdList() != null) {
-            for (Long contactsGroupId : createPlan.getContactsGroupIdList()) {
+        if (createPlan.getGroupList() != null) {
+            for (Long contactsGroupId : createPlan.getGroupList()) {
                 msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
             }
         }
@@ -119,7 +124,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         MessagePlan plan = optional.get();
         ServiceException.isTrue(MessagePlanStatus.SCHEDULING.getValue() == plan.getStatus(),
                 bundle.getString("msg-plan-cancel-status").replace("$status$", MessagePlanStatus.SCHEDULING.getTitle()));
-        Assert.isTrue(Current.getUserDetails().getId().equals(plan.getCustomerId()), "Can only modify their own message plan.");
+        Assert.isTrue(Current.get().getId().equals(plan.getCustomerId()), "Can only modify their own message plan.");
         // 更新
         plan.setDisable(true);
         messagePlanDao.save(plan);
@@ -144,7 +149,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         MessagePlan plan = optional.get();
         ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == plan.getStatus(),
                 bundle.getString("msg-plan-restart-status").replace("$status$", MessagePlanStatus.EDITING.getTitle()));
-        Assert.isTrue(Current.getUserDetails().getId().equals(plan.getCustomerId()), "Can only modify their own message plan.");
+        ServiceException.isTrue(plan.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
+                bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
+        Assert.isTrue(Current.get().getId().equals(plan.getCustomerId()), "Can only modify their own message plan.");
         // 更新
         plan.setDisable(false);
         messagePlanDao.save(plan);
@@ -163,14 +170,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     public MessagePlan findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        Optional<MessagePlan> optional = messagePlanDao.findById(id);
-        if (optional.isPresent()) {
-            log.info("leave findById");
-            return optional.get();
-        } else {
-            log.info("leave findById [null]");
-            return null;
-        }
+        MessagePlan plan = messagePlanDao.getOneUsable(id);
+        log.info("leave findById");
+        return plan;
     }
     
     @Override
@@ -179,17 +181,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(getPlanPage, CommonMessage.PARAM_IS_NULL);
         QMessagePlan qMessagePlan = QMessagePlan.messagePlan;
         BooleanBuilder builder = new BooleanBuilder();
-        if (getPlanPage.getDisable() != null) {
-            builder.and(qMessagePlan.disable.eq(getPlanPage.getDisable()));
-        }
-        if (getPlanPage.getStart() == null || getPlanPage.getEnd() == null) {
-            getPlanPage.setEnd(TimeTools.dayEnd(TimeTools.now()));
-            getPlanPage.setStart(TimeTools.monthStart(TimeTools.addMonth(getPlanPage.getEnd(), -2)));
-        }
-        builder.and(qMessagePlan.createTime.between(getPlanPage.getStart(), getPlanPage.getEnd()));
-        if (!StringUtils.isEmpty(getPlanPage.getKeyword())) {
-            builder.and(qMessagePlan.title.containsIgnoreCase(getPlanPage.getKeyword()));
-        }
+        QueryDslTools dslTools = new QueryDslTools(builder);
+        dslTools.eqNotNull(qMessagePlan.status, getPlanPage.getStatus());
+        dslTools.betweenNotNull(qMessagePlan.createTime, getPlanPage.getStart(), getPlanPage.getEnd());
+        dslTools.containsNotEmpty(false, getPlanPage.getKeyword(), qMessagePlan.title);
         QueryResults<MessagePlan> queryResults = jpaQueryFactory.select(qMessagePlan).from(qMessagePlan)
                 .where(builder)
                 .offset(getPlanPage.getPage() * getPlanPage.getSize())
@@ -206,19 +201,19 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.hasText(create.getTitle(), bundle.getString("msg-plan-title"));
         
         ServiceException.notNull(create.getExecTime(), bundle.getString("msg-plan-execute-time"));
-        ServiceException.isTrue(create.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), 15)),
-                bundle.getString("msg-plan-execute-time-later"));
+        ServiceException.isTrue(create.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
+                bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
         
         ServiceException.hasText(create.getText(), bundle.getString("msg-plan-content"));
         
         ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM,
                 bundle.getString("msg-plan-media-list"));
         
-        ServiceException.isTrue(create.getFromList() != null && create.getFromList().size() > 0,
+        ServiceException.isTrue(create.getFromNumList() != null && create.getFromNumList().size() > 0,
                 bundle.getString("msg-plan-from"));
         
-        ServiceException.isTrue((create.getContactsIdList() != null && create.getContactsIdList().size() > 0) ||
-                        (create.getContactsGroupIdList() != null && create.getContactsGroupIdList().size() > 0),
+        ServiceException.isTrue((create.getToList() != null && create.getToList().size() > 0) ||
+                        (create.getGroupList() != null && create.getGroupList().size() > 0),
                 bundle.getString("msg-plan-contacts"));
     }
     
@@ -232,7 +227,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     private MessageRecord generateMessage(CreateMessagePlan plan, Contacts contacts) {
-        CustomerVo cur = Current.getUserDetails();
+        CustomerVo cur = Current.get();
         // 计算实际消息内容
         String content = plan.getText()
                 .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName())
@@ -244,8 +239,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 根据消息类型判断是否需要分段发送
         if (plan.getMediaIdlList() == null || plan.getMediaIdlList().size() == 0) {
             messageRecord.setSegments(MessageTools.calcMsgSegments(content));
+            messageRecord.setSms(true);
         } else {
             messageRecord.setSegments(1);
+            messageRecord.setSms(false);
         }
         // 填充消息字段
         messageRecord.setCustomerId(cur.getId());
@@ -277,7 +274,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 }
                 MessageRecord messageRecord = generateMessage(createPlan, contacts);
                 messageRecord.setPlanId(planId);
-                messageRecord.setCustomerNumber(createPlan.getFromList().get(i % createPlan.getFromList().size()));
+                messageRecord.setCustomerNumber(createPlan.getFromNumList().get(i % createPlan.getFromNumList().size()));
                 msgTempList.add(messageRecord);
                 msgNum += messageRecord.getSegments();
             }
@@ -301,7 +298,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 }
                 MessageRecord messageRecord = generateMessage(createPlan, contacts);
                 messageRecord.setPlanId(planId);
-                messageRecord.setCustomerNumber(createPlan.getFromList().get(i % createPlan.getFromList().size()));
+                messageRecord.setCustomerNumber(createPlan.getFromNumList().get(i % createPlan.getFromNumList().size()));
+                messageRecord.setContactsGroupId(contactsGroupId);
                 msgTempList.add(messageRecord);
                 msgNum += messageRecord.getSegments();
             }

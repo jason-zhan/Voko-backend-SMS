@@ -25,7 +25,7 @@ public class MmsBillComponentImpl implements MmsBillComponent {
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
         MmsBill mmsBill = new MmsBill();
-        mmsBill.setCustomerId(Current.getUserDetails().getId());
+        mmsBill.setCustomerId(Current.get().getId());
         mmsBill.setInfoDescribe(describe);
         mmsBill.setAmount(amount);
         mmsBillDao.save(mmsBill);

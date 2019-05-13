@@ -39,7 +39,7 @@ public class KeywordServiceImpl implements KeywordService {
 
     @Override
     public PageDataVo findAll(PageBase pageBase) {
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Page<Keyword> page = keywordDao.findByCustomerId(customerId, PageRequest.of(pageBase.getPage(), pageBase.getSize()));
         List<KeywordVo> list = new ArrayList<>();
         for (Keyword keyword:page.getContent()) {
@@ -54,7 +54,7 @@ public class KeywordServiceImpl implements KeywordService {
         Optional<Keyword> optional = keywordDao.findById(keywordForm.getId());
         ServiceException.isTrue(optional.isPresent(),returnMsgUtil.msg("KEYWORD_NOT_EMPTY"));
         Keyword keyword = optional.get();
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         ServiceException.isTrue(keyword.getCustomerId().longValue()==customerId,returnMsgUtil.msg("KEYWORD_NOT_EMPTY"));
         if (!keywordForm.getTitle().equals(keyword.getTitle())){
             Long count = keywordDao.countByCustomerIdAndTitle(customerId,keywordForm.getTitle());
@@ -70,7 +70,7 @@ public class KeywordServiceImpl implements KeywordService {
     @Override
     public Boolean check(String title) {
         ServiceException.notNull(title,returnMsgUtil.msg("KEYWORD_NOT_EMPTY"));
-        Long customerId = Current.getUserDetails().getId();
+        Long customerId = Current.get().getId();
         Long count = keywordDao.countByCustomerIdAndTitle(customerId,title);
         return count<=0;
     }

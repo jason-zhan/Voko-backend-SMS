@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.controller;
+package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingfront.util.twilio.InboundMsg;
 import com.adbest.smsmarketingfront.util.twilio.StatusCallbackParam;

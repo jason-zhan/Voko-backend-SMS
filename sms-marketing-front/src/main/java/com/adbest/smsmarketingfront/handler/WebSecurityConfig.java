@@ -96,7 +96,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Bean
     protected AuthenticationSuccessHandler successHandler() {
         return (HttpServletRequest request, HttpServletResponse response, Authentication authentication) ->
-                HttpTools.responseForJson(response, ReturnEntity.success(Current.getUserDetails()));
+                HttpTools.responseForJson(response, ReturnEntity.success(Current.get()));
     }
 
     @Bean
