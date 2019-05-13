@@ -88,6 +88,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
+        
         plan.setCustomerId(Current.get().getId());
         plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         plan.setDisable(false);
@@ -112,6 +113,16 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return 1;
     }
     
+    @Override
+    public int update(CreateMessagePlan update) {
+        log.info("enter update, param={}", update);
+        
+        
+        
+        log.info("leave update");
+        return 0;
+    }
+    
     @Transactional
     @Override
     public int cancel(Long id) {
@@ -129,7 +140,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         messagePlanDao.save(plan);
         int msgTotal = messageRecordDao.sumMsgNumByPlanId(plan.getId());
         // 返还消息条数
-        if (StringUtils.hasText(plan.getMediaIdList())) {
+        List<String> urlList = UrlTools.getUrlList(plan.getMediaIdList());
+        if (urlList.size() > 0) {
             mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + plan.getTitle()), msgTotal);
         } else {
             smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + plan.getTitle()), msgTotal);
@@ -169,7 +181,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     public MessagePlan findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessagePlan plan = messagePlanDao.getOneUsable(id);
+        MessagePlan plan = messagePlanDao.findByIdAndDisableIsFalse(id);
         log.info("leave findById");
         return plan;
     }
