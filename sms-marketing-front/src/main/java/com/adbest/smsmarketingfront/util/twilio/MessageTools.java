@@ -7,12 +7,25 @@ import org.springframework.util.StringUtils;
  */
 public class MessageTools {
     
-    public static final int MAX_MSG_TEXT_LEN = 1600;  // 消息最大允许长度
+    public static final int MAX_MSG_TEXT_GSM7 = 1600;  // 消息最大允许长度(GSM7)
+    public static final int MAX_MSG_TEXT_UCS2 = 700;  // 消息最大允许长度(UCS2)
     public static final int MAX_MSG_MEDIA_NUM = 10;  // 消息最大允许媒体数
     public static final int SINGLE_ALLOW_TEXT_GSM7 = 160;  // 单条消息允许长度(GSM7)
     public static final int SINGLE_ALLOW_TEXT_UCS2 = 70;  // 单条消息允许长度(UCS2)
     public static final int MULTI_ALLOW_TEXT_GSM7 = 153;  // 多条消息每条允许长度(GSM7)
     public static final int MULTI_ALLOW_TEXT_UCS2 = 67;  // 多条消息每条允许长度(UCS2)
+    
+    /**
+     * 检测内容是否超长
+     * @param text
+     * @return
+     */
+    public static boolean isOverLength(String text) {
+        if (StringUtils.isEmpty(text)) {
+            return false;
+        }
+        return isGsm7(text) ? text.length() <= MAX_MSG_TEXT_GSM7 : text.length() <= MAX_MSG_TEXT_UCS2;
+    }
     
     /**
      * 简单判断将采用哪种编码
@@ -27,6 +40,7 @@ public class MessageTools {
     /**
      * 计算消息分段数量
      * 将使用预设参数进行计算
+     *
      * @param text
      * @return
      */
@@ -40,6 +54,7 @@ public class MessageTools {
     
     /**
      * 计算消息分段数量
+     *
      * @param text
      * @param singleAllowText
      * @param multiAllowText

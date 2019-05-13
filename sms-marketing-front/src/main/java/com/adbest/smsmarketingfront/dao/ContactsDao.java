@@ -25,4 +25,6 @@ public interface ContactsDao extends JpaRepository<Contacts, Long>, JpaSpecifica
     Long countByIdInAndCustomerId(List<Long> contactsIds, Long customerId);
 
     List<Contacts> findByCustomerId(Long customerId);
+    
+    Contacts findByIdAndCustomerIdAndIsDeleteIsFalse(Long id, Long customerId);
 }

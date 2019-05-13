@@ -1,0 +1,28 @@
+package com.adbest.smsmarketingfront.service.param;
+
+import com.adbest.smsmarketingentity.MessageTemplate;
+import com.adbest.smsmarketingfront.service.MessageTemplateService;
+import com.adbest.smsmarketingfront.util.UrlTools;
+import lombok.Data;
+
+import java.util.List;
+
+/**
+ * @see MessageTemplate
+ * @see MessageTemplateService#create(CreateMsgTemplate)
+ */
+@Data
+public class CreateMsgTemplate {
+    
+    protected String subject;  // 主题
+    protected String content;  // 内容
+    private List<String> mediaIdList;  // 资源id列表
+    
+    
+    public void copy(MessageTemplate target) {
+        target.setSubject(this.subject);
+        target.setContent(this.getContent());
+        target.setMediaList(UrlTools.getUrlsStr(this.getMediaIdList()));
+        target.setSms(this.getMediaIdList() == null || this.getMediaIdList().size() == 0);
+    }
+}

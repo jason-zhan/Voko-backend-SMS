@@ -1,7 +1,6 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Contacts;
-import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingentity.MessagePlan;
@@ -21,6 +20,7 @@ import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
+import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
@@ -46,7 +46,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 @Service
@@ -97,7 +96,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 消息入库
         int msgTotal = 0;
         if (createPlan.getToList() != null) {
-            msgTotal += batchSaveMessage(createPlan.getToList(), createPlan, plan.getId());
+            msgTotal += batchSaveMessage(createPlan, plan.getId());
         }
         if (createPlan.getGroupList() != null) {
             for (Long contactsGroupId : createPlan.getGroupList()) {
@@ -114,14 +113,44 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return 1;
     }
     
+    @Transactional
     @Override
-    public int update(CreateMessagePlan update) {
+    public int update(UpdateMessagePlan update) {
         log.info("enter update, param={}", update);
-        
-        
+        // 参数检查
+        checkMessagePlan(update);
+        // 检查任务
+        Assert.notNull(update.getId(), CommonMessage.ID_CANNOT_EMPTY);
+        CustomerVo cur = Current.get();
+        MessagePlan found = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(update.getId(), cur.getId());
+        ServiceException.notNull(found, bundle.getString("msg-plan-not-exists"));
+        // 检查客户有效号码
+        List<String> fromNumList = validFromNumberLi(update.getFromList());
+        ServiceException.isTrue(fromNumList.size() > 0, bundle.getString("msg-plan-from-invalid"));
+        // 更新定时任务
+        Assert.isTrue(Current.get().getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
+        ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == found.getStatus(),
+                bundle.getString("msg-plan-status").replace("$action$", "update")
+                        .replace("$status$", MessagePlanStatus.EDITING.getTitle())
+        );
+        update.copy(found);
+        messagePlanDao.save(found);
+        // 清除旧消息
+        messageRecordDao.deleteByPlanId(found.getId());
+        // 产生新消息
+        int msgTotal = 0;
+        if (update.getToList() != null) {
+            msgTotal += batchSaveMessage(update, found.getId());
+        }
+        if (update.getGroupList() != null) {
+            for (Long contactsGroupId : update.getGroupList()) {
+                msgTotal += batchSaveMessage(contactsGroupId, update, found.getId());
+            }
+        }
+        // TODO 校验套餐内余量
         
         log.info("leave update");
-        return 0;
+        return 1;
     }
     
     @Transactional
@@ -130,22 +159,23 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         log.info("enter cancel, id=" + id);
         // 参数校验
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        Optional<MessagePlan> optional = messagePlanDao.findById(id);
-        ServiceException.isTrue(optional.isPresent(), bundle.getString("msg-plan-not-exists"));
-        MessagePlan plan = optional.get();
-        ServiceException.isTrue(MessagePlanStatus.SCHEDULING.getValue() == plan.getStatus(),
-                bundle.getString("msg-plan-cancel-status").replace("$status$", MessagePlanStatus.SCHEDULING.getTitle()));
-        Assert.isTrue(Current.get().getId().equals(plan.getCustomerId()), "Can only modify their own message plan.");
+        CustomerVo cur = Current.get();
+        MessagePlan found = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(id, cur.getId());
+        ServiceException.notNull(found, bundle.getString("msg-plan-not-exists"));
+        ServiceException.isTrue(MessagePlanStatus.SCHEDULING.getValue() == found.getStatus(),
+                bundle.getString("msg-plan-status").replace("$action$", "cancel")
+                        .replace("$status$", MessagePlanStatus.SCHEDULING.getTitle())
+        );
         // 更新
-        plan.setDisable(true);
-        messagePlanDao.save(plan);
-        int msgTotal = messageRecordDao.sumMsgNumByPlanId(plan.getId());
+        found.setStatus(MessagePlanStatus.EDITING.getValue());
+        messagePlanDao.save(found);
+        int msgTotal = messageRecordDao.sumMsgNumByPlanId(found.getId());
         // 返还消息条数
-        List<String> urlList = UrlTools.getUrlList(plan.getMediaIdList());
+        List<String> urlList = UrlTools.getUrlList(found.getMediaIdList());
         if (urlList.size() > 0) {
-            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + plan.getTitle()), msgTotal);
+            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), msgTotal);
         } else {
-            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + plan.getTitle()), msgTotal);
+            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), msgTotal);
         }
         log.info("leave cancel");
         return 1;
@@ -156,23 +186,24 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     public int restart(Long id) {
         log.info("enter restart, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        Optional<MessagePlan> optional = messagePlanDao.findById(id);
-        ServiceException.isTrue(optional.isPresent(), "msg-plan-not-exists");
-        MessagePlan plan = optional.get();
-        ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == plan.getStatus(),
-                bundle.getString("msg-plan-restart-status").replace("$status$", MessagePlanStatus.EDITING.getTitle()));
-        ServiceException.isTrue(plan.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
+        CustomerVo cur = Current.get();
+        MessagePlan found = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(id, cur.getId());
+        ServiceException.notNull(found, "msg-plan-not-exists");
+        ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == found.getStatus(),
+                bundle.getString("msg-plan-status").replace("$action$", "restart")
+                        .replace("$status$", MessagePlanStatus.EDITING.getTitle())
+        );
+        ServiceException.isTrue(found.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
                 bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
-        Assert.isTrue(Current.get().getId().equals(plan.getCustomerId()), "Can only modify their own message plan.");
         // 更新
-        plan.setDisable(false);
-        messagePlanDao.save(plan);
-        int msgTotal = messageRecordDao.sumMsgNumByPlanId(plan.getId());
+        found.setStatus(MessagePlanStatus.SCHEDULING.getValue());
+        messagePlanDao.save(found);
+        int msgTotal = messageRecordDao.sumMsgNumByPlanId(found.getId());
         // 扣除消息条数
-        if (StringUtils.hasText(plan.getMediaIdList())) {
-            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + plan.getTitle()), -msgTotal);
+        if (StringUtils.hasText(found.getMediaIdList())) {
+            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), -msgTotal);
         } else {
-            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + plan.getTitle()), -msgTotal);
+            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), -msgTotal);
         }
         log.info("leave restart");
         return 1;
@@ -182,7 +213,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     public MessagePlan findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessagePlan plan = messagePlanDao.findByIdAndDisableIsFalse(id);
+        MessagePlan plan = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
         log.info("leave findById");
         return plan;
     }
@@ -231,9 +262,12 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     private List<String> validFromNumberLi(List<Long> numberIdList) {
         Map<Long, String> validNumberMap = new HashMap<>();
+        CustomerVo cur = Current.get();
         for (Long numberId : numberIdList) {
-            Optional<MobileNumber> optional = mbNumberLibDao.findById(numberId);
-            optional.ifPresent(mobileNumber -> validNumberMap.put(numberId, mobileNumber.getNumber()));
+            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, cur.getId());
+            if (mobileNumber != null) {
+                validNumberMap.put(numberId, mobileNumber.getNumber());
+            }
         }
         return (List<String>) validNumberMap.values();
     }
@@ -246,7 +280,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName())
                 .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.getFirstName())
                 .replace(MsgTemplateVariable.CON_LASTNAME.getTitle(), contacts.getLastName());
-        ServiceException.isTrue(content.length() <= MessageTools.MAX_MSG_TEXT_LEN, bundle.getString("msg-plan-content-too-long"));
+        ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
+                bundle.getString("msg-plan-content-over-length-gsm7") : bundle.getString("msg-plan-content-over-length-ucs2"));
         MessageRecord messageRecord = new MessageRecord();
         // 根据消息类型判断是否需要分段发送
         if (plan.getMediaIdlList() == null || plan.getMediaIdlList().size() == 0) {
@@ -269,21 +304,19 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return messageRecord;
     }
     
-    private int batchSaveMessage(List<Long> contactsIdList, CreateMessagePlan createPlan, Long planId) {
+    private int batchSaveMessage(CreateMessagePlan createPlan, Long planId) {
+        List<Long> toList = createPlan.getToList();
         int msgNum = 0;  // 消息条数
         List<MessageRecord> msgTempList = new ArrayList<>();
-        for (int i = 0; i < contactsIdList.size(); i++) {
-            Long contactsId = contactsIdList.get(i);
+        CustomerVo cur = Current.get();
+        for (int i = 0; i < toList.size(); i++) {
+            Long contactsId = toList.get(i);
             if (!uniqueValidForRecipient(planId, contactsId)) {
                 continue;
             }
             // 联系人验证
-            Optional<Contacts> optional = contactsDao.findById(contactsId);
-            if (optional.isPresent()) {
-                Contacts contacts = optional.get();
-                if (contacts.getIsDelete()) {
-                    continue;
-                }
+            Contacts contacts = contactsDao.findByIdAndCustomerIdAndIsDeleteIsFalse(contactsId, cur.getId());
+            if (contacts != null) {
                 MessageRecord messageRecord = generateMessage(createPlan, contacts);
                 messageRecord.setPlanId(planId);
                 messageRecord.setCustomerNumber(createPlan.getFromNumList().get(i % createPlan.getFromNumList().size()));

@@ -6,5 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface MessagePlanDao extends JpaRepository<MessagePlan, Long>, JpaSpecificationExecutor<MessagePlan> {
 
-    MessagePlan findByIdAndDisableIsFalse(Long id);
+    MessagePlan findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
 }

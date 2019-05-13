@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.QContacts;
 import com.adbest.smsmarketingentity.QMessageRecord;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
@@ -21,7 +22,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.ResourceBundle;
 
 @Service
@@ -40,9 +40,8 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     public int deleteOneMessage(Long id) {
         log.info("enter deleteOneMessage, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        Optional<MessageRecord> optional = messageRecordDao.findById(id);
-        ServiceException.isTrue(optional.isPresent(), bundle.getString("msg-record-not-exists"));
-        Assert.isTrue(Current.get().getId().equals(optional.get().getCustomerId()), bundle.getString("permission denied"));
+        MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
+        ServiceException.notNull(messageRecord, bundle.getString("msg-record-not-exists"));
         int result = messageRecordDao.disableById(id, true);
         log.info("leave deleteOneMessage");
         return result;
@@ -50,14 +49,23 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     
     @Override
     public int batchDelete(List<Long> idList) {
-        return 0;
+        log.info("enter deleteOneMessage, param={}", idList);
+        Assert.notNull(idList, CommonMessage.PARAM_IS_NULL);
+        ServiceException.isTrue(idList.size() > 0, bundle.getString("msg-record-id-list"));
+        CustomerVo cur = Current.get();
+        int result = 0;
+        for (Long id : idList) {
+            result += messageRecordDao.disableByIdAndCustomerId(id, cur.getId(), false);
+        }
+        log.info("leave deleteOneMessage");
+        return result;
     }
     
     @Override
     public MessageRecord findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessageRecord messageRecord = messageRecordDao.findByIdAndDisableIsFalse(id);
+        MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
         log.info("leave findById");
         return messageRecord;
     }
