@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -48,10 +49,15 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     }
     
     @Override
+    public int batchDelete(List<Long> idList) {
+        return 0;
+    }
+    
+    @Override
     public MessageRecord findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessageRecord messageRecord = messageRecordDao.getOneUsable(id);
+        MessageRecord messageRecord = messageRecordDao.findByIdAndDisableIsFalse(id);
         log.info("leave findById");
         return messageRecord;
     }

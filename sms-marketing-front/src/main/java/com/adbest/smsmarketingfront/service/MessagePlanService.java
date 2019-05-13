@@ -15,6 +15,7 @@ public interface MessagePlanService {
     int create(CreateMessagePlan create);
     
     // 修改定时任务（编辑中状态）
+    int update(CreateMessagePlan update);
     
     // 取消定时任务
     int cancel(Long id);
