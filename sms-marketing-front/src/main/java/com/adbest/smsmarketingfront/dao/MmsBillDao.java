@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface MmsBillDao extends JpaRepository<MmsBill, Long>, JpaSpecificationExecutor<MmsBill> {
 
+    MmsBill findByIdAndCustomerId(Long id, Long customerId);
 }

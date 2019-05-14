@@ -1,5 +1,6 @@
 package com.adbest.smsmarketingfront.service.impl;
 
+import com.adbest.smsmarketingentity.InboxStatus;
 import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.QContacts;
 import com.adbest.smsmarketingentity.QMessageRecord;
@@ -37,21 +38,11 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     ResourceBundle bundle;
     
     @Override
-    public int deleteOneMessage(Long id) {
-        log.info("enter deleteOneMessage, id=" + id);
-        Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
-        ServiceException.notNull(messageRecord, bundle.getString("msg-record-not-exists"));
-        int result = messageRecordDao.disableById(id, true);
-        log.info("leave deleteOneMessage");
-        return result;
-    }
-    
-    @Override
-    public int batchDelete(List<Long> idList) {
+    public int delete(List<Long> idList) {
         log.info("enter deleteOneMessage, param={}", idList);
         Assert.notNull(idList, CommonMessage.PARAM_IS_NULL);
-        ServiceException.isTrue(idList.size() > 0, bundle.getString("msg-record-id-list"));
+        ServiceException.isTrue(idList.size() > 0,
+                bundle.getString("msg-record-id-list").replace("$action$", "delete"));
         CustomerVo cur = Current.get();
         int result = 0;
         for (Long id : idList) {
@@ -62,10 +53,28 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     }
     
     @Override
+    public int markRead(List<Long> idList) {
+        log.info("enter markRead, param={}", idList);
+        Assert.notNull(idList, CommonMessage.PARAM_IS_NULL);
+        ServiceException.isTrue(idList.size() > 0,
+                bundle.getString("msg-record-id-list").replace("$action$", "mark as read"));
+        CustomerVo cur = Current.get();
+        int result = 0;
+        for (Long id : idList) {
+            result += messageRecordDao.markReadOne(id, cur.getId());
+        }
+        log.info("leave markRead");
+        return result;
+    }
+    
+    @Override
     public MessageRecord findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
+        if (messageRecord != null && messageRecord.getInbox() && messageRecord.getStatus() == InboxStatus.UNREAD.getValue()) {
+            messageRecordDao.markReadOne(messageRecord.getId());
+        }
         log.info("leave findById");
         return messageRecord;
     }

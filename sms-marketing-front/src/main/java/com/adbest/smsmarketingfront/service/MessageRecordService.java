@@ -13,11 +13,11 @@ import java.util.List;
  */
 public interface MessageRecordService {
     
-    // 删除(实际禁用)一条消息
-    int deleteOneMessage(Long id);
+    // 删除(实际禁用)消息
+    int delete(List<Long> idList);
     
-    // 批量删除(实际禁用)
-    int batchDelete(List<Long> idList);
+    // 标为已读
+    int markRead(List<Long> idList);
     
     // 根据id查询消息
     MessageRecord findById(Long id);

@@ -54,7 +54,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         log.info("enter update, param={}", update);
         checkMessageTemplate(update);
         Assert.notNull(update.getId(), CommonMessage.ID_CANNOT_EMPTY);
-        MessageTemplate found = messageTemplateDao.findByIdAndCustomerIdAndDisableIsFalse(update.getId(), Current.get().getId());
+        MessageTemplate found = messageTemplateDao.findByIdAndCustomerId(update.getId(), Current.get().getId());
         ServiceException.notNull(found, bundle.getString("msg-template-not-exists"));
         update.copy(found);
         messageTemplateDao.save(found);
@@ -67,7 +67,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     public int disableById(Long id, boolean disable) {
         log.info("enter disableById, id=" + id + ", disable=" + disable);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        int result = messageTemplateDao.disableById(id, Current.get().getId(), disable);
+        int result = messageTemplateDao.disableByIdAndCustomerId(id, Current.get().getId(), disable);
         log.info("leave disableById");
         return result;
     }
@@ -85,7 +85,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     public MessageTemplate findById(Long id) {
         log.info("enter findById, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessageTemplate template = messageTemplateDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
+        MessageTemplate template = messageTemplateDao.findByIdAndCustomerId(id, Current.get().getId());
         log.info("leave findById");
         return template;
     }
@@ -110,6 +110,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     
     public void checkMessageTemplate(CreateMsgTemplate template) {
         Assert.notNull(template, CommonMessage.PARAM_IS_NULL);
+        ServiceException.hasText(template.getTitle(), bundle.getString("msg-template-title"));
         ServiceException.hasText(template.getContent(), bundle.getString("msg-template-content"));
         ServiceException.isTrue(MessageTools.isOverLength(template.getContent()), MessageTools.isGsm7(template.getContent()) ?
                 bundle.getString("msg-plan-content-over-length-gsm7") : bundle.getString("msg-plan-content-over-length-ucs2"));

@@ -22,12 +22,15 @@ public class MessageTemplate implements Serializable {
     private Long customerId;  // 用户id
     @Column(nullable = false)
     private Boolean sms;  // 是否短信模板(true:是)
+    @Column(nullable = false)
+    private String title;  // 标题
     protected String subject;  // 主题
     @Column(nullable = false)
     @Lob
     protected String content;  // 内容
     @Lob
-    private String mediaList;  // 资源列表 [资源url,多个以','分隔]
+    private String mediaList;  // 资源id列表 [多个以','分隔]
+    private String remark;  // 备注
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:是)
     @Column(nullable = false)

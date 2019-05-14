@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
+import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -25,6 +26,12 @@ public class MessagePlanController {
         int result = messagePlanService.create(create);
         return ReturnEntity.successIfTrue(result > 0);
     }
+    @RequestMapping("/update")
+    @ResponseBody
+    public ReturnEntity update(@RequestBody UpdateMessagePlan update) {
+        int result = messagePlanService.update(update);
+        return ReturnEntity.successIfTrue(result > 0);
+    }
     
     @RequestMapping("/cancel")
     @ResponseBody
@@ -40,14 +47,14 @@ public class MessagePlanController {
         return ReturnEntity.successIfTrue(result > 0);
     }
     
-    @RequestMapping("/findById")
+    @RequestMapping("/details")
     @ResponseBody
     public ReturnEntity findById(Long id) {
         MessagePlan plan = messagePlanService.findById(id);
         return ReturnEntity.success(plan);
     }
     
-    @RequestMapping("/findByConditions")
+    @RequestMapping("/page")
     @ResponseBody
     public ReturnEntity findByConditions(@RequestBody GetMessagePlanPage getPlanPage) {
         Page<MessagePlan> planPage = messagePlanService.findByConditions(getPlanPage);

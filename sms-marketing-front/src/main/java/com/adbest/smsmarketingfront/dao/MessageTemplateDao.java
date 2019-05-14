@@ -14,7 +14,7 @@ public interface MessageTemplateDao extends JpaRepository<MessageTemplate, Long>
     @Transactional
     @Modifying
     @Query("update MessageTemplate set disable = ?3 where id = ?1 and customerId = ?2")
-    int disableById(Long id, Long customerId, boolean disable);
+    int disableByIdAndCustomerId(Long id, Long customerId, boolean disable);
     
-    MessageTemplate findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
+    MessageTemplate findByIdAndCustomerId(Long id, Long customerId);
 }

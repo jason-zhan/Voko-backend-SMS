@@ -12,6 +12,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/message-record")
 public class MessageRecordController {
@@ -19,28 +21,34 @@ public class MessageRecordController {
     @Autowired
     MessageRecordService messageRecordService;
     
-    @RequestMapping("/deleteOneMessage")
+    @RequestMapping("/delete")
     @ResponseBody
-    public ReturnEntity deleteOneMessage(Long id) {
-        int result = messageRecordService.deleteOneMessage(id);
+    public ReturnEntity batchDelete(@RequestBody List<Long> idList) {
+        int result = messageRecordService.delete(idList);
+        return ReturnEntity.successIfTrue(result > 0);
+    }
+    @RequestMapping("/mark-read")
+    @ResponseBody
+    public ReturnEntity markRead(@RequestBody List<Long> idList) {
+        int result = messageRecordService.markRead(idList);
         return ReturnEntity.successIfTrue(result > 0);
     }
     
-    @RequestMapping("/findById")
+    @RequestMapping("/details")
     @ResponseBody
     public ReturnEntity findById(Long id) {
         MessageRecord message = messageRecordService.findById(id);
         return ReturnEntity.success(message);
     }
     
-    @RequestMapping("/findInboxByConditions")
+    @RequestMapping("/inbox")
     @ResponseBody
     public ReturnEntity findInboxByConditions(@RequestBody GetInboxMessagePage getInboxPage) {
         Page<MessageRecord> messagePage = messageRecordService.findInboxByConditions(getInboxPage);
         return ReturnEntity.success(messagePage);
     }
     
-    @RequestMapping("/findOutboxByConditions")
+    @RequestMapping("/outbox")
     @ResponseBody
     public ReturnEntity findOutboxByConditions(@RequestBody GetOutboxMessagePage getOutboxPage) {
         Page<MessageRecord> messagePage = messageRecordService.findOutboxByConditions(getOutboxPage);

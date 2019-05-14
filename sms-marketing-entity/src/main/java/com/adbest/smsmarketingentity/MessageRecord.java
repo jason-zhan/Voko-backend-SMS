@@ -33,6 +33,7 @@ public class MessageRecord implements Serializable {
     private String content;
     @Column(nullable = false)
     private Integer segments;  // 被分割为多少条消息
+    @Lob
     private String mediaList;  // 资源列表 [资源url,多个以','分隔]
     private Boolean sms;  // 是否短信(true:是)
     /**

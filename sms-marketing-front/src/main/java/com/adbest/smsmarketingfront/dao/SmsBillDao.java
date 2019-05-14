@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface SmsBillDao extends JpaRepository<SmsBill, Long>, JpaSpecificationExecutor<SmsBill> {
 
+    SmsBill findByIdAndCustomerId(Long id, Long customerId);
 }
