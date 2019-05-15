@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.handler;
 
 import com.adbest.smsmarketingfront.service.CustomerService;
+import com.adbest.smsmarketingfront.service.impl.CustomerServiceImpl;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.HttpTools;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
@@ -21,14 +22,15 @@ import org.springframework.security.web.access.intercept.FilterSecurityIntercept
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.logout.LogoutSuccessHandler;
+import org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl;
+import org.springframework.security.web.authentication.rememberme.PersistentTokenRepository;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
+import javax.sql.DataSource;
 import java.io.IOException;
 import java.io.PrintWriter;
-import java.nio.charset.StandardCharsets;
-import java.util.ResourceBundle;
 
 @Configuration
 @EnableGlobalMethodSecurity(prePostEnabled = true)
@@ -45,10 +47,21 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     CustomAuthenticationProvider authenticationProvider;
     @Autowired
     private ReturnMsgUtil returnMsgUtil;
+    @Autowired
+    private DataSource dataSource;
+    @Autowired
+    private CustomerServiceImpl customerServiceImpl;
 
     @Override
     public void configure(WebSecurity web) throws Exception {
         web.ignoring().antMatchers("/index.html", "/static/**", "/nologin", "/favicon.ico", "/register", "/twilio/**");
+    }
+
+    @Bean
+    public PersistentTokenRepository persistentTokenRepository() {
+        JdbcTokenRepositoryImpl tokenRepository = new JdbcTokenRepositoryImpl();
+        tokenRepository.setDataSource(dataSource);
+        return tokenRepository;
     }
 
     @Override
@@ -83,7 +96,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                         out.close();
                     }
                 })
-                .permitAll()
+                .permitAll().and()
+                .rememberMe().rememberMeParameter("rememberMe")
+                .tokenValiditySeconds(60 * 60 * 24 * 7).tokenRepository(persistentTokenRepository()).userDetailsService(customerServiceImpl)
                 .and().csrf().disable()
                 .exceptionHandling().accessDeniedHandler(deniedHandler);
     }

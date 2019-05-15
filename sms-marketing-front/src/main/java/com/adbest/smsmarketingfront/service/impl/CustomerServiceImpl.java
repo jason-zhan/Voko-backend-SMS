@@ -2,7 +2,10 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
+import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
 import com.adbest.smsmarketingfront.entity.form.CustomerForm;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
+import com.adbest.smsmarketingfront.entity.vo.UserDetailsVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.CommonMessage;
@@ -14,7 +17,10 @@ import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Async;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
@@ -106,7 +112,18 @@ public class CustomerServiceImpl implements  CustomerService {
         return true;
     }
 
-    private void initCustomerData(Customer customer){
+    @Override
+    public Customer findFirstByEmail(String email) {
+        return customerDao.findFirstByEmail(email);
+    }
+
+    @Override
+    public List<Customer> findByEmailIn(List<String> emails) {
+        return customerDao.findByEmailIn(emails);
+    }
+
+    @Override
+    public void initCustomerData(Customer customer){
         //初始化手机号码
         initPhone(customer,1);
         List<MarketSetting> marketSettings = marketSettingService.findAll();
@@ -163,41 +180,6 @@ public class CustomerServiceImpl implements  CustomerService {
         if (customer == null) {
             throw new UsernameNotFoundException("邮箱错误");
         }
-        return new UserDetails() {
-            @Override
-            public Collection<? extends GrantedAuthority> getAuthorities() {
-                return new ArrayList<GrantedAuthority>();
-            }
-
-            @Override
-            public String getPassword() {
-                return customer.getPassword();
-            }
-
-            @Override
-            public String getUsername() {
-                return customer.getEmail();
-            }
-
-            @Override
-            public boolean isAccountNonExpired() {
-                return true;
-            }
-
-            @Override
-            public boolean isAccountNonLocked() {
-                return true;
-            }
-
-            @Override
-            public boolean isCredentialsNonExpired() {
-                return true;
-            }
-
-            @Override
-            public boolean isEnabled() {
-                return !customer.getDisable();
-            }
-        };
+        return new UserDetailsVo(customer);
     }
 }

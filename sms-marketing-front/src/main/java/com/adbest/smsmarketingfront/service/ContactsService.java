@@ -35,4 +35,6 @@ public interface ContactsService {
     boolean process(ContactsProcessForm contactsProcessForm);
 
     List<ContactsVo> upload(MultipartFile file);
+
+    void saveAll(List<Contacts> contactsList);
 }

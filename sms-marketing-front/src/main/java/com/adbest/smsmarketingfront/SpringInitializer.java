@@ -89,6 +89,7 @@ public class SpringInitializer implements InitializingBean {
     
     @Override
     public void afterPropertiesSet() throws Exception {
+
     
     }
     

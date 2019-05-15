@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.handler;
 import com.adbest.smsmarketingfront.util.HttpTools;
 import com.adbest.smsmarketingfront.util.ResponseCode;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
+import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,6 +31,9 @@ public class GlobalExceptionCatch implements ErrorController {
     
     @Autowired
     ObjectMapper objectMapper;
+
+    @Autowired
+    private ReturnMsgUtil returnMsgUtil;
     
     private final static List<Integer> knownStatus = Arrays.asList(401, 403, 404);
     
@@ -64,7 +68,7 @@ public class GlobalExceptionCatch implements ErrorController {
             status = e.getCode();
             msg = e.getMessage();
         }
-        returnEntity = ReturnEntity.fail(status, "".equals(msg)?ResponseCode.getMessage(status):msg);
+        returnEntity = ReturnEntity.fail(status, "".equals(msg)?returnMsgUtil.msg("T500"):msg);
         HttpTools.responseForJson(response, returnEntity);
     }
     
