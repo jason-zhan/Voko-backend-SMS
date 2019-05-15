@@ -17,6 +17,7 @@ public class MessageRecord implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String sid;  // twilio 平台消息唯一标识
     /**
      * @see MessagePlan#id
      */

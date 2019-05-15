@@ -48,9 +48,13 @@ public class StatusCallbackParam {
     private String ApiVersion;
     
     public static StatusCallbackParam parse(@NotNull HttpServletRequest request){
-        StatusCallbackParam statusCallbackParam = new StatusCallbackParam();
-        statusCallbackParam.setMessageSid(request.getParameter("MessageSid"));
-        
-        return statusCallbackParam;
+        StatusCallbackParam param = new StatusCallbackParam();
+        param.setMessageSid(request.getParameter("MessageSid"));
+        param.setMessageStatus(request.getParameter("MessageStatus"));
+        param.setTo(request.getParameter("To"));
+        param.setFrom(request.getParameter("From"));
+        param.setAccountSid(request.getParameter("AccountSid"));
+        param.setApiVersion(request.getParameter("ApiVersion"));
+        return param;
     }
 }
