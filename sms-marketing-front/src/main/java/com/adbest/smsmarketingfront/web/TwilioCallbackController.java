@@ -1,7 +1,7 @@
 package com.adbest.smsmarketingfront.web;
 
-import com.adbest.smsmarketingfront.util.twilio.InboundMsg;
-import com.adbest.smsmarketingfront.util.twilio.StatusCallbackParam;
+import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
+import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 

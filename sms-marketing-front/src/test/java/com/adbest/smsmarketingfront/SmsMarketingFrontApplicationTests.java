@@ -1,10 +1,8 @@
 package com.adbest.smsmarketingfront;
 
 import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingentity.QContacts;
-import com.adbest.smsmarketingfront.util.twilio.PreSendMsg;
+import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
-import com.querydsl.core.BooleanBuilder;
 import com.twilio.rest.api.v2010.account.Message;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -13,7 +11,6 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.UnsupportedEncodingException;
-import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.ResourceBundle;
 

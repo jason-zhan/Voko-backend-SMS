@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.util.twilio;
 
 import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.twilio.Twilio;
 import com.twilio.base.ResourceSet;
 import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
@@ -9,6 +10,7 @@ import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.rest.api.v2010.account.MessageCreator;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.LocalReader;
+import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFree;
 import com.twilio.twiml.MessagingResponse;
 import com.twilio.twiml.messaging.Body;
 import com.twilio.twiml.messaging.Media;
@@ -45,20 +47,29 @@ public class TwilioUtil {
     }
     
     /**
-     * 查询美国可用手机号
+     * 查询美国可用的地区号码
      * 具有收发短信和彩信功能
      *
      * @param areaCode
      * @return
      */
-    public ResourceSet<Local> fetchNumbersByAreaCode(Integer areaCode) {
-        LocalReader reader = Local.reader("US")
+    public ResourceSet<Local> fetchNumbersByAreaCode(@NotNull Integer areaCode) {
+        return Local.reader("US")
                 .setSmsEnabled(true)
-                .setMmsEnabled(true);
-        if (areaCode != null) {
-            reader.setAreaCode(areaCode);
-        }
-        return reader.read();
+                .setMmsEnabled(true)
+                .read();
+    }
+    
+    /**
+     * 查询美国可用的跨区域号码
+     * 具有收发短信和彩信功能
+     * @return
+     */
+    public ResourceSet<TollFree> fetchTollFreeNumbers() {
+        return TollFree.reader("US")
+                .setSmsEnabled(true)
+                .setMmsEnabled(true)
+                .read();
     }
     
     /**

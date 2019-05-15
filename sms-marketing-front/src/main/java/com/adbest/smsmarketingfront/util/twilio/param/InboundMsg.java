@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.util.twilio;
+package com.adbest.smsmarketingfront.util.twilio.param;
 
 import lombok.Data;
 
