@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.controller;
+package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingfront.entity.form.KeywordForm;
 import com.adbest.smsmarketingfront.entity.vo.KeywordVo;
@@ -10,6 +10,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/keyword")
@@ -34,6 +36,12 @@ public class KeywordController {
     public ReturnEntity check(String title){
         Boolean is = keywordService.check(title);
         return ReturnEntity.success(is);
+    }
+
+    @RequestMapping("/delete")
+    public ReturnEntity delete(String ids){
+        Integer row = keywordService.delete(ids);
+        return ReturnEntity.success(row);
     }
 
 }

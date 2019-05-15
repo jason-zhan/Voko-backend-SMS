@@ -1,11 +1,8 @@
 package com.adbest.smsmarketingfront.entity.vo;
 
 import com.adbest.smsmarketingentity.Customer;
-import com.adbest.smsmarketingentity.UsArea;
 import lombok.Data;
-import org.hibernate.annotations.CreationTimestamp;
 
-import javax.persistence.Column;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -24,6 +21,17 @@ public class CustomerVo implements Serializable {
     }
 
     public CustomerVo(Customer customer) {
+        this.id = customer.getId();
+        this.email = customer.getEmail();
+        this.firstName = customer.getFirstName();
+        this.lastName = customer.getLastName();
+        this.customerName = customer.getCustomerName();
+        this.industry = customer.getIndustry();
+        this.organization = customer.getOrganization();
+        this.registerTime = customer.getRegisterTime();
+    }
+
+    public CustomerVo(UserDetailsVo customer) {
         this.id = customer.getId();
         this.email = customer.getEmail();
         this.firstName = customer.getFirstName();

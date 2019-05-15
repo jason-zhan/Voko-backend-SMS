@@ -54,4 +54,8 @@ public class VkCDRCustomers implements Serializable {
      * 是否已发送短信通知
      */
     private Boolean inSend;
+    /**
+     * 是否已导入到系统
+     */
+    private Boolean inLeadin;
 }

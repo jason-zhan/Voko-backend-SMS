@@ -175,11 +175,11 @@ public class ContactsServiceImpl implements ContactsService {
         BooleanBuilder builder = new BooleanBuilder();
         QContacts qContacts = QContacts.contacts;
         QContactsLinkGroup qContactsLinkGroup = QContactsLinkGroup.contactsLinkGroup;
-        if(StringUtils.isEmpty(selectContactsForm.getKeyWord())){
+        if(!StringUtils.isEmpty(selectContactsForm.getKeyWord())){
                 builder.and(qContacts.phone.containsIgnoreCase(selectContactsForm.getKeyWord()).or(qContacts.firstName.containsIgnoreCase
                         (selectContactsForm.getKeyWord())));
         }
-        if(StringUtils.isEmpty(selectContactsForm.getSource())){
+        if(!StringUtils.isEmpty(selectContactsForm.getSource())){
             builder.and(qContacts.source.eq(Integer.valueOf(selectContactsForm.getSource())));
         }
         if(selectContactsForm.getInLock()!=null){
@@ -188,7 +188,7 @@ public class ContactsServiceImpl implements ContactsService {
         builder.and(qContacts.customerId.eq(customerId));
         builder.and(qContacts.isDelete.isFalse());
         JPAQuery<Contacts> jpaQuery = null;
-        if (StringUtils.isEmpty(selectContactsForm.getGroupId())){
+        if (!StringUtils.isEmpty(selectContactsForm.getGroupId())){
             builder.and(qContactsLinkGroup.id.eq(Long.valueOf(selectContactsForm.getGroupId())));
             jpaQuery = jpaQueryFactory.select(qContacts)
                     .from(qContacts).rightJoin(qContactsLinkGroup).on(qContacts.id.eq(qContactsLinkGroup.contactsId));
@@ -248,11 +248,17 @@ public class ContactsServiceImpl implements ContactsService {
         }
     }
 
+    @Override
+    @Transactional
+    public void saveAll(List<Contacts> contactsList) {
+        contactsDao.saveAll(contactsList);
+    }
+
     @Transactional
     public void saveData(List<ContactsTemp> list,Long customerId,String groupId){
         if (list.size()<=0)return;
         List<Contacts> contacts = contactsDao.findByCustomerId(customerId);
-        Map<String,Contacts> map = contacts.stream().collect(Collectors.toMap(Contacts::getPhone,c -> c));
+        Map<String,Contacts> map = contacts.stream().collect(Collectors.toMap(Contacts::getPhone,c -> c, (contacts1, newContacts) -> contacts1));
         contacts = Lists.newArrayList();
         Contacts c = null;
         for (ContactsTemp contactsTemp:list) {

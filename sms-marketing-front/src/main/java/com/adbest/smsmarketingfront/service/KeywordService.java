@@ -16,4 +16,6 @@ public interface KeywordService {
     KeywordVo save(KeywordForm keywordForm);
 
     Boolean check(String title);
+
+    Integer delete(String ids);
 }

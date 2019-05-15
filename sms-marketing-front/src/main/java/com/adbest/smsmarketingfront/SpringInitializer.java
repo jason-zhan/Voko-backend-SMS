@@ -1,5 +1,6 @@
 package com.adbest.smsmarketingfront;
 
+import com.adbest.smsmarketingfront.dao.PersistentLoginsDao;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,7 +24,6 @@ import java.util.ResourceBundle;
 @EntityScan(basePackages = "com.adbest.smsmarketingentity")
 @ServletComponentScan(basePackages = "com.adbest.smsmarketingfront.handler")
 public class SpringInitializer implements InitializingBean {
-    
     
     @Bean
     @Autowired
@@ -61,6 +61,6 @@ public class SpringInitializer implements InitializingBean {
     
     @Override
     public void afterPropertiesSet() throws Exception {
-    
+
     }
 }
