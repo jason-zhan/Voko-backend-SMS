@@ -1,5 +1,9 @@
 package com.adbest.smsmarketingfront;
 
+import com.adbest.smsmarketingentity.InboxStatus;
+import com.adbest.smsmarketingentity.MessagePlanStatus;
+import com.adbest.smsmarketingentity.MsgTemplateVariable;
+import com.adbest.smsmarketingentity.OutboxStatus;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -16,8 +20,12 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import javax.persistence.EntityManager;
+import java.lang.reflect.InvocationTargetException;
+import java.util.HashMap;
 import java.util.Locale;
+import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 @Configuration
 @EntityScan(basePackages = "com.adbest.smsmarketingentity")
@@ -59,8 +67,48 @@ public class SpringInitializer implements InitializingBean {
         return redisTemplate;
     }
     
+    @Bean
+    public Map<Integer, String> messagePlanStatusMap() {
+        return getValuesMap(MessagePlanStatus.class);
+    }
+    
+    @Bean
+    public Map<Integer, String> inboxStatusMap() {
+        return getValuesMap(InboxStatus.class);
+    }
+    
+    @Bean
+    public Map<Integer, String> outboxStatusMap() {
+        return getValuesMap(OutboxStatus.class);
+    }
+    
+    @Bean
+    public Set<String> msgTemplateVariableSet() {
+        return MsgTemplateVariable.valueSet();
+    }
+    
     @Override
     public void afterPropertiesSet() throws Exception {
     
+    }
+    
+    
+    private <T extends Enum> Map<Integer, String> getValuesMap(Class<T> tClass) {
+        Map<Integer, String> map = new HashMap<>();
+        T[] ts = tClass.getEnumConstants();
+        try {
+            for (T t : ts) {
+                map.put((Integer) tClass.getMethod("getValue").invoke(t),
+                        (String) tClass.getMethod("getTitle").invoke(t));
+            }
+        } catch (NoSuchMethodException e) {
+            e.printStackTrace();
+        } catch (IllegalAccessException e) {
+            e.printStackTrace();
+        } catch (InvocationTargetException e) {
+            e.printStackTrace();
+        } finally {
+            return map;
+        }
     }
 }

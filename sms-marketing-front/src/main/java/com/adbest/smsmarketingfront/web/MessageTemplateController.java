@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Set;
+
 @RestController
 @RequestMapping("/api/message-template")
 public class MessageTemplateController {
@@ -60,5 +62,12 @@ public class MessageTemplateController {
     public ReturnEntity findByConditions(@RequestBody GetMsgTemplatePage getTemplatePage) {
         Page<MessageTemplate> templatePage = messageTemplateService.findByConditions(getTemplatePage);
         return ReturnEntity.success(templatePage);
+    }
+    
+    @RequestMapping("/variables")
+    @ResponseBody
+    public ReturnEntity variableSet() {
+        Set<String> variableSet = messageTemplateService.variableSet();
+        return ReturnEntity.success(variableSet);
     }
 }

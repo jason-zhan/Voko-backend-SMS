@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/message-bill")
+@RequestMapping("/api")
 public class MessageBillController {
     
     @Autowired
@@ -22,28 +22,28 @@ public class MessageBillController {
     @Autowired
     MmsBillService mmsBillService;
     
-    @RequestMapping("/getSmsById")
+    @RequestMapping("/sms-bill/details")
     @ResponseBody
     public ReturnEntity getSmsById(Long id) {
         SmsBill smsbill = smsBillService.findById(id);
         return ReturnEntity.success(smsbill);
     }
     
-    @RequestMapping("/getSmsBillPage")
+    @RequestMapping("/sms-bill/page")
     @ResponseBody
     public ReturnEntity getSmsBillPage(@RequestBody GetMsgBillPage getBillPage) {
         Page<SmsBill> billPage = smsBillService.findByConditions(getBillPage);
         return ReturnEntity.success(billPage);
     }
     
-    @RequestMapping("/getMmsById")
+    @RequestMapping("/mms-bill/details")
     @ResponseBody
     public ReturnEntity getMmsById(Long id) {
         MmsBill mmsBill = mmsBillService.findById(id);
         return ReturnEntity.success(mmsBill);
     }
     
-    @RequestMapping("/getMmsBillPage")
+    @RequestMapping("/mms-bill/page")
     @ResponseBody
     public ReturnEntity getMmsBillPage(@RequestBody GetMsgBillPage getBillPage) {
         Page<MmsBill> billPage = mmsBillService.findByConditions(getBillPage);

@@ -6,6 +6,8 @@ import com.adbest.smsmarketingfront.service.param.GetMsgTemplatePage;
 import com.adbest.smsmarketingfront.service.param.UpdateMsgTemplate;
 import org.springframework.data.domain.Page;
 
+import java.util.Set;
+
 /**
  * 消息模板业务
  * @see MessageTemplate
@@ -29,4 +31,7 @@ public interface MessageTemplateService {
     
     // 根据条件查询
     Page<MessageTemplate> findByConditions(GetMsgTemplatePage getTemplatePage);
+    
+    // 模板变量
+    Set<String> variableSet();
 }

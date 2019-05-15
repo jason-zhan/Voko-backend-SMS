@@ -6,6 +6,8 @@ import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import org.springframework.data.domain.Page;
 
+import java.util.Map;
+
 /**
  * 消息定时任务前端业务
  * @see MessagePlan
@@ -29,4 +31,7 @@ public interface MessagePlanService {
     
     // 根据条件查询定时任务
     Page<MessagePlan> findByConditions(GetMessagePlanPage getPlanPage);
+    
+    // 获取定时任务状态
+    Map<Integer, String> statusMap();
 }

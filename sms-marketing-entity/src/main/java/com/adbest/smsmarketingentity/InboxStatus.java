@@ -6,8 +6,8 @@ package com.adbest.smsmarketingentity;
  */
 public enum  InboxStatus {
     
-    UNREAD(1, "UNREAD"),  // 未读
-    ALREADY_READ(2, "ALREADY_READ"),  // 已读
+    UNREAD(0, "UNREAD"),  // 未读
+    ALREADY_READ(1, "ALREADY_READ"),  // 已读
     
     ;
     

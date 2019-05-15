@@ -23,6 +23,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 
 @Service
@@ -36,6 +37,11 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     JPAQueryFactory jpaQueryFactory;
     @Autowired
     ResourceBundle bundle;
+    
+    @Autowired
+    Map<Integer,String> inboxStatusMap;
+    @Autowired
+    Map<Integer,String> outboxStatusMap;
     
     @Override
     public int delete(List<Long> idList) {
@@ -121,5 +127,19 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         Page<MessageRecord> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
         log.info("leave findOutboxByConditions");
         return messagePage;
+    }
+    
+    @Override
+    public Map<Integer, String> inboxStatusMap() {
+        log.info("enter inboxStatusMap");
+        log.info("leave inboxStatusMap");
+        return inboxStatusMap;
+    }
+    
+    @Override
+    public Map<Integer, String> outboxStatusMap() {
+        log.info("enter outboxStatusMap");
+        log.info("leave outboxStatusMap");
+        return outboxStatusMap;
     }
 }

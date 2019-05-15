@@ -76,6 +76,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;
     
+    @Autowired
+    private Map<Integer,String> messagePlanStatusMap;
+    
     @Transactional
     @Override
     public int create(CreateMessagePlan createPlan) {
@@ -236,6 +239,13 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Page<MessagePlan> planPage = PageBase.toPageEntity(queryResults, getPlanPage);
         log.info("leave findByConditions");
         return planPage;
+    }
+    
+    @Override
+    public Map<Integer, String> statusMap() {
+        log.info("enter statusMap");
+        log.info("leave statusMap");
+        return messagePlanStatusMap;
     }
     
     private void checkMessagePlan(CreateMessagePlan create) {

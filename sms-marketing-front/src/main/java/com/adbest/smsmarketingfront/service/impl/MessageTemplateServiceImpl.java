@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
 import java.util.ResourceBundle;
+import java.util.Set;
 
 
 @Service
@@ -32,9 +33,12 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
     MessageTemplateDao messageTemplateDao;
     
     @Autowired
-    ResourceBundle bundle;
+    private ResourceBundle bundle;
     @Autowired
-    JPAQueryFactory jpaQueryFactory;
+    private JPAQueryFactory jpaQueryFactory;
+    
+    @Autowired
+    private Set<String> msgTemplateVariableSet;
     
     @Override
     public int create(CreateMsgTemplate create) {
@@ -106,6 +110,13 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         Page<MessageTemplate> templatePage = PageBase.toPageEntity(queryResults, getTemplatePage);
         log.info("leave findByConditions");
         return templatePage;
+    }
+    
+    @Override
+    public Set<String> variableSet() {
+        log.info("enter msgTemplateVariableSet");
+        log.info("leave msgTemplateVariableSet");
+        return msgTemplateVariableSet;
     }
     
     public void checkMessageTemplate(CreateMsgTemplate template) {

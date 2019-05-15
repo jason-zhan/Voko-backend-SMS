@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/message-record")
@@ -23,7 +24,7 @@ public class MessageRecordController {
     
     @RequestMapping("/delete")
     @ResponseBody
-    public ReturnEntity batchDelete(@RequestBody List<Long> idList) {
+    public ReturnEntity delete(@RequestBody List<Long> idList) {
         int result = messageRecordService.delete(idList);
         return ReturnEntity.successIfTrue(result > 0);
     }
@@ -53,5 +54,15 @@ public class MessageRecordController {
     public ReturnEntity findOutboxByConditions(@RequestBody GetOutboxMessagePage getOutboxPage) {
         Page<MessageRecord> messagePage = messageRecordService.findOutboxByConditions(getOutboxPage);
         return ReturnEntity.success(messagePage);
+    }
+    @RequestMapping("/inbox-status")
+    @ResponseBody
+    public Map<Integer, String> inboxStatusMap() {
+        return messageRecordService.inboxStatusMap();
+    }
+    @RequestMapping("/outbox-status")
+    @ResponseBody
+    public Map<Integer, String> outboxStatusMap() {
+        return messageRecordService.outboxStatusMap();
     }
 }

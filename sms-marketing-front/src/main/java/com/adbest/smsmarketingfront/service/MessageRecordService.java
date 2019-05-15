@@ -6,6 +6,7 @@ import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import org.springframework.data.domain.Page;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 消息(SMS/MMS)前端业务
@@ -28,4 +29,9 @@ public interface MessageRecordService {
     // 根据条件查询发件
     Page<MessageRecord> findOutboxByConditions(GetOutboxMessagePage getOutboxPage);
     
+    // 收件箱消息状态
+    Map<Integer, String> inboxStatusMap();
+    
+    // 发件箱消息状态
+    Map<Integer, String> outboxStatusMap();
 }

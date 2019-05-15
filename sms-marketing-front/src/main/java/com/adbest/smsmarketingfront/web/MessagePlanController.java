@@ -13,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/message-plan")
 public class MessagePlanController {
@@ -59,5 +61,13 @@ public class MessagePlanController {
     public ReturnEntity findByConditions(@RequestBody GetMessagePlanPage getPlanPage) {
         Page<MessagePlan> planPage = messagePlanService.findByConditions(getPlanPage);
         return ReturnEntity.success(planPage);
+    }
+    
+    
+    @RequestMapping("/status")
+    @ResponseBody
+    public ReturnEntity statusMap() {
+        Map<Integer, String> statusMap = messagePlanService.statusMap();
+        return ReturnEntity.success(statusMap);
     }
 }
