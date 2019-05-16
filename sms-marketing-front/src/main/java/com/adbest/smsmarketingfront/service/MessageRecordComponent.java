@@ -1,6 +1,8 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import com.adbest.smsmarketingentity.MessageReturnCode;
+import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
 
 /**
  * 消息(SMS/MMS)处理组件
@@ -15,7 +17,7 @@ public interface MessageRecordComponent {
     int updateMessage(MessageRecord update);
     
     // 更新消息状态
-    int updateMessageStatus(int status);
+    int updateMessageStatus(StatusCallbackParam param);
     
     // 接收消息处理
     MessageRecord dealWithIncome(MessageRecord income);

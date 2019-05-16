@@ -13,6 +13,11 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     @Transactional
     @Modifying
+    @Query("update MessageRecord set status = ?2 where sid = ?1")
+    int updateStatusBySid(String sid, int status);
+    
+    @Transactional
+    @Modifying
     @Query("update MessageRecord set disable = ?2 where id = ?1")
     int disableById(Long id, boolean disable);
     
@@ -36,4 +41,6 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     int sumMsgNumByPlanId(Long planId);
     
     MessageRecord findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
+    
+    MessageRecord findTopBySid(String sid);
 }
