@@ -15,4 +15,6 @@ public interface SmsBillService {
     
     // 根据条件查询列表
     Page<SmsBill> findByConditions(GetMsgBillPage getBillPage);
+
+    Long sumByCustomerId(Long customerId);
 }

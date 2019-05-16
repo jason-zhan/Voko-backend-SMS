@@ -10,7 +10,7 @@ public class ContactsGroupForm {
 
     Long id;
 
-    String name;
+    String title;
 
     List<String> groupIds;
 
@@ -20,7 +20,7 @@ public class ContactsGroupForm {
 
     public ContactsGroup getContactsGroup() {
         ContactsGroup contactsGroup = new ContactsGroup();
-        contactsGroup.setTitle(this.name);
+        contactsGroup.setTitle(this.title);
         contactsGroup.setCustomerId(this.customerId);
         contactsGroup.setDescription(this.description);
         return contactsGroup;

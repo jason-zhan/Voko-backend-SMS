@@ -41,8 +41,8 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     @Transactional
     public ContactsGroup save(ContactsGroupForm contactsGroup) {
-        ServiceException.notNull(contactsGroup.getName(), returnMsgUtil.msg("GROUP_NAME_NOT_EMPTY"));
-        Long count = countByCustomerIdAndTitle(contactsGroup.getCustomerId(), contactsGroup.getName());
+        ServiceException.notNull(contactsGroup.getTitle(), returnMsgUtil.msg("GROUP_NAME_NOT_EMPTY"));
+        Long count = countByCustomerIdAndTitle(contactsGroup.getCustomerId(), contactsGroup.getTitle());
         ServiceException.isTrue(count<=0, returnMsgUtil.msg("GROUP_NAME_EXISTS"));
         ContactsGroup co = contactsGroupDao.save(contactsGroup.getContactsGroup());
         List<String> groupIds = contactsGroup.getGroupIds();
@@ -84,13 +84,16 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     @Transactional
     public ContactsGroup update(ContactsGroupForm contactsGroupForm) {
-        Long count = countByCustomerIdAndTitle(Current.get().getId(), contactsGroupForm.getName());
-        ServiceException.isTrue(count<=0, returnMsgUtil.msg("GROUP_NAME_EXISTS"));
+        ServiceException.notNull(contactsGroupForm.getTitle(), returnMsgUtil.msg("GROUP_NAME_NOT_EMPTY"));
         Optional<ContactsGroup> optionalContactsGroup = contactsGroupDao.findById(contactsGroupForm.getId());
         ServiceException.isTrue(optionalContactsGroup.isPresent(),returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
         ServiceException.isTrue(optionalContactsGroup.get().getCustomerId()== Current.get().getId(),returnMsgUtil.msg("GROUP_INFO_NOT_EXISTS"));
         ContactsGroup contactsGroup = optionalContactsGroup.get();
-        contactsGroup.setTitle(contactsGroupForm.getName());
+        if (!contactsGroup.getTitle().equals(contactsGroup.getTitle())){
+            Long count = countByCustomerIdAndTitle(Current.get().getId(), contactsGroupForm.getTitle());
+            ServiceException.isTrue(count<=0, returnMsgUtil.msg("GROUP_NAME_EXISTS"));
+        }
+        contactsGroup.setTitle(contactsGroupForm.getTitle());
         contactsGroup.setDescription(contactsGroupForm.getDescription());
         return contactsGroupDao.save(contactsGroup);
     }
@@ -129,6 +132,11 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     public List<ContactsGroup> findAll() {
         return contactsGroupDao.findAll();
+    }
+
+    @Override
+    public List<Object> findByContentIn(List<Long> ids) {
+        return contactsGroupDao.findByContentIn(ids);
     }
 
 }

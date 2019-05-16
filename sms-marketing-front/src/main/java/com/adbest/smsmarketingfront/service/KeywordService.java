@@ -5,6 +5,7 @@ import com.adbest.smsmarketingfront.entity.form.KeywordForm;
 import com.adbest.smsmarketingfront.entity.vo.KeywordVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.util.PageBase;
+import org.springframework.data.domain.Page;
 
 import java.util.List;
 
@@ -20,4 +21,5 @@ public interface KeywordService {
     Integer delete(String ids);
 
     List<Keyword> findByCustomerIdAndTitle(Long customerId, String title);
+
 }

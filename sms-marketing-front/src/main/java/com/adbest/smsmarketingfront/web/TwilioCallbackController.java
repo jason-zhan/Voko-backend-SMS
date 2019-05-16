@@ -6,6 +6,7 @@ import com.adbest.smsmarketingfront.service.MessageRecordComponent;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,10 +16,14 @@ import javax.servlet.http.HttpServletResponse;
 
 @RestController
 @RequestMapping("/twilio")
+@Slf4j
 public class TwilioCallbackController {
     
     @Autowired
     MessageRecordComponent messageRecordComponent;
+
+    @Autowired
+    private MessageRecordService messageRecordService;
     
     /**
      * 接收来自twilio的消息
@@ -29,6 +34,8 @@ public class TwilioCallbackController {
     @RequestMapping("/receive-message")
     public void receiveMessage(HttpServletRequest request, HttpServletResponse response) {
         InboundMsg inboundMsg = InboundMsg.parse(request);
+        log.info("收到短信，{}",inboundMsg.toString());
+        messageRecordService.saveInbox(inboundMsg);
         System.out.println(inboundMsg);
     }
     
