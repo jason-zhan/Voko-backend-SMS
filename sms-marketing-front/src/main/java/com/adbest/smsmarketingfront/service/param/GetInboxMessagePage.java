@@ -23,6 +23,7 @@ public class GetInboxMessagePage extends PageBase {
     
     public void fillConditions(BooleanBuilder builder, QMessageRecord qMessageRecord, QContacts qContacts) {
         QueryDslTools dslTools = new QueryDslTools(builder);
+        builder.and(qMessageRecord.disable.isFalse());
         builder.and(qMessageRecord.inbox.eq(true));
         dslTools.ifTrue(hasRead, qMessageRecord.status, InboxStatus.ALREADY_READ.getValue(), InboxStatus.UNREAD.getValue());
         dslTools.eqNotNull(qMessageRecord.sms, isSms);

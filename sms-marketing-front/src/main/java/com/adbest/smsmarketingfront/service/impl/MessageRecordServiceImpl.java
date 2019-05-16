@@ -52,7 +52,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         CustomerVo cur = Current.get();
         int result = 0;
         for (Long id : idList) {
-            result += messageRecordDao.disableByIdAndCustomerId(id, cur.getId(), false);
+            result += messageRecordDao.disableByIdAndCustomerId(id, cur.getId(), true);
         }
         log.info("leave deleteOneMessage");
         return result;

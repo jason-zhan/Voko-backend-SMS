@@ -9,6 +9,10 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import org.quartz.Scheduler;
+import org.quartz.SchedulerException;
+import org.quartz.SchedulerFactory;
+import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
@@ -26,6 +30,8 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 @Configuration
 @EntityScan(basePackages = "com.adbest.smsmarketingentity")
@@ -87,9 +93,17 @@ public class SpringInitializer implements InitializingBean {
         return MsgTemplateVariable.valueSet();
     }
     
+    
+    @Bean
+    public Scheduler scheduler() throws SchedulerException {
+        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+        scheduler.start();
+        return scheduler;
+    }
+    
     @Override
     public void afterPropertiesSet() throws Exception {
-
+    
     
     }
     

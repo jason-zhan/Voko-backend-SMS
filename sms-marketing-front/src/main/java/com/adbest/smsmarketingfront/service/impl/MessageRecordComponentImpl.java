@@ -8,9 +8,10 @@ import com.adbest.smsmarketingfront.service.MessageRecordComponent;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
 import org.springframework.stereotype.Service;
 
-@Service
+@Component
 @Slf4j
 public class MessageRecordComponentImpl implements MessageRecordComponent {
     
@@ -42,8 +43,14 @@ public class MessageRecordComponentImpl implements MessageRecordComponent {
         } catch (IllegalArgumentException | NullPointerException e) {
             System.out.println(e);
         }
+        if (MessageReturnCode.QUEUED == returnCode) {
+            return messageRecordDao.updateReturnCodeBySid(param.getMessageSid(), MessageReturnCode.QUEUED.getValue());
+        }
         if (MessageReturnCode.FAILED == returnCode) {
             return messageRecordDao.updateStatusBySid(param.getMessageSid(), OutboxStatus.FAILED.getValue());
+        }
+        if (MessageReturnCode.SENT == returnCode) {
+            return messageRecordDao.updateReturnCodeBySid(param.getMessageSid(), MessageReturnCode.SENT.getValue());
         }
         if (MessageReturnCode.DELIVERED == returnCode) {
             return messageRecordDao.updateStatusBySid(param.getMessageSid(), OutboxStatus.DELIVERED.getValue());

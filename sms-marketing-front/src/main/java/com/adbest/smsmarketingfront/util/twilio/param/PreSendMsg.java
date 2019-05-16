@@ -13,4 +13,12 @@ import java.util.List;
 public class PreSendMsg {
     private MessageRecord record;
     private List<URI> mediaUriList;  // 完整媒体文件路径
+    
+    public PreSendMsg() {
+    }
+    
+    public PreSendMsg(MessageRecord record, List<URI> mediaUriList) {
+        this.record = record;
+        this.mediaUriList = mediaUriList;
+    }
 }

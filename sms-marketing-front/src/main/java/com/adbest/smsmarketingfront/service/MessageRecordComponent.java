@@ -1,7 +1,6 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingentity.MessageReturnCode;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
 
 /**
