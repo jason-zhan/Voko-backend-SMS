@@ -18,4 +18,6 @@ public interface KeywordService {
     Boolean check(String title);
 
     Integer delete(String ids);
+
+    List<Keyword> findByCustomerIdAndTitle(Long customerId, String title);
 }

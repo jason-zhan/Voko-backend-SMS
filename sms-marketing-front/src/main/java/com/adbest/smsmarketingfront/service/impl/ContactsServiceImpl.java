@@ -254,6 +254,17 @@ public class ContactsServiceImpl implements ContactsService {
         contactsDao.saveAll(contactsList);
     }
 
+    @Override
+    @Transactional
+    public Contacts save(Contacts contacts) {
+        return contactsDao.save(contacts);
+    }
+
+    @Override
+    public List<Contacts> findByPhoneAndCustomerId(String from, Long customerId) {
+        return contactsDao.findByPhoneAndCustomerId(from, customerId);
+    }
+
     @Transactional
     public void saveData(List<ContactsTemp> list,Long customerId,String groupId){
         if (list.size()<=0)return;

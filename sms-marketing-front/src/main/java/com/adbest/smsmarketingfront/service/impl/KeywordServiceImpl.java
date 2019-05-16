@@ -96,4 +96,9 @@ public class KeywordServiceImpl implements KeywordService {
         Integer row = keywordDao.deleteByCustomerIdAndIdIn(customerId, idList);
         return row;
     }
+
+    @Override
+    public List<Keyword> findByCustomerIdAndTitle(Long customerId, String title) {
+        return keywordDao.findByCustomerIdAndTitle(customerId, title);
+    }
 }

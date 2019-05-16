@@ -1,30 +1,37 @@
 package com.adbest.smsmarketingfront.service.impl;
 
-import com.adbest.smsmarketingentity.InboxStatus;
-import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingentity.QContacts;
-import com.adbest.smsmarketingentity.QMessageRecord;
+import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
+import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
+import com.adbest.smsmarketingfront.service.ContactsService;
+import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
+import com.adbest.smsmarketingfront.service.MobileNumberService;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
+import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.transaction.Transactional;
+import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -42,6 +49,15 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     Map<Integer,String> inboxStatusMap;
     @Autowired
     Map<Integer,String> outboxStatusMap;
+
+    @Autowired
+    private MobileNumberService mobileNumberService;
+
+    @Autowired
+    private ContactsService contactsService;
+
+    @Autowired
+    private KeywordService keywordService;
     
     @Override
     public int delete(List<Long> idList) {
@@ -141,5 +157,49 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("enter outboxStatusMap");
         log.info("leave outboxStatusMap");
         return outboxStatusMap;
+    }
+
+    @Override
+    @Transactional
+    public void saveInbox(InboundMsg inboundMsg) {
+        List<MobileNumber> list = mobileNumberService.findByNumberAndDisable(inboundMsg.getTo(), false);
+        if (list.size()<=0){return;}
+        MobileNumber mobileNumber = list.get(0);
+        List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(inboundMsg.getFrom(), mobileNumber.getCustomerId());
+        Contacts contacts = null;
+        if (contactsList.size()<=0){
+            contacts = new Contacts();
+            contacts.setIsDelete(false);
+            contacts.setInLock(false);
+            contacts.setCustomerId(mobileNumber.getCustomerId());
+            contacts.setPhone(inboundMsg.getFrom());
+            contacts.setSource(ContactsSource.API_Added.getValue());
+            contactsService.save(contacts);
+        }else {
+            contacts = contactsList.get(0);
+        }
+        MessageRecord messageRecord = new MessageRecord();
+        messageRecord.setSegments(1);
+        messageRecord.setSms(inboundMsg.getMediaList().size()>0?false:true);
+        messageRecord.setCustomerId(mobileNumber.getCustomerId());
+        messageRecord.setContent(inboundMsg.getBody());
+        List<String> urls = inboundMsg.getMediaList().stream().map(s -> s.getMediaUrl()).collect(Collectors.toList());
+        messageRecord.setMediaList(urls.size()>0?urls.toString().substring(1,urls.toString().length()-1):null);
+        messageRecord.setContactsId(contacts.getId());
+        messageRecord.setContactsNumber(inboundMsg.getFrom());
+        messageRecord.setInbox(true);
+        messageRecord.setDisable(false);
+        messageRecord.setSendTime(new Timestamp(System.currentTimeMillis()));
+        messageRecord.setStatus(InboxStatus.UNREAD.getValue());
+        messageRecordDao.save(messageRecord);
+        if (inboundMsg.getBody().indexOf(" ")!=-1){return;}
+        List<Keyword> keywords = keywordService.findByCustomerIdAndTitle(mobileNumber.getCustomerId(), inboundMsg.getBody());
+        if (keywords.size()<=0){return;}
+        //自动回复
+        MessageRecord send = new MessageRecord();
+    }
+
+    public void sendSms(MessageRecord messageRecord){
+
     }
 }
