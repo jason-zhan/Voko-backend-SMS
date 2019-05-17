@@ -1,6 +1,9 @@
 package com.adbest.smsmarketingfront.dao;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -47,5 +50,15 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     MessageRecord findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     
-    MessageRecord findTopBySid(String sid);
+    @Transactional
+    @Modifying
+    @Query("update MessageRecord set status = ?2 where planId = ?1 and disable = false")
+    long updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
+    
+    long countByPlanIdAndDisableIsFalse(Long planId);
+    
+    long countByPlanIdAndStatusAndDisableIsFalse(Long planId, int status);
+    
+    Page<MessageRecord> findByPlanIdAndStatusAndDisableIsFalse(Long planId, int status, Pageable pageable);
+    
 }

@@ -4,41 +4,38 @@ import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.OutboxStatus;
-import com.adbest.smsmarketingentity.QMessagePlan;
-import com.adbest.smsmarketingentity.QMessageRecord;
-import com.adbest.smsmarketingfront.service.MessageRecordComponent;
-import com.adbest.smsmarketingfront.util.PageBase;
+import com.adbest.smsmarketingfront.dao.MessagePlanDao;
+import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
-import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.QueryResults;
-import com.querydsl.jpa.impl.JPAQuery;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import com.twilio.rest.api.v2010.account.Message;
+import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
-import org.quartz.JobExecutionContext;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.domain.Page;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 /**
  * 消息业务 任务合集
  */
 @Component
+@Slf4j
 public class MessageTask {
     
     @Autowired
@@ -46,115 +43,116 @@ public class MessageTask {
     @Value("${twilio.viewFileUrl}")
     private String viewFileUrl;
     @Value("${twilio.planExecTimeDelay}")
-    private int planExecTimeDelay;  // 计划等候执行分钟数
+    private int planExecTimeDelay;  // 定时发送等候执行分钟数
+    private static final int repairTimeRange = 5;  // 修复定时发送预先探测分钟数
     
     @Autowired
-    private MessageRecordComponent messageRecordComponent;
+    MessagePlanDao messagePlanDao;
+    @Autowired
+    MessageRecordDao messageRecordDao;
+    
     @Autowired
     private Scheduler scheduler;
-    @Autowired
-    JPAQueryFactory queryFactory;
     
     private static final int singleThreadSendNum = 1000;
     
     // 生成定时发送消息的任务(job)
     @Scheduled(cron = "15 0/10 * * * ?")
     public void generateSendMsgThread() {
-        QMessagePlan qMessagePlan = QMessagePlan.messagePlan;
-        QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
+        log.info("enter generateSendMsgThread [task]");
         // 获取待执行定时发送任务
-        List<MessagePlan> planList = getAllTobeExecutingPlan(qMessagePlan);
-        // 条件复用
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qMessageRecord.disable.isFalse());
-        PageBase pageBase = new PageBase();
-        pageBase.setSize(singleThreadSendNum);
+        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
+                TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay));
         for (MessagePlan plan : planList) {
-            while (true) {
-                JPAQuery<MessageRecord> jpaQuery = queryFactory.select(qMessageRecord).from(qMessageRecord)
-                        .where(builder.and(qMessageRecord.planId.eq(plan.getId())));
-                Page<MessageRecord> messagePage = getTobeSendMsgList(jpaQuery, pageBase);
-                generateScheduledJob(plan, messagePage);
-                if (messagePage.isLast()) {
-                    break;
-                }
-            }
-            
-        }
-        
-        
-        for (int i = 0; i < 10; i++) {
-            Map map = new HashMap();
-            map.put("index", i);
-            map.put("even", i % 2 == 0);
-            map.put("messageRecordComponent", messageRecordComponent);
-            JobDetail jobDetail = JobBuilder.newJob(JobTest.class).setJobData(new JobDataMap(map)).withIdentity("" + i, "job-key-").build();
-            Trigger trigger = TriggerBuilder.newTrigger().startAt(TimeTools.addSeconds(TimeTools.now(), i * 5)).build();
+            log.info("do planId: " + plan.getId());
             try {
-                scheduler.scheduleJob(jobDetail, trigger);
-            } catch (SchedulerException e) {
-                e.printStackTrace();
+                // 锁定任务状态
+                messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+                // 锁定消息状态
+                messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+                // 分发任务
+                long count = messageRecordDao.countByPlanIdAndDisableIsFalse(plan.getId());
+                int number = 0;
+                long totalPage = count % singleThreadSendNum == 0 ? count / singleThreadSendNum : count / singleThreadSendNum + 1;
+                while (number < totalPage) {
+                    generateScheduledJob(plan, number);
+                    number++;
+                }
+            } catch (Exception e) {
+                log.info("message plan generate job shut down", e);
             }
         }
+        
+        // 测试代码块
+        for (int i = 0; i < 20; i++) {
+            log.info("do planId: " + i);
+            long totalPage = 1 + new Random().nextInt(5);
+            int number = 0;
+            while (number < totalPage) {
+                MessagePlan plan = new MessagePlan();
+                plan.setId((long) i);
+                plan.setExecTime(TimeTools.addSeconds(TimeTools.now(), i * 5));
+                generateScheduledJob(plan, number);
+                number++;
+            }
+        }
+        log.info("leave generateSendMsgThread [task]");
     }
     
     // 异常发送修补线程
     @Scheduled(cron = "0/5 * * * * ?")
     public void repairSendMsg() {
-        System.out.println("== do repairSendMsg ==");
+        log.info("enter repairSendMsg [task]");
+        // 所有队列中的任务
+        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
+                TimeTools.addMinutes(TimeTools.now(), repairTimeRange));
+        if (planList.size() == 0) {
+            return;
+        }
         try {
-            List<JobExecutionContext> jobs = scheduler.getCurrentlyExecutingJobs();
-            for (JobExecutionContext job : jobs) {
-                System.out.println("executing job:" + job.getJobDetail().getKey());
+            List<String> groupNames = scheduler.getJobGroupNames();
+            // 排除当前正在运行的任务
+            for (String name : groupNames) {
+                planList.removeIf(plan -> name.equals(plan.getId().toString()));
+                System.out.println("group [" + name + "] exists");
+            }
+            // 分发任务
+            for (MessagePlan plan : planList) {
+                long count = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+                int number = 0;
+                long totalPage = count % singleThreadSendNum == 0 ? count / singleThreadSendNum : count / singleThreadSendNum + 1;
+                while (number < totalPage) {
+                    generateScheduledJob(plan, number);
+                    number++;
+                }
             }
         } catch (SchedulerException e) {
             e.printStackTrace();
         }
-        System.out.println("== leave repairSendMsg ==");
+        log.info("leave repairSendMsg [task]");
     }
     
-    // 发送消息
-    private void sendMessage(List<MessageRecord> messageList) {
-        for (MessageRecord message : messageList) {
-            PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
-            Message sentMsg = twilioUtil.sendMessage(preSendMsg);
-            message.setSid(sentMsg.getSid());
-            message.setStatus(OutboxStatus.SENT.getValue());
-            message.setSendTime(TimeTools.now());
-            messageRecordComponent.updateMessage(message);
-        }
-    }
-    
-    // 获取所有待执行定时发送任务
-    private List<MessagePlan> getAllTobeExecutingPlan(QMessagePlan qMessagePlan) {
-        BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qMessagePlan.status.eq(MessagePlanStatus.SCHEDULING.getValue()))
-                .and(qMessagePlan.execTime.before(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)));
-        List<MessagePlan> planList = queryFactory.select(qMessagePlan).from(qMessagePlan).where(builder).fetch();
-        return planList;
-    }
-    
-    // 生成定时发送任务
-    private void generateScheduledJob(MessagePlan plan, Page<MessageRecord> messagePage) {
+    /**
+     * 生成定时发送任务
+     *
+     * @param plan   定时发送任务
+     * @param number 消息列表当前页
+     */
+    private void generateScheduledJob(MessagePlan plan, int number) {
         Map map = new HashMap();
-        map.put("messagePage", messagePage);
-        JobDetail jobDetail = JobBuilder.newJob(JobTest.class).setJobData(new JobDataMap(map))
-                .withIdentity("" + messagePage.getNumber(), plan.getId() + "").build();
+        map.put("size", singleThreadSendNum);
+        map.put("messagePlanDao", messagePlanDao);
+        map.put("messageRecordDao", messageRecordDao);
+        map.put("twilioUtil", twilioUtil);
+        map.put("viewFileUrl", viewFileUrl);
+        JobDetail jobDetail = JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
+                .withIdentity("" + number, plan.getId() + "").build();
         Trigger trigger = TriggerBuilder.newTrigger().startAt(plan.getExecTime()).build();
         try {
             scheduler.scheduleJob(jobDetail, trigger);
         } catch (SchedulerException e) {
             e.printStackTrace();
         }
-        // TODO 改变计划状态
     }
     
-    // 获取一批待发送消息
-    private Page<MessageRecord> getTobeSendMsgList(JPAQuery<MessageRecord> jpaQuery, PageBase pageBase) {
-        QueryResults<MessageRecord> queryResults = jpaQuery.offset(pageBase.getPage() * pageBase.getSize())
-                .limit(pageBase.getSize())
-                .fetchResults();
-        Page<MessageRecord> messagePage = PageBase.toPageEntity(queryResults, pageBase);
-        return messagePage;
-    }
 }
