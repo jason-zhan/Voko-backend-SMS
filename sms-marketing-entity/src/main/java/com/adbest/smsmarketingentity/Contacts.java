@@ -6,6 +6,7 @@ import org.hibernate.annotations.CreationTimestamp;
 import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 
 /**
  * 联系人 [客户手动导入的联系人]
@@ -40,5 +41,8 @@ public class Contacts implements Serializable {
      * @see ContactsSource
      */
     private Integer source;  // 来源
+
+    @Transient
+    private List<ContactsGroup> groups;
 
 }

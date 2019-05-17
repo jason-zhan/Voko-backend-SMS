@@ -3,8 +3,10 @@ package com.adbest.smsmarketingfront.service;
 import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
+import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import org.springframework.data.domain.Page;
 
+import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -34,4 +36,6 @@ public interface MessageRecordService {
     
     // 发件箱消息状态
     Map<Integer, String> outboxStatusMap();
+
+    void saveInbox(InboundMsg inboundMsg);
 }

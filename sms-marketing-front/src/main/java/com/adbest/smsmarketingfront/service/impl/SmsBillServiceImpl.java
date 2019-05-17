@@ -53,4 +53,9 @@ public class SmsBillServiceImpl implements SmsBillService {
         log.info("leave findByConditions");
         return billPage;
     }
+
+    @Override
+    public Long sumByCustomerId(Long customerId) {
+        return smsBillDao.sumByCustomerId(customerId);
+    }
 }

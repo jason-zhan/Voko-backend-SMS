@@ -37,4 +37,8 @@ public interface ContactsService {
     List<ContactsVo> upload(MultipartFile file);
 
     void saveAll(List<Contacts> contactsList);
+
+    Contacts save(Contacts contacts);
+
+    List<Contacts> findByPhoneAndCustomerId(String from, Long customerId);
 }

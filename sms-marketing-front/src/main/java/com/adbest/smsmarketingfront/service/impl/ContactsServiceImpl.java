@@ -33,6 +33,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.io.InputStream;
+import java.sql.Array;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -117,8 +118,12 @@ public class ContactsServiceImpl implements ContactsService {
         ServiceException.isTrue(Optional.isPresent(), returnMsgUtil.msg("CONTACTS_NOT_EXISTS"));
         Contacts contacts = Optional.get();
         ServiceException.isTrue(contacts.getCustomerId()==customerId, returnMsgUtil.msg("CONTACTS_NOT_EXISTS"));
-        contacts.setIsDelete(isLock);
-        contacts.setInLockTime(new Timestamp(System.currentTimeMillis()));
+        contacts.setInLock(isLock);
+        if (isLock){
+            contacts.setInLockTime(new Timestamp(System.currentTimeMillis()));
+        }else {
+            contacts.setInLockTime(null);
+        }
         contactsDao.save(contacts);
         return true;
     }
@@ -200,6 +205,24 @@ public class ContactsServiceImpl implements ContactsService {
                 .limit(selectContactsForm.getSize())
                 .fetchResults();;
         Page<Contacts> page = PageBase.toPageEntity(queryResults, selectContactsForm);
+        Map<Long, Contacts> contactsMap = page.stream().collect(Collectors.toMap(Contacts::getId, contacts -> contacts));
+        if (page.getContent().size()>0){
+            List<Long> ids = page.getContent().stream().map(s -> s.getId()).collect(Collectors.toList());
+            List<Object> list = contactsGroupService.findByContentIn(ids);
+            ContactsGroup contactsGroup = null;
+            for (Object obj : list) {
+                Object[] objects = (Object[]) obj;
+                if (objects[2]==null){continue;}
+                Contacts contacts = contactsMap.get(Long.valueOf(objects[0].toString()));
+                contactsGroup = new ContactsGroup();
+                contactsGroup.setTitle(objects[1].toString());
+                contactsGroup.setId(Long.valueOf(objects[2].toString()));
+                if (contacts.getGroups()==null){
+                    contacts.setGroups(new ArrayList<>());
+                }
+                contacts.getGroups().add(contactsGroup);
+            }
+        }
         return new PageDataVo(page);
     }
 
@@ -252,6 +275,17 @@ public class ContactsServiceImpl implements ContactsService {
     @Transactional
     public void saveAll(List<Contacts> contactsList) {
         contactsDao.saveAll(contactsList);
+    }
+
+    @Override
+    @Transactional
+    public Contacts save(Contacts contacts) {
+        return contactsDao.save(contacts);
+    }
+
+    @Override
+    public List<Contacts> findByPhoneAndCustomerId(String from, Long customerId) {
+        return contactsDao.findByPhoneAndCustomerId(from, customerId);
     }
 
     @Transactional

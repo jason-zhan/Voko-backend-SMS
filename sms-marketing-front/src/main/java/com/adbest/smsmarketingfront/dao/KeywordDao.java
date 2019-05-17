@@ -21,4 +21,6 @@ public interface KeywordDao extends JpaRepository<Keyword, Long> {
     @Transactional
     @Query(value = "delete from Keyword k where k.customerId = :customerId and k.id in :ids")
     Integer deleteByCustomerIdAndIdIn(Long customerId, List<Long> ids);
+
+    List<Keyword> findByCustomerIdAndTitle(Long customerId, String title);
 }

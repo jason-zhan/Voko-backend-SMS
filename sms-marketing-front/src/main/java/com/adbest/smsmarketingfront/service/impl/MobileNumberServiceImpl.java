@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.util.List;
 
 @Service
 public class MobileNumberServiceImpl implements MobileNumberService {
@@ -19,5 +20,10 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     @Transactional
     public MobileNumber save(MobileNumber mobileNumber) {
         return mobileNumberDao.save(mobileNumber);
+    }
+
+    @Override
+    public List<MobileNumber> findByNumberAndDisable(String phone, boolean disable) {
+        return mobileNumberDao.findByNumberAndDisable(phone, disable);
     }
 }

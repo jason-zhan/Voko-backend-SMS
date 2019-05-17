@@ -29,4 +29,5 @@ public interface ContactsGroupService {
 
     List<ContactsGroup> findAll();
 
+    List<Object> findByContentIn(List<Long> ids);
 }

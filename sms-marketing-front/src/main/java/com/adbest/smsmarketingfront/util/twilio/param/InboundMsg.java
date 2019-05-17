@@ -113,4 +113,27 @@ public class InboundMsg {
         
         return inboundMsg;
     }
+
+    @Override
+    public String toString() {
+        return "InboundMsg{" +
+                "MessageSid='" + MessageSid + '\'' +
+                ", SmsSid='" + SmsSid + '\'' +
+                ", AccountSid='" + AccountSid + '\'' +
+                ", MessagingServiceSid='" + MessagingServiceSid + '\'' +
+                ", From='" + From + '\'' +
+                ", To='" + To + '\'' +
+                ", Body='" + Body + '\'' +
+                ", NumMedia='" + NumMedia + '\'' +
+                ", mediaList=" + mediaList +
+                ", FromCity='" + FromCity + '\'' +
+                ", FromState='" + FromState + '\'' +
+                ", FromZip='" + FromZip + '\'' +
+                ", FromCountry='" + FromCountry + '\'' +
+                ", ToCity='" + ToCity + '\'' +
+                ", ToState='" + ToState + '\'' +
+                ", ToZip='" + ToZip + '\'' +
+                ", ToCountry='" + ToCountry + '\'' +
+                '}';
+    }
 }
