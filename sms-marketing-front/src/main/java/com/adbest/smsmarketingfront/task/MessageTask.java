@@ -57,7 +57,7 @@ public class MessageTask {
     private static final int singleThreadSendNum = 1000;
     
     // 生成定时发送消息的任务(job)
-    @Scheduled(cron = "15 0/10 * * * ?")
+//    @Scheduled(cron = "15 0/10 * * * ?")
     public void generateSendMsgThread() {
         log.info("enter generateSendMsgThread [task]");
         // 获取待执行定时发送任务
@@ -100,7 +100,8 @@ public class MessageTask {
     }
     
     // 异常发送修补线程
-    @Scheduled(cron = "0/5 * * * * ?")
+//    @Scheduled(cron = "0/5 * * * * ?")
+//    @Scheduled(cron = "15 5/10 * * * ?")
     public void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中的任务
