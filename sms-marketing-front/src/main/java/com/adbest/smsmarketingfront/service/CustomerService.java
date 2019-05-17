@@ -25,4 +25,8 @@ public interface CustomerService extends UserDetailsService {
     List<Customer> findByEmailIn(List<String> emails);
 
     void initCustomerData(Customer customer);
+
+    boolean changePassword(String password, String newPassword);
+
+    boolean updateInfo(CustomerForm customerForm);
 }

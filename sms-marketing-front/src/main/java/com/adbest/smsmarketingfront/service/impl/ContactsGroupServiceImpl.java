@@ -131,7 +131,8 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
 
     @Override
     public List<ContactsGroup> findAll() {
-        return contactsGroupDao.findAll();
+        Long customerId = Current.get().getId();
+        return contactsGroupDao.findByCustomerId(customerId);
     }
 
     @Override
