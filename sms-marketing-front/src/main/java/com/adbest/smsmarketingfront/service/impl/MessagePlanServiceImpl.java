@@ -43,10 +43,12 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.ResourceBundle;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -105,7 +107,6 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
             }
         }
-        // TODO 消费账单
         // 产生消息账单
         if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
             smsBillComponent.saveSmsBill(bundle.getString("scheduled send: " + plan.getTitle()), -msgTotal);
@@ -150,8 +151,12 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 msgTotal += batchSaveMessage(contactsGroupId, update, found.getId());
             }
         }
-        // TODO 校验套餐内余量
-        
+        // 产生消息账单
+        if (update.getMediaIdlList() == null || update.getMediaIdlList().size() == 0) {
+            smsBillComponent.saveSmsBill(bundle.getString("scheduled send: " + found.getTitle()), -msgTotal);
+        } else {
+            mmsBillComponent.saveMmsBill(bundle.getString("scheduled send: " + found.getTitle()), -msgTotal);
+        }
         log.info("leave update");
         return 1;
     }
@@ -271,15 +276,15 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     private List<String> validFromNumberLi(List<Long> numberIdList) {
-        Map<Long, String> validNumberMap = new HashMap<>();
+        Set<String> numberSet = new HashSet<>();
         CustomerVo cur = Current.get();
         for (Long numberId : numberIdList) {
             MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, cur.getId());
             if (mobileNumber != null) {
-                validNumberMap.put(numberId, mobileNumber.getNumber());
+                numberSet.add(mobileNumber.getNumber());
             }
         }
-        return (List<String>) validNumberMap.values();
+        return Arrays.asList((String[]) numberSet.toArray());
     }
     
     private MessageRecord generateMessage(CreateMessagePlan plan, Contacts contacts) {

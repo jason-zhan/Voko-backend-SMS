@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import javax.annotation.Syntax;
 import javax.transaction.Transactional;
 
 
@@ -21,6 +22,7 @@ public class SmsBillComponentImpl implements SmsBillComponent {
     
     @Override
     public int saveSmsBill(String describe, Integer amount) {
+        // TODO 同步校验
         log.info("enter saveSmsBill, describe=" + describe + ", amount=" + amount);
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");

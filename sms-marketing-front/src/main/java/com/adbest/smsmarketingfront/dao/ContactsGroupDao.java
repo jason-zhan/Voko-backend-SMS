@@ -6,6 +6,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import javax.transaction.Transactional;
 import java.util.List;
@@ -26,7 +27,7 @@ public interface ContactsGroupDao extends JpaRepository<ContactsGroup, Long> {
 
     @Query(value = "SELECT a.contacts_id,b.title,b.id FROM contacts_link_group a LEFT JOIN contacts_group b ON a.group_id = b.id where a.contacts_id in :ids"
             ,nativeQuery = true)
-    List<Object> findByContentIn(List<Long> ids);
+    List<Object> findByContentIn(@Param("ids") List<Long> ids);
 
     List<ContactsGroup> findByCustomerId(Long customerId);
 }
