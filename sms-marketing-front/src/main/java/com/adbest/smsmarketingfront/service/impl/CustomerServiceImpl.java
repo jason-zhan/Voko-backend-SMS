@@ -9,6 +9,7 @@ import com.adbest.smsmarketingfront.entity.vo.UserDetailsVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.CommonMessage;
+import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.EncryptTools;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
@@ -150,6 +151,33 @@ public class CustomerServiceImpl implements  CustomerService {
             MmsBill mmsBill = new MmsBill(customer.getId(),infoDescribe,marketSetting.getSmsTotal());
             mmsBillComponent.save(mmsBill);
         }
+    }
+
+    @Override
+    @Transactional
+    public boolean changePassword(String password, String newPassword) {
+        Long customerId = Current.get().getId();
+        ServiceException.hasText(password, returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
+        ServiceException.hasText(newPassword, returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
+        ServiceException.isTrue(Customer.checkPassword(newPassword), returnMsgUtil.msg("PASSWORD_INCORRECT_FORMAT"));
+        Customer customer = customerDao.findById(customerId).get();
+        ServiceException.isTrue(customer.getPassword().equals(encryptTools.encrypt(password)), returnMsgUtil.msg("PASSWORD_INCORRECT"));
+        customer.setPassword(encryptTools.encrypt(newPassword));
+        customerDao.save(customer);
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean updateInfo(CustomerForm customerForm) {
+        Long customerId = Current.get().getId();
+        Customer customer = customerDao.findById(customerId).get();
+        customer.setOrganization(customerForm.getOrganization());
+        customer.setIndustry(customerForm.getIndustry());
+        customer.setLastName(customerForm.getLastName());
+        customer.setFirstName(customerForm.getFirstName());
+        customerDao.save(customer);
+        return true;
     }
 
     public void initPhone(Customer customer,int i){

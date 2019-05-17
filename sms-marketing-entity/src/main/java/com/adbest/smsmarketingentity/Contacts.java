@@ -42,7 +42,4 @@ public class Contacts implements Serializable {
      */
     private Integer source;  // 来源
 
-    @Transient
-    private List<ContactsGroup> groups;
-
 }

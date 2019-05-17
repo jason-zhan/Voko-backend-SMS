@@ -27,4 +27,6 @@ public interface ContactsGroupDao extends JpaRepository<ContactsGroup, Long> {
     @Query(value = "SELECT a.contacts_id,b.title,b.id FROM contacts_link_group a LEFT JOIN contacts_group b ON a.group_id = b.id where a.contacts_id in :ids"
             ,nativeQuery = true)
     List<Object> findByContentIn(List<Long> ids);
+
+    List<ContactsGroup> findByCustomerId(Long customerId);
 }

@@ -22,7 +22,6 @@ public class LoginController {
     @RequestMapping("/nologin")
     public ReturnEntity login() {
         return ReturnEntity.fail(ResponseCode.T401.getStauts(),returnMsgUtil.msg("T401"));
-//        return ReturnEntity.fail(ResponseCode.T401.getStauts(),"未登录");
     }
 
     @PostMapping("/register")

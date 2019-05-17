@@ -194,7 +194,7 @@ public class ContactsServiceImpl implements ContactsService {
         builder.and(qContacts.isDelete.isFalse());
         JPAQuery<Contacts> jpaQuery = null;
         if (!StringUtils.isEmpty(selectContactsForm.getGroupId())){
-            builder.and(qContactsLinkGroup.id.eq(Long.valueOf(selectContactsForm.getGroupId())));
+            builder.and(qContactsLinkGroup.groupId.eq(Long.valueOf(selectContactsForm.getGroupId())));
             jpaQuery = jpaQueryFactory.select(qContacts)
                     .from(qContacts).rightJoin(qContactsLinkGroup).on(qContacts.id.eq(qContactsLinkGroup.contactsId));
         }else {
@@ -205,7 +205,9 @@ public class ContactsServiceImpl implements ContactsService {
                 .limit(selectContactsForm.getSize())
                 .fetchResults();;
         Page<Contacts> page = PageBase.toPageEntity(queryResults, selectContactsForm);
-        Map<Long, Contacts> contactsMap = page.stream().collect(Collectors.toMap(Contacts::getId, contacts -> contacts));
+//        Map<Long, Contacts> contactsMap = page.stream().collect(Collectors.toMap(Contacts::getId, contacts -> contacts));
+        List<ContactsVo> contactsVos = page.getContent().stream().map(s -> new ContactsVo(s)).collect(Collectors.toList());
+        Map<Long, ContactsVo> contactsMap = contactsVos.stream().collect(Collectors.toMap(ContactsVo::getId, contacts -> contacts));
         if (page.getContent().size()>0){
             List<Long> ids = page.getContent().stream().map(s -> s.getId()).collect(Collectors.toList());
             List<Object> list = contactsGroupService.findByContentIn(ids);
@@ -213,7 +215,7 @@ public class ContactsServiceImpl implements ContactsService {
             for (Object obj : list) {
                 Object[] objects = (Object[]) obj;
                 if (objects[2]==null){continue;}
-                Contacts contacts = contactsMap.get(Long.valueOf(objects[0].toString()));
+                ContactsVo contacts = contactsMap.get(Long.valueOf(objects[0].toString()));
                 contactsGroup = new ContactsGroup();
                 contactsGroup.setTitle(objects[1].toString());
                 contactsGroup.setId(Long.valueOf(objects[2].toString()));
@@ -223,7 +225,7 @@ public class ContactsServiceImpl implements ContactsService {
                 contacts.getGroups().add(contactsGroup);
             }
         }
-        return new PageDataVo(page);
+        return new PageDataVo(page, contactsVos);
     }
 
     @Override

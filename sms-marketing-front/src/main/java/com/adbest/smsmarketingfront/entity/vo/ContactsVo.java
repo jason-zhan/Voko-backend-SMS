@@ -1,12 +1,13 @@
 package com.adbest.smsmarketingfront.entity.vo;
 
 import com.adbest.smsmarketingentity.Contacts;
-import com.adbest.smsmarketingentity.Customer;
+import com.adbest.smsmarketingentity.ContactsGroup;
 import lombok.Data;
 
 import javax.persistence.Column;
 import java.io.Serializable;
 import java.sql.Timestamp;
+import java.util.List;
 
 @Data
 public class ContactsVo implements Serializable {
@@ -20,6 +21,7 @@ public class ContactsVo implements Serializable {
     private Boolean inLock;  // 锁定(true:是)
     private Timestamp createTime;  // 创建时间
     private Timestamp inLockTime;  // 锁定时间
+    private List<ContactsGroup> groups;
     public ContactsVo(Contacts contacts){
         this.id = contacts.getId();
         this.phone = contacts.getPhone();
