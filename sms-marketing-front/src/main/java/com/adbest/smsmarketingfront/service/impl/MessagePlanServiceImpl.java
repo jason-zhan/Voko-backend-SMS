@@ -91,7 +91,6 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
-        
         plan.setCustomerId(Current.get().getId());
         plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         plan.setDisable(false);
@@ -106,6 +105,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
             }
         }
+        // TODO 消费账单
         // 产生消息账单
         if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
             smsBillComponent.saveSmsBill(bundle.getString("scheduled send: " + plan.getTitle()), -msgTotal);
@@ -262,7 +262,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM,
                 bundle.getString("msg-plan-media-list"));
         
-        ServiceException.isTrue(create.getFromNumList() != null && create.getFromNumList().size() > 0,
+        ServiceException.isTrue(create.getFromList() != null && create.getFromList().size() > 0,
                 bundle.getString("msg-plan-from"));
         
         ServiceException.isTrue((create.getToList() != null && create.getToList().size() > 0) ||

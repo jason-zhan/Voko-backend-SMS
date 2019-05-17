@@ -36,13 +36,13 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set status = 2 where id = ?1")
-    int markReadOne(Long id);
+    @Query("update MessageRecord set status = ?2 where id = ?1")
+    int updateStatusById(Long id, int status);
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set status = 2 where id = ?1 and customerId = ?2 and inbox = true")
-    int markReadOne(Long id, Long customerId);
+    @Query("update MessageRecord set status = ?3 where id = ?1 and customerId = ?2 and inbox = true")
+    int updateStatusByIdAndCustomerId(Long id, Long customerId, int status);
     
     // 根据计划id统计实际发送消息条数
     @Query("select sum(segments) from MessageRecord where planId = ?1")

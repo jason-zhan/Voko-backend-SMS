@@ -24,6 +24,9 @@ import org.springframework.data.domain.Sort;
 import java.util.List;
 import java.util.UUID;
 
+/**
+ * 发送消息作业
+ */
 @Slf4j
 public class SendMessageJob implements Job {
     

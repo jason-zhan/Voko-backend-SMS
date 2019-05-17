@@ -56,9 +56,11 @@ public class MessageTask {
     
     private static final int singleThreadSendNum = 1000;
     
-    // 生成定时发送消息的任务(job)
+    /**
+     * 分发定时发送消息作业(job)
+     */
 //    @Scheduled(cron = "15 0/10 * * * ?")
-    public void generateSendMsgThread() {
+    public void distributeSendMsgJob() {
         log.info("enter generateSendMsgThread [task]");
         // 获取待执行定时发送任务
         List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
@@ -99,7 +101,9 @@ public class MessageTask {
         log.info("leave generateSendMsgThread [task]");
     }
     
-    // 异常发送修补线程
+    /**
+     * 修补发送消息作业异常
+     */
 //    @Scheduled(cron = "0/5 * * * * ?")
 //    @Scheduled(cron = "15 5/10 * * * ?")
     public void repairSendMsg() {
@@ -134,7 +138,7 @@ public class MessageTask {
     }
     
     /**
-     * 生成定时发送任务
+     * 生成定时发送作业
      *
      * @param plan   定时发送任务
      * @param number 消息列表当前页
