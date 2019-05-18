@@ -31,11 +31,6 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set disable = ?3 where id = ?1 and customerId = ?2")
-    int disableByIdAndCustomerId(Long id, Long customerId, boolean disable);
-    
-    @Transactional
-    @Modifying
     @Query("update MessageRecord set status = ?2 where id = ?1")
     int updateStatusById(Long id, int status);
     

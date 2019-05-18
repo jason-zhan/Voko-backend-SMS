@@ -30,4 +30,6 @@ public interface ContactsGroupDao extends JpaRepository<ContactsGroup, Long> {
     List<Object> findByContentIn(@Param("ids") List<Long> ids);
 
     List<ContactsGroup> findByCustomerId(Long customerId);
+ 
+    ContactsGroup findByIdAndCustomerId(Long id, Long customerId);
 }

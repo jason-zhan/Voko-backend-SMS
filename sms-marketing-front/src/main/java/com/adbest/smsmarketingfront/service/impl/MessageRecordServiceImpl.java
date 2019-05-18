@@ -12,18 +12,14 @@ import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
-import com.querydsl.core.types.ConstructorExpression;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.twilio.rest.api.v2010.account.Message;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -31,11 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -82,9 +78,20 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 bundle.getString("msg-record-id-list").replace("$action$", "delete"));
         CustomerVo cur = Current.get();
         int result = 0;
+        String errMsg = "";
         for (Long id : idList) {
-            result += messageRecordDao.disableByIdAndCustomerId(id, cur.getId(), true);
+            Optional<MessageRecord> optional = messageRecordDao.findById(id);
+            if (optional.isPresent()) {
+                MessageRecord message = optional.get();
+                Assert.isTrue(cur.getId().equals(message.getCustomerId()), "can't delete other customer's message.");
+                if (!message.getInbox() && OutboxStatus.QUEUE.getValue() == message.getStatus()) {
+                    errMsg = bundle.getString("msg-record-delete-status").replace("$status$", OutboxStatus.QUEUE.getTitle());
+                    continue;
+                }
+                result += messageRecordDao.disableById(id, true);
+            }
         }
+        ServiceException.isTrue(StringUtils.isEmpty(errMsg), errMsg);
         log.info("leave deleteOneMessage");
         return result;
     }
@@ -126,7 +133,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
         QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
-                Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, null))
+                Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
                 .where(builder)
@@ -155,7 +162,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
                 .leftJoin(qCGroup).on(qMessageRecord.contactsGroupId.eq(qCGroup.id))
                 .where(builder)
-                .orderBy(qMessageRecord.sendTime.desc())
+                .orderBy(qMessageRecord.createTime.desc())
                 .offset(getOutboxPage.getPage() * getOutboxPage.getSize())
                 .limit(getOutboxPage.getSize())
                 .fetchResults();
@@ -200,7 +207,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         }
         MessageRecord messageRecord = new MessageRecord();
         messageRecord.setSegments(1);
-        messageRecord.setSms((inboundMsg.getMediaList() != null && inboundMsg.getMediaList().size() > 0) ? false : true);
+        messageRecord.setSms(inboundMsg.getMediaList() == null || inboundMsg.getMediaList().size() == 0);
         messageRecord.setCustomerId(mobileNumber.getCustomerId());
         messageRecord.setCustomerNumber(inboundMsg.getTo());
         messageRecord.setContent(inboundMsg.getBody());

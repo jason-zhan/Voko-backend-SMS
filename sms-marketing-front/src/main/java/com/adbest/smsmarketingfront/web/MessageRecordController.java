@@ -58,12 +58,14 @@ public class MessageRecordController {
     }
     @RequestMapping("/inbox-status")
     @ResponseBody
-    public Map<Integer, String> inboxStatusMap() {
-        return messageRecordService.inboxStatusMap();
+    public ReturnEntity inboxStatusMap() {
+        Map<Integer, String> map = messageRecordService.inboxStatusMap();
+        return ReturnEntity.success(map);
     }
     @RequestMapping("/outbox-status")
     @ResponseBody
-    public Map<Integer, String> outboxStatusMap() {
-        return messageRecordService.outboxStatusMap();
+    public ReturnEntity outboxStatusMap() {
+        Map<Integer, String> map = messageRecordService.outboxStatusMap();
+        return ReturnEntity.success(map);
     }
 }

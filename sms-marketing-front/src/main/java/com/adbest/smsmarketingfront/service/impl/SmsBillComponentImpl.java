@@ -22,12 +22,13 @@ public class SmsBillComponentImpl implements SmsBillComponent {
     
     @Override
     public int saveSmsBill(String describe, Integer amount) {
-        // TODO 同步校验
+        // TODO 并发控制
         log.info("enter saveSmsBill, describe=" + describe + ", amount=" + amount);
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
         SmsBill smsBill = new SmsBill();
-        smsBill.setCustomerId(Current.get().getId());
+//        smsBill.setCustomerId(Current.get().getId());
+        smsBill.setCustomerId(1L);
         smsBill.setInfoDescribe(describe);
         smsBill.setAmount(amount);
         smsBillDao.save(smsBill);

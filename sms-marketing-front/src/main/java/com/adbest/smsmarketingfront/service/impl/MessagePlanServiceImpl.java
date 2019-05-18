@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Contacts;
+import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingentity.MessagePlan;
@@ -9,6 +10,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.MsgTemplateVariable;
 import com.adbest.smsmarketingentity.QMessagePlan;
 import com.adbest.smsmarketingfront.dao.ContactsDao;
+import com.adbest.smsmarketingfront.dao.ContactsGroupDao;
 import com.adbest.smsmarketingfront.dao.MbNumberLibDao;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
@@ -43,7 +45,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     MessagePlanDao messagePlanDao;
     @Autowired
     ContactsDao contactsDao;
+    @Autowired
+    ContactsGroupDao contactsGroupDao;
     @Autowired
     MessageRecordDao messageRecordDao;
     @Autowired
@@ -79,7 +82,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     private int planExecTimeDelay;
     
     @Autowired
-    private Map<Integer,String> messagePlanStatusMap;
+    private Map<Integer, String> messagePlanStatusMap;
     
     @Transactional
     @Override
@@ -89,7 +92,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         checkMessagePlan(createPlan);
         // 检查客户有效号码
         List<String> fromNumList = validFromNumberLi(createPlan.getFromList());
-        ServiceException.isTrue(fromNumList.size() > 0, bundle.getString("msg-plan-from-invalid"));
+        createPlan.setFromNumList(fromNumList);
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
@@ -107,11 +110,12 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
             }
         }
+        Assert.isTrue(msgTotal > 0, "No message to be sent, for empty contacts list!");
         // 产生消息账单
         if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
-            smsBillComponent.saveSmsBill(bundle.getString("scheduled send: " + plan.getTitle()), -msgTotal);
+            smsBillComponent.saveSmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
         } else {
-            mmsBillComponent.saveMmsBill(bundle.getString("scheduled send: " + plan.getTitle()), -msgTotal);
+            mmsBillComponent.saveMmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
         }
         log.info("leave create");
         return 1;
@@ -130,7 +134,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.notNull(found, bundle.getString("msg-plan-not-exists"));
         // 检查客户有效号码
         List<String> fromNumList = validFromNumberLi(update.getFromList());
-        ServiceException.isTrue(fromNumList.size() > 0, bundle.getString("msg-plan-from-invalid"));
+        update.setFromNumList(fromNumList);
         // 更新定时任务
         Assert.isTrue(Current.get().getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
         ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == found.getStatus(),
@@ -280,11 +284,13 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         CustomerVo cur = Current.get();
         for (Long numberId : numberIdList) {
             MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, cur.getId());
+//            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, 1L);
             if (mobileNumber != null) {
                 numberSet.add(mobileNumber.getNumber());
             }
         }
-        return Arrays.asList((String[]) numberSet.toArray());
+        ServiceException.isTrue(numberSet.size() > 0, bundle.getString("msg-plan-from-invalid"));
+        return new ArrayList<>(numberSet);
     }
     
     private MessageRecord generateMessage(CreateMessagePlan plan, Contacts contacts) {
@@ -292,7 +298,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 计算实际消息内容
         String content = plan.getText()
                 .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName())
+//                .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), "01")
                 .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName())
+//                .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), "test")
                 .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.getFirstName())
                 .replace(MsgTemplateVariable.CON_LASTNAME.getTitle(), contacts.getLastName());
         ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
@@ -307,7 +315,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             messageRecord.setSms(false);
         }
         // 填充消息字段
-        messageRecord.setCustomerId(cur.getId());
+//        messageRecord.setCustomerId(cur.getId());
+        messageRecord.setCustomerId(1L);
         messageRecord.setContent(content);
         messageRecord.setMediaList(UrlTools.getUrlsStr(plan.getMediaIdlList()));
         messageRecord.setContactsId(contacts.getId());
@@ -344,11 +353,17 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     private int batchSaveMessage(Long contactsGroupId, CreateMessagePlan createPlan, Long planId) {
+        // 组验证
+        ContactsGroup contactsGroup = contactsGroupDao.findByIdAndCustomerId(contactsGroupId, Current.get().getId());
+        if (contactsGroup == null) {
+            log.info("contacts group(%s) not exists!", contactsGroupId);
+            return 0;
+        }
         int msgNum = 0;  // 消息条数
         int page = 0;
         Page<Contacts> contactsPage = null;
         do {
-            contactsPage = contactsDao.findByContactsGroupId(contactsGroupId, PageRequest.of(page, 1000));
+            contactsPage = contactsDao.findUsableByGroupId(contactsGroupId, PageRequest.of(page, 1000));
             List<Contacts> contactsList = contactsPage.getContent();
             List<MessageRecord> msgTempList = new ArrayList<>();
             for (int i = 0; i < contactsList.size(); i++) {

@@ -12,5 +12,4 @@ public interface SmsBillDao extends JpaRepository<SmsBill, Long>, JpaSpecificati
     @Query("select sum(amount) from SmsBill where customerId = :customerId")
     Long sumByCustomerId(Long customerId);
     
-    long sum
 }
