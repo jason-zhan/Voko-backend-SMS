@@ -96,7 +96,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
-        plan.setCustomerId(Current.get().getId());
+//        plan.setCustomerId(Current.get().getId());
+        plan.setCustomerId(1L);
         plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         plan.setDisable(false);
         messagePlanDao.save(plan);
@@ -281,10 +282,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     private List<String> validFromNumberLi(List<Long> numberIdList) {
         Set<String> numberSet = new HashSet<>();
-        CustomerVo cur = Current.get();
+//        CustomerVo cur = Current.get();
         for (Long numberId : numberIdList) {
-            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, cur.getId());
-//            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, 1L);
+//            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, cur.getId());
+            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, 1L);
             if (mobileNumber != null) {
                 numberSet.add(mobileNumber.getNumber());
             }
@@ -294,13 +295,13 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     private MessageRecord generateMessage(CreateMessagePlan plan, Contacts contacts) {
-        CustomerVo cur = Current.get();
+//        CustomerVo cur = Current.get();
         // 计算实际消息内容
         String content = plan.getText()
-                .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName())
-//                .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), "01")
-                .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName())
-//                .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), "test")
+//                .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName())
+                .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), "01")
+//                .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName())
+                .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), "test")
                 .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.getFirstName())
                 .replace(MsgTemplateVariable.CON_LASTNAME.getTitle(), contacts.getLastName());
         ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
@@ -332,14 +333,15 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         List<Long> toList = createPlan.getToList();
         int msgNum = 0;  // 消息条数
         List<MessageRecord> msgTempList = new ArrayList<>();
-        CustomerVo cur = Current.get();
+//        CustomerVo cur = Current.get();
         for (int i = 0; i < toList.size(); i++) {
             Long contactsId = toList.get(i);
             if (!uniqueValidForRecipient(planId, contactsId)) {
                 continue;
             }
             // 联系人验证
-            Contacts contacts = contactsDao.findByIdAndCustomerIdAndIsDeleteIsFalse(contactsId, cur.getId());
+//            Contacts contacts = contactsDao.findByIdAndCustomerIdAndIsDeleteIsFalse(contactsId, cur.getId());
+            Contacts contacts = contactsDao.findByIdAndCustomerIdAndIsDeleteIsFalse(contactsId, 1L);
             if (contacts != null) {
                 MessageRecord messageRecord = generateMessage(createPlan, contacts);
                 messageRecord.setPlanId(planId);
@@ -354,7 +356,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     private int batchSaveMessage(Long contactsGroupId, CreateMessagePlan createPlan, Long planId) {
         // 组验证
-        ContactsGroup contactsGroup = contactsGroupDao.findByIdAndCustomerId(contactsGroupId, Current.get().getId());
+//        ContactsGroup contactsGroup = contactsGroupDao.findByIdAndCustomerId(contactsGroupId, Current.get().getId());
+        ContactsGroup contactsGroup = contactsGroupDao.findByIdAndCustomerId(contactsGroupId, 2L);
         if (contactsGroup == null) {
             log.info("contacts group(%s) not exists!", contactsGroupId);
             return 0;

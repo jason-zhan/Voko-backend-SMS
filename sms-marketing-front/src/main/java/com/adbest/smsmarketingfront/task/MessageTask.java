@@ -7,10 +7,7 @@ import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.util.TimeTools;
-import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
-import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
-import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
@@ -21,15 +18,16 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 /**
  * 消息业务 任务合集
@@ -59,7 +57,7 @@ public class MessageTask {
     /**
      * 分发定时发送消息作业(job)
      */
-//    @Scheduled(cron = "15 0/10 * * * ?")
+    @Scheduled(cron = "15 0/10 * * * ?")
     public void distributeSendMsgJob() {
         log.info("enter generateSendMsgThread [task]");
         // 获取待执行定时发送任务
@@ -67,96 +65,102 @@ public class MessageTask {
                 TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay));
         for (MessagePlan plan : planList) {
             log.info("do planId: " + plan.getId());
-            try {
-                // 锁定任务状态
-                messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
-                // 锁定消息状态
-                messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
-                // 分发任务
-                long count = messageRecordDao.countByPlanIdAndDisableIsFalse(plan.getId());
-                int number = 0;
-                long totalPage = count % singleThreadSendNum == 0 ? count / singleThreadSendNum : count / singleThreadSendNum + 1;
-                while (number < totalPage) {
-                    generateScheduledJob(plan, number);
-                    number++;
-                }
-            } catch (Exception e) {
-                log.info("message plan generate job shut down", e);
-            }
+            // 锁定任务状态
+            messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+            // 锁定消息状态
+            messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+            // 分发任务
+            long count = messageRecordDao.countByPlanIdAndDisableIsFalse(plan.getId());
+            distributeJob(plan, count);
         }
         
         // 测试代码块
-        for (int i = 0; i < 20; i++) {
-            log.info("do planId: " + i);
-            long totalPage = 1 + new Random().nextInt(5);
-            int number = 0;
-            while (number < totalPage) {
-                MessagePlan plan = new MessagePlan();
-                plan.setId((long) i);
-                plan.setExecTime(TimeTools.addSeconds(TimeTools.now(), i * 5));
-                generateScheduledJob(plan, number);
-                number++;
-            }
-        }
+//        for (int i = 0; i < 20; i++) {
+//            log.info("do planId: " + i);
+//            long totalPage = 1 + new Random().nextInt(5);
+//            int number = 0;
+//            while (number < totalPage) {
+//                MessagePlan plan = new MessagePlan();
+//                plan.setId((long) i);
+//                plan.setExecTime(TimeTools.addSeconds(TimeTools.now(), i * 5));
+//                generateScheduledJob(plan, number);
+//                number++;
+//            }
+//        }
         log.info("leave generateSendMsgThread [task]");
     }
     
     /**
      * 修补发送消息作业异常
      */
-//    @Scheduled(cron = "0/5 * * * * ?")
+    @Scheduled(cron = "0/5 * * * * ?")
 //    @Scheduled(cron = "15 5/10 * * * ?")
     public void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中的任务
-        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
-                TimeTools.addMinutes(TimeTools.now(), repairTimeRange));
-        if (planList.size() == 0) {
-            return;
-        }
+//        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
+//                TimeTools.addMinutes(TimeTools.now(), repairTimeRange));
+//        if (planList.size() == 0) {
+//            return;
+//        }
+        List<String> groupNames = null;
         try {
-            List<String> groupNames = scheduler.getJobGroupNames();
-            // 排除当前正在运行的任务
-            for (String name : groupNames) {
-                planList.removeIf(plan -> name.equals(plan.getId().toString()));
-                System.out.println("group [" + name + "] exists");
-            }
-            // 分发任务
-            for (MessagePlan plan : planList) {
-                long count = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
-                int number = 0;
-                long totalPage = count % singleThreadSendNum == 0 ? count / singleThreadSendNum : count / singleThreadSendNum + 1;
-                while (number < totalPage) {
-                    generateScheduledJob(plan, number);
-                    number++;
-                }
-            }
+            groupNames = scheduler.getJobGroupNames();
         } catch (SchedulerException e) {
-            e.printStackTrace();
+            throw new RuntimeException("getJobGroupNames() exception", e);
         }
+        // 排除当前正在运行的任务
+        for (String name : groupNames) {
+//            planList.removeIf(plan -> name.equals(plan.getId().toString()));
+            System.out.println("group [" + name + "] exists");
+        }
+        // 分发任务
+//        for (MessagePlan plan : planList) {
+//            long count = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+//            distributeJob(plan, count);
+//        }
         log.info("leave repairSendMsg [task]");
     }
     
     /**
      * 生成定时发送作业
      *
-     * @param plan   定时发送任务
-     * @param number 消息列表当前页
+     * @param planId 定时发送任务id
+     * @param page   消息列表当前页
+     * @return
      */
-    private void generateScheduledJob(MessagePlan plan, int number) {
+    private JobDetail generateScheduledJob(Long planId, int page) {
+        Page<MessageRecord> messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(planId, MessagePlanStatus.QUEUING.getValue(),
+                PageRequest.of(page, singleThreadSendNum, Sort.Direction.ASC, "id"));
         Map map = new HashMap();
+        map.put("messageList", messagePage.getContent());
         map.put("size", singleThreadSendNum);
-        map.put("messagePlanDao", messagePlanDao);
-        map.put("messageRecordDao", messageRecordDao);
-        map.put("twilioUtil", twilioUtil);
-        map.put("viewFileUrl", viewFileUrl);
+//        map.put("messagePlanDao", messagePlanDao);
+//        map.put("messageRecordDao", messageRecordDao);
+//        map.put("twilioUtil", twilioUtil);
+//        map.put("viewFileUrl", viewFileUrl);
         JobDetail jobDetail = JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
-                .withIdentity("" + number, plan.getId() + "").build();
-        Trigger trigger = TriggerBuilder.newTrigger().startAt(plan.getExecTime()).build();
-        try {
-            scheduler.scheduleJob(jobDetail, trigger);
-        } catch (SchedulerException e) {
-            e.printStackTrace();
+                .withIdentity("" + page, planId + "").build();
+        return jobDetail;
+    }
+    
+    // 分发定时发送作业
+    private void distributeJob(MessagePlan plan, long count) {
+        int page = 0;
+        long totalPage = count % singleThreadSendNum == 0 ? count / singleThreadSendNum : count / singleThreadSendNum + 1;
+        List<JobDetail> jobDetailList = new ArrayList<>();
+        while (page < totalPage) {
+            JobDetail jobDetail = generateScheduledJob(plan.getId(), page);
+            jobDetailList.add(jobDetail);
+            page++;
+        }
+        for (JobDetail jobDetail : jobDetailList) {
+            Trigger trigger = TriggerBuilder.newTrigger().startAt(plan.getExecTime()).build();
+            try {
+                scheduler.scheduleJob(jobDetail, trigger);
+            } catch (SchedulerException e) {
+                log.info("distributeJob [SchedulerException]", e);
+            }
         }
     }
     

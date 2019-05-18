@@ -11,7 +11,6 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.SchedulerFactory;
 import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -94,12 +93,12 @@ public class SpringInitializer implements InitializingBean {
     }
     
     
-    @Bean
-    public Scheduler scheduler() throws SchedulerException {
-        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
-        scheduler.start();
-        return scheduler;
-    }
+//    @Bean
+//    public Scheduler scheduler() throws SchedulerException {
+//        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+//        scheduler.start();
+//        return scheduler;
+//    }
     
     @Override
     public void afterPropertiesSet() throws Exception {

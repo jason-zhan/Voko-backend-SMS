@@ -7,6 +7,7 @@ import com.adbest.smsmarketingfront.dao.ContactsLinkGroupDao;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.util.TimeTools;
+import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -14,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -41,6 +43,17 @@ public class MessagePlanServiceImplTest {
         System.out.println("ch isGsm7: " + isGsm7(chStr));
         System.out.println("en isGsm7: " + isGsm7(enStr));
         System.out.println("== ==");
+//        String str = "(To the Oak Tree)" +
+//                "I must be a ceiba tree beside you " +
+//                "Be the image of a tree standing together with you " +
+//                "Our roots, entwined underground " +
+//                "Our leaves, touching in the clouds " +
+//                "With each gust of wind " +
+//                "We greet each other " +
+//                "But nobody " +
+//                "Can understand our words ";
+//        int segments = MessageTools.calcMsgSegments(str);
+//        System.out.println("segments: "+segments);
     }
     
     @Test
@@ -62,9 +75,10 @@ public class MessagePlanServiceImplTest {
                 "We greet each other " +
                 "But nobody " +
                 "Can understand our words ");
-        create.setExecTime(TimeTools.addDay(TimeTools.now(), 1));
+        create.setExecTime(new Timestamp(1558166420000L));
         create.setFromList(Arrays.asList(1L, 2L, 3L));
-        create.setGroupList(Arrays.asList(2L));
+        create.setToList(Arrays.asList(3L, 4L, 5L, 6L));
+//        create.setGroupList(Arrays.asList(2L));
         messagePlanService.create(create);
     }
     
