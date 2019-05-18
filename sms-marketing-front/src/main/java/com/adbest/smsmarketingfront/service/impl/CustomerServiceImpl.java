@@ -8,27 +8,30 @@ import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.entity.vo.UserDetailsVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
-import com.adbest.smsmarketingfront.util.CommonMessage;
-import com.adbest.smsmarketingfront.util.Current;
-import com.adbest.smsmarketingfront.util.EncryptTools;
-import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
+import com.adbest.smsmarketingfront.util.*;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.twilio.base.ResourceSet;
 import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.scheduling.annotation.Async;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
+import javax.mail.MessagingException;
+import javax.mail.internet.MimeMessage;
+import javax.servlet.http.HttpServletRequest;
 import javax.transaction.Transactional;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -63,6 +66,18 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Autowired
     private SmsBillComponentImpl smsBillComponent;
+
+    @Autowired
+    private TemplateEngine templateEngine;
+
+    @Autowired
+    private JavaMailSender javaMailSender;
+
+    @Autowired
+    private RedisTemplate redisTemplate;
+
+    @Value("${spring.mail.username}")
+    private String emailname;
 
     @Override
     public Customer save(Customer customer) {
@@ -180,6 +195,47 @@ public class CustomerServiceImpl implements  CustomerService {
         return true;
     }
 
+    @Override
+    public boolean getCode(String email, HttpServletRequest request) {
+        ServiceException.hasText(email,returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
+        Customer customer = customerDao.findFirstByEmail(email);
+        ServiceException.notNull(customer,returnMsgUtil.msg("ACCOUNT_NOT_REGISTERED"));
+        String number = getNumber(7);
+        request.getSession().setAttribute("email", email);
+        redisTemplate.opsForValue().set(email, number, 10, TimeUnit.MINUTES);
+        Map<String,Object> dataMap = new HashMap<>();
+        dataMap.put("code",number);
+        String emailText = createTemplates(dataMap,"emailTemplates");
+        MimeMessage message = javaMailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message);
+        try {
+            helper.setFrom(emailname);
+            helper.setTo(email);
+            helper.setSubject("Your Password Reset Request");
+            helper.setText(emailText, true);
+        } catch (MessagingException e) {
+            log.error("发送邮件错误，{}",e);
+            return false;
+        }
+        javaMailSender.send(message);
+        return true;
+    }
+
+    @Override
+    public boolean updatePasswordByCode(String code, String password, HttpServletRequest request) {
+        Object email = request.getSession().getAttribute("email");
+        ServiceException.notNull(email,returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
+        Object c = redisTemplate.opsForValue().get(email.toString());
+        ServiceException.notNull(c,returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
+        ServiceException.isTrue(c.toString().equals(code),returnMsgUtil.msg("VERIFICATION_CODE_ERROR"));
+        redisTemplate.delete(email.toString());
+        Customer customer = customerDao.findFirstByEmail(email.toString());
+        ServiceException.isTrue(!customer.getPassword().equals(encryptTools.encrypt(password)), returnMsgUtil.msg("PASSWORD_INCORRECT"));
+        customer.setPassword(encryptTools.encrypt(password));
+        customerDao.save(customer);
+        return true;
+    }
+
     public void initPhone(Customer customer,int i){
         if (i>3){
             return;
@@ -209,5 +265,34 @@ public class CustomerServiceImpl implements  CustomerService {
             throw new UsernameNotFoundException("邮箱错误");
         }
         return new UserDetailsVo(customer);
+    }
+
+    /**
+     * 根据位数生成验证码
+     *
+     * @param size 位数
+     * @return
+     */
+    private String getNumber(int size) {
+        String retNum = "";
+        String codeStr = "1234567890";
+        Random r = new Random();
+        for (int i = 0; i < size; i++) {
+            retNum += codeStr.charAt(r.nextInt(codeStr.length()));
+        }
+        return retNum;
+    }
+
+    /**
+     *
+     * @param dataMap 渲染数据原
+     * @param TemplatesName 模板名
+     * @return
+     */
+    private String createTemplates(Map<String,Object> dataMap, String TemplatesName){
+        Context context = new Context();
+        context.setVariables(dataMap);
+        String emailText = templateEngine.process(TemplatesName,context);
+        return emailText;
     }
 }

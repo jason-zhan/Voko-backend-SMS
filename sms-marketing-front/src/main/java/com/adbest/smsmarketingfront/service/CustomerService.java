@@ -5,6 +5,7 @@ import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
 import com.adbest.smsmarketingfront.entity.form.CustomerForm;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
+import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,4 +30,8 @@ public interface CustomerService extends UserDetailsService {
     boolean changePassword(String password, String newPassword);
 
     boolean updateInfo(CustomerForm customerForm);
+
+    boolean getCode(String email, HttpServletRequest request);
+
+    boolean updatePasswordByCode(String code, String password, HttpServletRequest request);
 }
