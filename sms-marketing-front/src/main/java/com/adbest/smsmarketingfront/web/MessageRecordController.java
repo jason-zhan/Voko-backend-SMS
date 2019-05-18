@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import com.adbest.smsmarketingfront.entity.vo.MessageVo;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
@@ -45,24 +46,26 @@ public class MessageRecordController {
     @RequestMapping("/inbox")
     @ResponseBody
     public ReturnEntity findInboxByConditions(@RequestBody GetInboxMessagePage getInboxPage) {
-        Page<MessageRecord> messagePage = messageRecordService.findInboxByConditions(getInboxPage);
+        Page<MessageVo> messagePage = messageRecordService.findInboxByConditions(getInboxPage);
         return ReturnEntity.success(messagePage);
     }
     
     @RequestMapping("/outbox")
     @ResponseBody
     public ReturnEntity findOutboxByConditions(@RequestBody GetOutboxMessagePage getOutboxPage) {
-        Page<MessageRecord> messagePage = messageRecordService.findOutboxByConditions(getOutboxPage);
+        Page<MessageVo> messagePage = messageRecordService.findOutboxByConditions(getOutboxPage);
         return ReturnEntity.success(messagePage);
     }
     @RequestMapping("/inbox-status")
     @ResponseBody
-    public Map<Integer, String> inboxStatusMap() {
-        return messageRecordService.inboxStatusMap();
+    public ReturnEntity inboxStatusMap() {
+        Map<Integer, String> map = messageRecordService.inboxStatusMap();
+        return ReturnEntity.success(map);
     }
     @RequestMapping("/outbox-status")
     @ResponseBody
-    public Map<Integer, String> outboxStatusMap() {
-        return messageRecordService.outboxStatusMap();
+    public ReturnEntity outboxStatusMap() {
+        Map<Integer, String> map = messageRecordService.outboxStatusMap();
+        return ReturnEntity.success(map);
     }
 }

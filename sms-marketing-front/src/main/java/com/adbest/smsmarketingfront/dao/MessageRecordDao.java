@@ -1,6 +1,9 @@
 package com.adbest.smsmarketingfront.dao;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
@@ -18,23 +21,23 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     @Transactional
     @Modifying
+    @Query("update MessageRecord set returnCode = ?2 where sid = ?1")
+    int updateReturnCodeBySid(String sid, int returnCode);
+    
+    @Transactional
+    @Modifying
     @Query("update MessageRecord set disable = ?2 where id = ?1")
     int disableById(Long id, boolean disable);
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set disable = ?3 where id = ?1 and customerId = ?2")
-    int disableByIdAndCustomerId(Long id, Long customerId, boolean disable);
+    @Query("update MessageRecord set status = ?2 where id = ?1")
+    int updateStatusById(Long id, int status);
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set status = 2 where id = ?1")
-    int markReadOne(Long id);
-    
-    @Transactional
-    @Modifying
-    @Query("update MessageRecord set status = 2 where id = ?1 and customerId = ?2 and inbox = true")
-    int markReadOne(Long id, Long customerId);
+    @Query("update MessageRecord set status = ?3 where id = ?1 and customerId = ?2 and inbox = true")
+    int updateStatusByIdAndCustomerId(Long id, Long customerId, int status);
     
     // 根据计划id统计实际发送消息条数
     @Query("select sum(segments) from MessageRecord where planId = ?1")
@@ -42,5 +45,15 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     MessageRecord findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     
-    MessageRecord findTopBySid(String sid);
+    @Transactional
+    @Modifying
+    @Query("update MessageRecord set status = ?2 where planId = ?1 and disable = false")
+    long updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
+    
+    long countByPlanIdAndDisableIsFalse(Long planId);
+    
+    long countByPlanIdAndStatusAndDisableIsFalse(Long planId, int status);
+    
+    Page<MessageRecord> findByPlanIdAndStatusAndDisableIsFalse(Long planId, int status, Pageable pageable);
+    
 }

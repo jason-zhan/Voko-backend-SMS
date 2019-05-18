@@ -27,6 +27,7 @@ public class GetOutboxMessagePage extends PageBase {
     
     public void fillConditions(BooleanBuilder builder, QMessageRecord qMessageRecord, QContacts qContacts) {
         QueryDslTools dslTools = new QueryDslTools(builder);
+        builder.and(qMessageRecord.disable.isFalse());
         builder.and(qMessageRecord.inbox.eq(false));
         if (this.hasSent != null) {
             if (this.hasSent) {

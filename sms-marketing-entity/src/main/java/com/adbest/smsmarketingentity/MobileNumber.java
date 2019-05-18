@@ -31,6 +31,7 @@ public class MobileNumber implements Serializable {
      * @see UsArea#id
      */
     private Long cityId;
+    @Column(nullable = false)
     private Boolean disable;  // 是否可用(true:禁用)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间

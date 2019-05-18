@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
+import com.adbest.smsmarketingfront.entity.vo.MessageVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
@@ -11,16 +12,14 @@ import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
+import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.twilio.rest.api.v2010.account.Message;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -28,11 +27,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -49,9 +48,9 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     ResourceBundle bundle;
     
     @Autowired
-    Map<Integer,String> inboxStatusMap;
+    Map<Integer, String> inboxStatusMap;
     @Autowired
-    Map<Integer,String> outboxStatusMap;
+    Map<Integer, String> outboxStatusMap;
 
     @Autowired
     private MobileNumberService mobileNumberService;
@@ -79,9 +78,20 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 bundle.getString("msg-record-id-list").replace("$action$", "delete"));
         CustomerVo cur = Current.get();
         int result = 0;
+        String errMsg = "";
         for (Long id : idList) {
-            result += messageRecordDao.disableByIdAndCustomerId(id, cur.getId(), false);
+            Optional<MessageRecord> optional = messageRecordDao.findById(id);
+            if (optional.isPresent()) {
+                MessageRecord message = optional.get();
+                Assert.isTrue(cur.getId().equals(message.getCustomerId()), "can't delete other customer's message.");
+                if (!message.getInbox() && OutboxStatus.QUEUE.getValue() == message.getStatus()) {
+                    errMsg = bundle.getString("msg-record-delete-status").replace("$status$", OutboxStatus.QUEUE.getTitle());
+                    continue;
+                }
+                result += messageRecordDao.disableById(id, true);
+            }
         }
+        ServiceException.isTrue(StringUtils.isEmpty(errMsg), errMsg);
         log.info("leave deleteOneMessage");
         return result;
     }
@@ -95,7 +105,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         CustomerVo cur = Current.get();
         int result = 0;
         for (Long id : idList) {
-            result += messageRecordDao.markReadOne(id, cur.getId());
+            result += messageRecordDao.updateStatusByIdAndCustomerId(id, cur.getId(), InboxStatus.ALREADY_READ.getValue());
         }
         log.info("leave markRead");
         return result;
@@ -107,14 +117,14 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
         if (messageRecord != null && messageRecord.getInbox() && messageRecord.getStatus() == InboxStatus.UNREAD.getValue()) {
-            messageRecordDao.markReadOne(messageRecord.getId());
+            messageRecordDao.updateStatusById(messageRecord.getId(), InboxStatus.ALREADY_READ.getValue());
         }
         log.info("leave findById");
         return messageRecord;
     }
     
     @Override
-    public Page<MessageRecord> findInboxByConditions(GetInboxMessagePage getInboxPage) {
+    public Page<MessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage) {
         log.info("enter findInboxByConditions, param={}", getInboxPage);
         Assert.notNull(getInboxPage, CommonMessage.PARAM_IS_NULL);
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
@@ -122,7 +132,8 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
-        QueryResults<MessageRecord> queryResults = jpaQueryFactory.select(qMessageRecord)
+        QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
+                Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
                 .where(builder)
@@ -130,29 +141,32 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 .offset(getInboxPage.getPage() * getInboxPage.getSize())
                 .limit(getInboxPage.getSize())
                 .fetchResults();
-        Page<MessageRecord> messagePage = PageBase.toPageEntity(queryResults, getInboxPage);
+        Page<MessageVo> messagePage = PageBase.toPageEntity(queryResults, getInboxPage);
         log.info("leave findInboxByConditions");
         return messagePage;
     }
     
     @Override
-    public Page<MessageRecord> findOutboxByConditions(GetOutboxMessagePage getOutboxPage) {
+    public Page<MessageVo> findOutboxByConditions(GetOutboxMessagePage getOutboxPage) {
         log.info("enter findOutboxByConditions, param={}", getOutboxPage);
         Assert.notNull(getOutboxPage, CommonMessage.PARAM_IS_NULL);
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
+        QContactsGroup qCGroup = QContactsGroup.contactsGroup;
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getOutboxPage.fillConditions(builder, qMessageRecord, qContacts);
-        QueryResults<MessageRecord> queryResults = jpaQueryFactory.select(qMessageRecord)
+        QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
+                Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, qCGroup.title))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
+                .leftJoin(qCGroup).on(qMessageRecord.contactsGroupId.eq(qCGroup.id))
                 .where(builder)
-                .orderBy(qMessageRecord.sendTime.desc())
+                .orderBy(qMessageRecord.createTime.desc())
                 .offset(getOutboxPage.getPage() * getOutboxPage.getSize())
                 .limit(getOutboxPage.getSize())
                 .fetchResults();
-        Page<MessageRecord> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
+        Page<MessageVo> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
         log.info("leave findOutboxByConditions");
         return messagePage;
     }
@@ -174,11 +188,13 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     @Override
     public void saveInbox(InboundMsg inboundMsg) {
         List<MobileNumber> list = mobileNumberService.findByNumberAndDisable(inboundMsg.getTo(), false);
-        if (list.size()<=0){return;}
+        if (list.size() <= 0) {
+            return;
+        }
         MobileNumber mobileNumber = list.get(0);
         List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(inboundMsg.getFrom(), mobileNumber.getCustomerId());
         Contacts contacts = null;
-        if (contactsList.size()<=0){
+        if (contactsList.size() <= 0) {
             contacts = new Contacts();
             contacts.setIsDelete(false);
             contacts.setInLock(false);
@@ -186,18 +202,20 @@ public class MessageRecordServiceImpl implements MessageRecordService {
             contacts.setPhone(inboundMsg.getFrom());
             contacts.setSource(ContactsSource.API_Added.getValue());
             contactsService.save(contacts);
-        }else {
+        } else {
             contacts = contactsList.get(0);
         }
         MessageRecord messageRecord = new MessageRecord();
         messageRecord.setSegments(1);
-        messageRecord.setSms((inboundMsg.getMediaList()!=null&&inboundMsg.getMediaList().size()>0)?false:true);
+        messageRecord.setSms(inboundMsg.getMediaList() == null || inboundMsg.getMediaList().size() == 0);
         messageRecord.setCustomerId(mobileNumber.getCustomerId());
         messageRecord.setCustomerNumber(inboundMsg.getTo());
         messageRecord.setContent(inboundMsg.getBody());
         List<String> urls = null;
-        if (!messageRecord.getSms()){urls = inboundMsg.getMediaList().stream().map(s -> s.getMediaUrl()).collect(Collectors.toList());}
-        messageRecord.setMediaList(urls!=null?urls.toString().substring(1,urls.toString().length()-1):null);
+        if (!messageRecord.getSms()) {
+            urls = inboundMsg.getMediaList().stream().map(s -> s.getMediaUrl()).collect(Collectors.toList());
+        }
+        messageRecord.setMediaList(urls != null ? urls.toString().substring(1, urls.toString().length() - 1) : null);
         messageRecord.setContactsId(contacts.getId());
         messageRecord.setContactsNumber(inboundMsg.getFrom());
         messageRecord.setInbox(true);
@@ -215,8 +233,8 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setCustomerId(mobileNumber.getCustomerId());
         send.setCustomerNumber(inboundMsg.getTo());
         String content = keywords.get(0).getContent();
-        content = content.replaceAll(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), StringUtils.isEmpty(contacts.getFirstName())?"":contacts.getFirstName())
-                .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), StringUtils.isEmpty(contacts.getLastName())?"":contacts.getLastName());
+        content = content.replaceAll(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), StringUtils.isEmpty(contacts.getFirstName()) ? "" : contacts.getFirstName())
+                .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), StringUtils.isEmpty(contacts.getLastName()) ? "" : contacts.getLastName());
         send.setContent(content);
         send.setSms(true);
         send.setContactsId(contacts.getId());
@@ -231,10 +249,10 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     }
 
     @Transactional
-    public void sendSms(MessageRecord messageRecord){
+    public void sendSms(MessageRecord messageRecord) {
         messageRecord.setSegments(MessageTools.calcMsgSegments(messageRecord.getContent()));
         Long sum = smsBillService.sumByCustomerId(messageRecord.getCustomerId());
-        ServiceException.isTrue((sum==null?0l:sum)- messageRecord.getSegments()>=0,"Insufficient allowance");
+        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
         messageRecordDao.save(messageRecord);
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
