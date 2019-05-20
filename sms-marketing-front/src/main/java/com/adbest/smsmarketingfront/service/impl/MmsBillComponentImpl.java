@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.MmsBill;
 import com.adbest.smsmarketingfront.dao.MmsBillDao;
+import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.util.Current;
 import lombok.extern.slf4j.Slf4j;
@@ -10,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
+import java.util.ResourceBundle;
 
 
 @Component
@@ -18,21 +20,27 @@ public class MmsBillComponentImpl implements MmsBillComponent {
     
     @Autowired
     MmsBillDao mmsBillDao;
+    @Autowired
+    ResourceBundle bundle;
     
     @Override
     public int saveMmsBill(String describe, Integer amount) {
+        // TODO 并发控制
         log.info("enter saveMmsBill, describe=" + describe + ", amount=" + amount);
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
+        Long curId = Current.get().getId();
+        Long sum = mmsBillDao.sumByCustomerId(curId);
+        ServiceException.isTrue(sum + amount >= 0, bundle.getString("mms-balance-not-enough"));
         MmsBill mmsBill = new MmsBill();
-        mmsBill.setCustomerId(Current.get().getId());
+        mmsBill.setCustomerId(curId);
         mmsBill.setInfoDescribe(describe);
         mmsBill.setAmount(amount);
         mmsBillDao.save(mmsBill);
         log.info("leave saveMmsBill");
         return 1;
     }
-
+    
     @Override
     @Transactional
     public MmsBill save(MmsBill mmsBill) {

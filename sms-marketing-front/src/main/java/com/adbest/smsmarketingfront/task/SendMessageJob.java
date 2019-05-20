@@ -5,7 +5,11 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
+import com.adbest.smsmarketingfront.util.TimeTools;
+import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
+import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
+import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -17,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -36,13 +41,6 @@ public class SendMessageJob implements Job {
     public void execute(JobExecutionContext jobContext) throws JobExecutionException {
         JobDetail jobDetail = jobContext.getJobDetail();
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
-        // 初始化固件
-        if (viewFileUrl == null) {
-//            messagePlanDao = (MessagePlanDao) jobDataMap.get("messagePlanDao");
-//            messageRecordDao = (MessageRecordDao) jobDataMap.get("messageRecordDao");
-//            twilioUtil = (TwilioUtil) jobDataMap.get("twilioUtil");
-            viewFileUrl = (String) jobDataMap.get("viewFileUrl");
-        }
         // 获取操作参数
         JobKey jobKey = jobDetail.getKey();
         Long planId = Long.valueOf(jobKey.getGroup());
@@ -78,14 +76,24 @@ public class SendMessageJob implements Job {
     
     // 发送消息
     private void sendMessage(List<MessageRecord> messageList, Long planId, Integer page) {
+        List<MessageRecord> sentMessageList = new ArrayList<>();
         for (MessageRecord message : messageList) {
-            message.setSid(UUID.randomUUID().toString());
-//            PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
-//            Message sentMsg = twilioUtil.sendMessage(preSendMsg);
-//            messageRecordDao.updateStatusAfterSendMessage(message.getId(), sentMsg.getSid(), OutboxStatus.SENT.getValue());
-            messageRecordDao.updateStatusAfterSendMessage(message.getId(), UUID.randomUUID().toString(), OutboxStatus.SENT.getValue());
-            System.out.printf("plan:" + planId + ":" + "page:" + page + "msg:" + message.getId() + "%n");
+            try {
+//            message.setSid(UUID.randomUUID().toString());
+                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
+                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
+//            messageRecordDao.updateStatusAfterSendMessage(message.getId(), message.getSid(), OutboxStatus.SENT.getValue());
+                message.setSid(sentMsg.getSid());
+                message.setStatus(OutboxStatus.SENT.getValue());
+                message.setSendTime(TimeTools.now());
+                sentMessageList.add(message);
+                System.out.printf("sent(%s) planId=%s page=%s%n", message.getId(), planId, page);
+            } catch (Exception e) {
+                System.out.printf("sendError(%s) planId=%s page=%s%n", message.getId(), planId, page);
+                log.info("sendError: ", e);
+            }
         }
+        messageRecordDao.saveAll(sentMessageList);
     }
     
     @Autowired

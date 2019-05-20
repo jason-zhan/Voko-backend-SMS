@@ -57,7 +57,7 @@ public class MessageTask {
     /**
      * 分发定时发送消息作业(job)
      */
-    @Scheduled(cron = "15 0/10 * * * ?")
+    @Scheduled(fixedRate = 10 * 60 * 1000)
     public void distributeSendMsgJob() {
         log.info("enter generateSendMsgThread [task]");
         // 获取待执行定时发送任务
@@ -130,18 +130,13 @@ public class MessageTask {
      * @return
      */
     private JobDetail generateScheduledJob(Long planId, int page) {
-        Page<MessageRecord> messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(planId, MessagePlanStatus.QUEUING.getValue(),
+        Page<MessageRecord> messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue(),
                 PageRequest.of(page, singleThreadSendNum, Sort.Direction.ASC, "id"));
-        Map map = new HashMap();
+        Map<String, Object> map = new HashMap<>();
         map.put("messageList", messagePage.getContent());
         map.put("size", singleThreadSendNum);
-//        map.put("messagePlanDao", messagePlanDao);
-//        map.put("messageRecordDao", messageRecordDao);
-//        map.put("twilioUtil", twilioUtil);
-//        map.put("viewFileUrl", viewFileUrl);
-        JobDetail jobDetail = JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
+        return JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
                 .withIdentity("" + page, planId + "").build();
-        return jobDetail;
     }
     
     // 分发定时发送作业

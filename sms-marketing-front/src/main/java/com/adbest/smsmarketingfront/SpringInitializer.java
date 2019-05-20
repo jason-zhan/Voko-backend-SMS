@@ -29,8 +29,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.Set;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 @Configuration
 @EntityScan(basePackages = "com.adbest.smsmarketingentity")
@@ -93,12 +91,12 @@ public class SpringInitializer implements InitializingBean {
     }
     
     
-//    @Bean
-//    public Scheduler scheduler() throws SchedulerException {
-//        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
-//        scheduler.start();
-//        return scheduler;
-//    }
+    @Bean
+    public Scheduler scheduler() throws SchedulerException {
+        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
+        scheduler.start();
+        return scheduler;
+    }
     
     @Override
     public void afterPropertiesSet() throws Exception {

@@ -98,6 +98,11 @@
             <groupId>org.quartz-scheduler</groupId>
             <artifactId>quartz</artifactId>
         </dependency>
+        <dependency>
+            <groupId>com.alibaba.druid</groupId>
+            <artifactId>druid-wrapper</artifactId>
+            <version>0.2.9</version>
+        </dependency>
 
     </dependencies>
 
