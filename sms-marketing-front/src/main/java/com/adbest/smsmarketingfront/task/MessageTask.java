@@ -24,6 +24,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -69,12 +70,9 @@ public class MessageTask {
                 TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay));
         for (MessagePlan plan : planList) {
             log.info("do planId: " + plan.getId());
-            // 锁定任务状态
-            messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
-            // 锁定消息状态
-            messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+            // 锁定任务和消息
+            lockPlanAndMessage(plan.getId());
             // 分发任务
-//            long count = messageRecordDao.countByPlanIdAndDisableIsFalse(plan.getId());
             distributeJob(plan);
         }
         
@@ -154,6 +152,14 @@ public class MessageTask {
                 log.info("distributeJob [SchedulerException]", e);
             }
         }
+    }
+    
+    @Transactional
+    public void lockPlanAndMessage(Long planId) {
+        // 锁定任务状态
+        messagePlanDao.updateStatusById(planId, MessagePlanStatus.QUEUING.getValue());
+        // 锁定消息状态
+        messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
     }
     
 }
