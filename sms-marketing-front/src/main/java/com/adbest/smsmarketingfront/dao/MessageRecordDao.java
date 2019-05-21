@@ -35,9 +35,14 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     int updateStatusById(Long id, int status);
     
     @Transactional
-    @Modifying
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("update MessageRecord set status = ?3 where id = ?1 and customerId = ?2 and inbox = true")
-    int updateStatusByIdAndCustomerId(Long id, Long customerId, int status);
+    int updateStatusAfterReadMessage(Long id, Long customerId, int status);
+    
+    @Transactional
+    @Modifying
+    @Query("update MessageRecord set sid = ?2, status = ?3, sendTime = current_timestamp where id = ?1")
+    int updateStatusAfterSendMessage(Long id, String sid, int status);
     
     // 根据计划id统计实际发送消息条数
     @Query("select sum(segments) from MessageRecord where planId = ?1")
@@ -48,7 +53,7 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     @Transactional
     @Modifying
     @Query("update MessageRecord set status = ?2 where planId = ?1 and disable = false")
-    long updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
+    int updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
     
     long countByPlanIdAndDisableIsFalse(Long planId);
     

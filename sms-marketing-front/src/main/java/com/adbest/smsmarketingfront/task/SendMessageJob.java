@@ -17,83 +17,102 @@ import org.quartz.JobDetail;
 import org.quartz.JobExecutionContext;
 import org.quartz.JobExecutionException;
 import org.quartz.JobKey;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
 /**
  * 发送消息作业
  */
+@Component
 @Slf4j
 public class SendMessageJob implements Job {
     
-    private MessagePlanDao messagePlanDao;
-    private MessageRecordDao messageRecordDao;
-    private TwilioUtil twilioUtil;
-    private String viewFileUrl;
-    
-    private final boolean test = true;
+    private static MessagePlanDao messagePlanDao;
+    private static MessageRecordDao messageRecordDao;
+    private static TwilioUtil twilioUtil;
+    private static String viewFileUrl;
     
     @Override
     public void execute(JobExecutionContext jobContext) throws JobExecutionException {
         JobDetail jobDetail = jobContext.getJobDetail();
         JobDataMap jobDataMap = jobDetail.getJobDataMap();
-        // 初始化固件
-        if (messagePlanDao == null) {
-            messagePlanDao = (MessagePlanDao) jobDataMap.get("messagePlanDao");
-            messageRecordDao = (MessageRecordDao) jobDataMap.get("messageRecordDao");
-            twilioUtil = (TwilioUtil) jobDataMap.get("twilioUtil");
-            viewFileUrl = (String) jobDataMap.get("viewFileUrl");
-        }
         // 获取操作参数
         JobKey jobKey = jobDetail.getKey();
         Long planId = Long.valueOf(jobKey.getGroup());
         Integer page = Integer.valueOf(jobKey.getName());
         Integer size = (Integer) jobDataMap.get("size");
-        if (planId == null || page == null || size == null) {
-            log.info("[ERROR] parameter passing error,  planId=%s, page=%s, size=%s", planId, page, size);
+        List<MessageRecord> messageList = (List<MessageRecord>) jobDataMap.get("messageList");
+        if (messageList == null || messageList.size() == 0) {
+            System.out.printf("[ERROR] message list is empty,  planId=%s, page=%s, size=%s [task] %n", planId, page, size);
             return;
         }
-        if (!test) {
-            // 执行
-            Page<MessageRecord> messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue(),
-                    PageRequest.of(page, size, Sort.Direction.ASC, "id"));
-            sendMessage(messagePage.getContent());
-            // 统计任务完成度
-            long queueCount = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
-            if (queueCount == 0) {
-                messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue());
-            }
+        System.out.printf("will execute send message, planId=%s, page=%s, size=%s [task] %n", planId, page, size);
+        // 执行
+        sendMessage(messageList, planId, page);
+        // 统计任务完成度
+        long queueCount = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
+        if (queueCount == 0) {
+            messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+            System.out.printf("message plan complete, planId=%s [task] %n", planId);
         } else {
-            // 测试代码块
-            for (int i = 30; i > 0; i--) {
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.printf("job:%s:page:%s:%s%n", planId, page, i);
-            }
+            System.out.printf("executed send message, planId=%s, page=%s, size=%s [task] %n", planId, page, size);
         }
-        
+        // 测试代码块
+//            for (int i = 30; i > 0; i--) {
+//                try {
+//                    Thread.sleep(1000);
+//                } catch (InterruptedException e) {
+//                    e.printStackTrace();
+//                }
+//                System.out.printf("job:%s:page:%s:%s%n", planId, page, i);
+//            }
+    
     }
     
     // 发送消息
-    private void sendMessage(List<MessageRecord> messageList) {
+    private void sendMessage(List<MessageRecord> messageList, Long planId, Integer page) {
+        List<MessageRecord> sentMessageList = new ArrayList<>();
         for (MessageRecord message : messageList) {
-            if (test) {
-                message.setSid(UUID.randomUUID().toString());
-            } else {
+            try {
+//            message.setSid(UUID.randomUUID().toString());
                 PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
                 Message sentMsg = twilioUtil.sendMessage(preSendMsg);
+//            messageRecordDao.updateStatusAfterSendMessage(message.getId(), message.getSid(), OutboxStatus.SENT.getValue());
                 message.setSid(sentMsg.getSid());
+                message.setStatus(OutboxStatus.SENT.getValue());
+                message.setSendTime(TimeTools.now());
+                sentMessageList.add(message);
+                System.out.printf("sent(%s) planId=%s page=%s%n", message.getId(), planId, page);
+            } catch (Exception e) {
+                System.out.printf("sendError(%s) planId=%s page=%s%n", message.getId(), planId, page);
+                log.info("sendError: ", e);
             }
-            message.setStatus(OutboxStatus.SENT.getValue());
-            message.setSendTime(TimeTools.now());
-            messageRecordDao.save(message);
         }
+        messageRecordDao.saveAll(sentMessageList);
+    }
+    
+    @Autowired
+    public void setMessagePlanDao(MessagePlanDao messagePlanDao) {
+        SendMessageJob.messagePlanDao = messagePlanDao;
+    }
+    
+    @Autowired
+    public void setMessageRecordDao(MessageRecordDao messageRecordDao) {
+        SendMessageJob.messageRecordDao = messageRecordDao;
+    }
+    
+    @Autowired
+    public void setTwilioUtil(TwilioUtil twilioUtil) {
+        SendMessageJob.twilioUtil = twilioUtil;
+    }
+    
+    @Value("${twilio.viewFileUrl}")
+    public void setViewFileUrl(String viewFileUrl) {
+        SendMessageJob.viewFileUrl = viewFileUrl;
     }
 }

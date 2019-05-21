@@ -105,7 +105,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         CustomerVo cur = Current.get();
         int result = 0;
         for (Long id : idList) {
-            result += messageRecordDao.updateStatusByIdAndCustomerId(id, cur.getId(), InboxStatus.ALREADY_READ.getValue());
+            result += messageRecordDao.updateStatusAfterReadMessage(id, cur.getId(), InboxStatus.ALREADY_READ.getValue());
         }
         log.info("leave markRead");
         return result;
