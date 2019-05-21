@@ -323,7 +323,7 @@ public class ContactsServiceImpl implements ContactsService {
     }
 
     private boolean checkPhone(String phone) {
-        Pattern pattern = Pattern.compile("^(\\d{8})$",
+        Pattern pattern = Pattern.compile("^(\\d{10})$",
                 Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(phone);
         return matcher.matches();
