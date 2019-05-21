@@ -192,14 +192,16 @@ public class MessageRecordServiceImpl implements MessageRecordService {
             return;
         }
         MobileNumber mobileNumber = list.get(0);
-        List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(inboundMsg.getFrom(), mobileNumber.getCustomerId());
+        String from = inboundMsg.getFrom();
+        from = from.startsWith("+1")?from.substring(2,from.length()):from;
+        List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(from, mobileNumber.getCustomerId());
         Contacts contacts = null;
         if (contactsList.size() <= 0) {
             contacts = new Contacts();
             contacts.setIsDelete(false);
             contacts.setInLock(false);
             contacts.setCustomerId(mobileNumber.getCustomerId());
-            contacts.setPhone(inboundMsg.getFrom());
+            contacts.setPhone(from);
             contacts.setSource(ContactsSource.API_Added.getValue());
             contactsService.save(contacts);
         } else {

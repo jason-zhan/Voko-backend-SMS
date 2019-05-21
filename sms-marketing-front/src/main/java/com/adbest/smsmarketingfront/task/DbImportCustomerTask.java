@@ -100,7 +100,9 @@ public class DbImportCustomerTask {
             for (Object obj : list) {
                 Object[] objects = (Object[]) obj;
                 contacts = new Contacts();
-                contacts.setPhone(objects[1]+"");
+                String phone = objects[1]+"";
+                phone = phone.startsWith("+1")?phone.substring(2,phone.length()):phone;
+                contacts.setPhone(phone);
                 contacts.setSource(ContactsSource.API_Added.getValue());
                 contacts.setCustomerId((Long) objects[4]);
                 contacts.setInLock(false);

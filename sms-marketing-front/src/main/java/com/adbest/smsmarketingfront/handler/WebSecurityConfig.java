@@ -101,7 +101,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .rememberMe().rememberMeParameter("rememberMe")
                 .tokenValiditySeconds(60 * 60 * 24 * 7).tokenRepository(persistentTokenRepository()).userDetailsService(customerServiceImpl)
                 .and().csrf().disable()
-                .exceptionHandling().accessDeniedHandler(deniedHandler);
+                .exceptionHandling().accessDeniedHandler(deniedHandler).and()
+                .cors()
+                .and()
+                .csrf().disable();;
     }
 
     @Override
