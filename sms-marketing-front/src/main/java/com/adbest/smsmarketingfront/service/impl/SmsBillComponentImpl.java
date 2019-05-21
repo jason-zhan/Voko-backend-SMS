@@ -13,6 +13,8 @@ import org.springframework.util.Assert;
 import javax.annotation.Syntax;
 import javax.transaction.Transactional;
 import java.util.ResourceBundle;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.LockSupport;
 
 
 @Component
@@ -25,14 +27,19 @@ public class SmsBillComponentImpl implements SmsBillComponent {
     ResourceBundle bundle;
     
     @Override
-    public int saveSmsBill(String describe, Integer amount) {
-        // TODO 并发控制
+    public synchronized int saveSmsBill(String describe, Integer amount) {
         log.info("enter saveSmsBill, describe=" + describe + ", amount=" + amount);
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
-        Long curId = Current.get().getId();
-        Long sum = smsBillDao.sumByCustomerId(curId);
-        ServiceException.isTrue(sum + amount >= 0, bundle.getString("sms-balance-not-enough"));
+        if (amount == 0) {
+            return 0;
+        }
+//        Long curId = Current.get().getId();
+        Long curId = 1L;
+        if (amount < 0) {
+            Long sum = smsBillDao.sumByCustomerId(curId);
+            ServiceException.isTrue(sum + amount >= 0, bundle.getString("sms-balance-not-enough"));
+        }
         SmsBill smsBill = new SmsBill();
         smsBill.setCustomerId(curId);
 //        smsBill.setCustomerId(1L);
