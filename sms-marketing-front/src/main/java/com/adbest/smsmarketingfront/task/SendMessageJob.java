@@ -58,7 +58,7 @@ public class SendMessageJob implements Job {
         long queueCount = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
         if (queueCount == 0) {
             messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue());
-            System.out.printf("message plan complete, planId=%s [task] %n", planId);
+            System.out.printf("complete message plan, planId=%s [task] %n", planId);
         } else {
             System.out.printf("executed send message, planId=%s, page=%s, size=%s [task] %n", planId, page, size);
         }
@@ -79,11 +79,11 @@ public class SendMessageJob implements Job {
         List<MessageRecord> sentMessageList = new ArrayList<>();
         for (MessageRecord message : messageList) {
             try {
-//            message.setSid(UUID.randomUUID().toString());
-                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
-                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
+            message.setSid(UUID.randomUUID().toString());
+//                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
+//                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
 //            messageRecordDao.updateStatusAfterSendMessage(message.getId(), message.getSid(), OutboxStatus.SENT.getValue());
-                message.setSid(sentMsg.getSid());
+//                message.setSid(sentMsg.getSid());
                 message.setStatus(OutboxStatus.SENT.getValue());
                 message.setSendTime(TimeTools.now());
                 sentMessageList.add(message);

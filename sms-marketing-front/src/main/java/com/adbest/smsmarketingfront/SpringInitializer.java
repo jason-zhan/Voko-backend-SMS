@@ -91,13 +91,6 @@ public class SpringInitializer implements InitializingBean {
     }
     
     
-    @Bean
-    public Scheduler scheduler() throws SchedulerException {
-        Scheduler scheduler = StdSchedulerFactory.getDefaultScheduler();
-        scheduler.start();
-        return scheduler;
-    }
-    
     @Override
     public void afterPropertiesSet() throws Exception {
     
