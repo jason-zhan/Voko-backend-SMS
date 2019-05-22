@@ -7,6 +7,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 @RequestMapping("/customer")
 public class CustomerController {
@@ -23,6 +25,18 @@ public class CustomerController {
     @RequestMapping("/updateInfo")
     public ReturnEntity updateInfo(CustomerForm customerForm){
         boolean is = customerService.updateInfo(customerForm);
+        return ReturnEntity.success(is);
+    }
+
+    @RequestMapping("/getCode")
+    public ReturnEntity getCode(String email, HttpServletRequest request){
+        boolean is = customerService.getCode(email, request);
+        return ReturnEntity.success(is);
+    }
+
+    @RequestMapping("/password")
+    public ReturnEntity password(String code,String password, HttpServletRequest request){
+        boolean is = customerService.updatePasswordByCode(code, password, request);
         return ReturnEntity.success(is);
     }
 }

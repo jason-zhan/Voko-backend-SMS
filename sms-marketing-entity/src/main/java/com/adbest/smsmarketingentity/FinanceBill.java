@@ -13,6 +13,7 @@ import java.sql.Timestamp;
  */
 @Data
 @Entity
+@Table(name = "finance_bill")
 public class FinanceBill implements Serializable {
     
     @Id

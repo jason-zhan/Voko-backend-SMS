@@ -108,9 +108,10 @@ public class InboundMsg {
     public static InboundMsg parse(@NotNull HttpServletRequest request){
         InboundMsg inboundMsg = new InboundMsg();
         inboundMsg.setMessageSid(request.getParameter("MessageSid"));
-        // todo 属性转换
-        
-        
+        inboundMsg.setTo(request.getParameter("To"));
+        inboundMsg.setFrom(request.getParameter("From"));
+        inboundMsg.setBody(request.getParameter("Body"));
+        inboundMsg.setFromCity(request.getParameter("MediaUrl "));
         return inboundMsg;
     }
 

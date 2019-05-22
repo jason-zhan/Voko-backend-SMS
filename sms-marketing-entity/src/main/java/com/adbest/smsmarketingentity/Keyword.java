@@ -23,9 +23,6 @@ public class Keyword implements Serializable {
      */
     @Column(nullable = false)
     private Long customerId;
-    @ManyToOne(fetch = FetchType.EAGER)
-    @JoinColumn(nullable = true)
-    private ServiceNumber serviceNumber;  // 服务短号
     @Column(nullable = false)
     private String title;  // 关键字名称
     @Lob

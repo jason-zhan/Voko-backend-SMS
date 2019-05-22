@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
@@ -52,9 +53,16 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
     @Autowired
     private CustomerServiceImpl customerServiceImpl;
 
+    @Bean
+    @Override
+    public AuthenticationManager authenticationManagerBean() throws Exception {
+        return super.authenticationManagerBean();
+    }
+
     @Override
     public void configure(WebSecurity web) throws Exception {
-        web.ignoring().antMatchers("/index.html", "/static/**", "/nologin", "/favicon.ico", "/register", "/twilio/**");
+        web.ignoring().antMatchers("/index.html", "/static/**", "/nologin", "/favicon.ico", "/register", "/twilio/**", "/customer/getCode",
+                "/customer/password", "/xls/**");
     }
 
     @Bean
@@ -100,7 +108,10 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 .rememberMe().rememberMeParameter("rememberMe")
                 .tokenValiditySeconds(60 * 60 * 24 * 7).tokenRepository(persistentTokenRepository()).userDetailsService(customerServiceImpl)
                 .and().csrf().disable()
-                .exceptionHandling().accessDeniedHandler(deniedHandler);
+                .exceptionHandling().accessDeniedHandler(deniedHandler).and()
+                .cors()
+                .and()
+                .csrf().disable();;
     }
 
     @Override

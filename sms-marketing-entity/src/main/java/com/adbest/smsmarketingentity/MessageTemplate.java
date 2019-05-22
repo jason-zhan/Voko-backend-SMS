@@ -13,6 +13,7 @@ import java.sql.Timestamp;
  */
 @Entity
 @Data
+@Table(name = "message_template")
 public class MessageTemplate implements Serializable {
     
     @Id

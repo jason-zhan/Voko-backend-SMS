@@ -25,10 +25,6 @@ public class Customer implements Serializable {
     private String password;  // 密码
     private String firstName;  // 名字
     private String lastName;  // 姓氏
-    /**
-     * 用户姓名
-     */
-    private String customerName;
     private UsArea state;  // 州
     private UsArea city;  // 城市
     private String industry;  // 行业
@@ -40,7 +36,9 @@ public class Customer implements Serializable {
     private Boolean disable;  // 是否禁用
 
     public static boolean checkEmail(String email) {
-        Pattern pattern = Pattern.compile("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+//        Pattern pattern = Pattern.compile("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$", Pattern.CASE_INSENSITIVE);
+        Pattern pattern = Pattern.compile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?$",
+                Pattern.CASE_INSENSITIVE);
         Matcher matcher = pattern.matcher(email);
         return matcher.matches();
     }

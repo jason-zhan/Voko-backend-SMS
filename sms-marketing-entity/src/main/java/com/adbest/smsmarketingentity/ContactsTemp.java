@@ -7,6 +7,7 @@ import java.io.Serializable;
 
 @Data
 @Entity
+@Table(name = "contacts_temp")
 public class ContactsTemp implements Serializable {
 
     @Id

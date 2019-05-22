@@ -10,6 +10,7 @@ import java.io.Serializable;
  */
 @Data
 @Entity
+@Table(name = "market_setting")
 public class MarketSetting implements Serializable {
     
     @Id

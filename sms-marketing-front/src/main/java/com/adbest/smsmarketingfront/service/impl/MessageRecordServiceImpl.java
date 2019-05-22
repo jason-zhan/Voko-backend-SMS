@@ -51,22 +51,22 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     Map<Integer, String> inboxStatusMap;
     @Autowired
     Map<Integer, String> outboxStatusMap;
-    
+
     @Autowired
     private MobileNumberService mobileNumberService;
-    
+
     @Autowired
     private ContactsService contactsService;
-    
+
     @Autowired
     private KeywordService keywordService;
-    
+
     @Autowired
     private SmsBillComponent smsBillComponent;
-    
+
     @Autowired
     private SmsBillService smsBillService;
-    
+
     @Autowired
     private TwilioUtil twilioUtil;
     
@@ -184,7 +184,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("leave outboxStatusMap");
         return outboxStatusMap;
     }
-    
+
     @Override
     public void saveInbox(InboundMsg inboundMsg) {
         List<MobileNumber> list = mobileNumberService.findByNumberAndDisable(inboundMsg.getTo(), false);
@@ -192,14 +192,16 @@ public class MessageRecordServiceImpl implements MessageRecordService {
             return;
         }
         MobileNumber mobileNumber = list.get(0);
-        List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(inboundMsg.getFrom(), mobileNumber.getCustomerId());
+        String from = inboundMsg.getFrom();
+        from = from.startsWith("+1")?from.substring(2,from.length()):from;
+        List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(from, mobileNumber.getCustomerId());
         Contacts contacts = null;
         if (contactsList.size() <= 0) {
             contacts = new Contacts();
             contacts.setIsDelete(false);
             contacts.setInLock(false);
             contacts.setCustomerId(mobileNumber.getCustomerId());
-            contacts.setPhone(inboundMsg.getFrom());
+            contacts.setPhone(from);
             contacts.setSource(ContactsSource.API_Added.getValue());
             contactsService.save(contacts);
         } else {
@@ -225,14 +227,10 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         messageRecord.setSid(inboundMsg.getMessageSid());
         messageRecord.setExpectedSendTime(new Timestamp(System.currentTimeMillis()));
         messageRecordDao.save(messageRecord);
-        if (inboundMsg.getBody().indexOf(" ") != -1) {
-            return;
-        }
-        List<Keyword> keywords = keywordService.findByCustomerIdAndTitle(mobileNumber.getCustomerId(), inboundMsg.getBody());
-        if (keywords.size() <= 0) {
-            return;
-        }
-        //自动回复
+        if (inboundMsg.getBody().trim().indexOf(" ")!=-1){return;}
+        List<Keyword> keywords = keywordService.findByCustomerIdAndTitle(mobileNumber.getCustomerId(), inboundMsg.getBody().trim());
+        if (keywords.size()<=0){return;}
+
         MessageRecord send = new MessageRecord();
         send.setCustomerId(mobileNumber.getCustomerId());
         send.setCustomerNumber(inboundMsg.getTo());
@@ -251,7 +249,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setStatus(OutboxStatus.SENT.getValue());
         sendSms(send);
     }
-    
+
     @Transactional
     public void sendSms(MessageRecord messageRecord) {
         messageRecord.setSegments(MessageTools.calcMsgSegments(messageRecord.getContent()));

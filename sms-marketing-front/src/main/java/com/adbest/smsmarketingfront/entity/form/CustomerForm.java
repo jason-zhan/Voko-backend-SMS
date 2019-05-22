@@ -8,10 +8,6 @@ public class CustomerForm {
     private String password;  // 密码
     private String firstName;  // 名字
     private String lastName;  // 姓氏
-    /**
-     * 用户姓名
-     */
-    private String customerName;
     private String state;  // 州
     private String city;  // 城市
     private String industry;  // 行业

@@ -79,4 +79,9 @@ public class ContactsController {
         List<ContactsVo> list = contactsService.upload(file);
         return ReturnEntity.success(list);
     }
+
+    @RequestMapping(value = "/upload-template")
+    public ReturnEntity uploadTemplate() {
+        return ReturnEntity.success("/xls/upload-template.xls");
+    }
 }

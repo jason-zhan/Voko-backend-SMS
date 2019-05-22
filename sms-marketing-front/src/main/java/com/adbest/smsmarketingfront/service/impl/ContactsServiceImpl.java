@@ -36,6 +36,8 @@ import java.io.InputStream;
 import java.sql.Array;
 import java.sql.Timestamp;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 @Service
@@ -74,6 +76,7 @@ public class ContactsServiceImpl implements ContactsService {
     @Transactional
     public ContactsVo save(ContactsForm contactsForm) {
         ServiceException.notNull(contactsForm.getPhone(), returnMsgUtil.msg("PHONE_NOT_EMPTY"));
+        ServiceException.isTrue(checkPhone(contactsForm.getPhone()), returnMsgUtil.msg("PHONE_INCORRECT_FORMAT"));
         Long customerId = Current.get().getId();
         Contacts contacts = contactsForm.getContacts();
         Contacts ct = contactsDao.findFirstByPhoneAndCustomerId(contactsForm.getPhone(), customerId);
@@ -299,7 +302,7 @@ public class ContactsServiceImpl implements ContactsService {
         Contacts c = null;
         for (ContactsTemp contactsTemp:list) {
             boolean lock = redisLockUtil.lock(customerId + contactsTemp.getPhone(), 60 * 5);
-            if (!lock)continue;
+            if (!lock || !checkPhone(contactsTemp.getPhone()))continue;
             c = map.get(contactsTemp.getPhone());
             if (c==null){
                 c = new Contacts();
@@ -317,5 +320,12 @@ public class ContactsServiceImpl implements ContactsService {
         }
         contactsDao.saveAll(contacts);
         contactsLinkGroupService.createContactsLinkGroup(contacts.stream().map(s->s.getId()).collect(Collectors.toList()), Long.valueOf(groupId));
+    }
+
+    private boolean checkPhone(String phone) {
+        Pattern pattern = Pattern.compile("^(\\d{10})$",
+                Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(phone);
+        return matcher.matches();
     }
 }

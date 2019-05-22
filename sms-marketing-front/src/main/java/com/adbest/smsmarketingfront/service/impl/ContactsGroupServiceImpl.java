@@ -52,13 +52,6 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
             if (contactsLinkGroups.size()>0){
                 List<Long> contactsIds = contactsLinkGroups.stream().map(s -> s.getContactsId()).distinct().collect(Collectors.toList());
                 contactsLinkGroupService.createContactsLinkGroup(contactsIds, co.getId());
-//                List<ContactsLinkGroup> list = new ArrayList<>();
-//                ContactsLinkGroup clg = null;
-//                for (Long id:contactsIds) {
-//                    clg = new ContactsLinkGroup(id, co.getId());
-//                    list.add(clg);
-//                }
-//                contactsLinkGroupService.saveAll(list);
             }
         }
         return co;

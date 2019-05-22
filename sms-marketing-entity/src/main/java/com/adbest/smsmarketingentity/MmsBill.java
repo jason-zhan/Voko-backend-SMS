@@ -12,6 +12,7 @@ import java.sql.Timestamp;
  */
 @Entity
 @Data
+@Table(name = "mms_bill")
 public class MmsBill implements Serializable {
     
     @Id

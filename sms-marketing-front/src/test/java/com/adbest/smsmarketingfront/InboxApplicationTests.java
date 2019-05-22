@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,12 +30,12 @@ public class InboxApplicationTests {
     
     @Test
     public void test(){
-        InboundMsg inboundMsg = new InboundMsg();
-        inboundMsg.setMessageSid(UUID.randomUUID().toString());
-        inboundMsg.setBody("优惠");
-        inboundMsg.setFrom("123456");
-        inboundMsg.setTo("654321");
-        messageRecordService.saveInbox(inboundMsg);
+//        InboundMsg inboundMsg = new InboundMsg();
+//        inboundMsg.setMessageSid(UUID.randomUUID().toString());
+//        inboundMsg.setBody("优惠");
+//        inboundMsg.setFrom("123456");
+//        inboundMsg.setTo("654321");
+//        messageRecordService.saveInbox(inboundMsg);
     }
 
 }

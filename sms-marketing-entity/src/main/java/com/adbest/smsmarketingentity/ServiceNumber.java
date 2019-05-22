@@ -2,11 +2,7 @@ package com.adbest.smsmarketingentity;
 
 import lombok.Data;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.GeneratedValue;
-import javax.persistence.GenerationType;
-import javax.persistence.Id;
+import javax.persistence.*;
 import java.io.Serializable;
 import java.sql.Timestamp;
 
@@ -15,6 +11,7 @@ import java.sql.Timestamp;
  */
 @Entity
 @Data
+@Table(name = "service_number")
 public class ServiceNumber implements Serializable {
     
     @Id
