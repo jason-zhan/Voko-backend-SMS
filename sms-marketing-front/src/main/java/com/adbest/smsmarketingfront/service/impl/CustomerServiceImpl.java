@@ -19,8 +19,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.web.authentication.WebAuthenticationDetails;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
@@ -79,6 +85,9 @@ public class CustomerServiceImpl implements  CustomerService {
     @Value("${spring.mail.username}")
     private String emailname;
 
+    @Autowired
+    private AuthenticationManager authenticationManager;
+
     @Override
     public Customer save(Customer customer) {
         return customerDao.save(customer);
@@ -99,7 +108,7 @@ public class CustomerServiceImpl implements  CustomerService {
     }
 
     @Override
-    public boolean register(CustomerForm createSysUser) {
+    public boolean register(CustomerForm createSysUser, HttpServletRequest request) {
         ServiceException.notNull(createSysUser, returnMsgUtil.msg("PARAM_IS_NULL"));
         ServiceException.hasText(createSysUser.getEmail(), returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
         ServiceException.hasText(createSysUser.getPassword(), returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
@@ -114,7 +123,6 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setEmail(createSysUser.getEmail());
 //        if (createSysUser.getCity()!=null)customer.setCity(usAreaService.findById(Long.valueOf(createSysUser.getCity())));
 //        if (createSysUser.getState()!=null)customer.setState(usAreaService.findById(Long.valueOf(createSysUser.getState())));
-        customer.setCustomerName(createSysUser.getCustomerName());
         customer.setFirstName(createSysUser.getFirstName());
         customer.setLastName(createSysUser.getLastName());
         customer.setIndustry(createSysUser.getIndustry());
@@ -125,6 +133,12 @@ public class CustomerServiceImpl implements  CustomerService {
                 initCustomerData(customer);
             }
         }.start();
+
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getEmail(), createSysUser.getPassword());
+        Authentication authenticatedUser = authenticationManager
+        .authenticate(authenticationToken);
+        SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
+        request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
         return true;
     }
 

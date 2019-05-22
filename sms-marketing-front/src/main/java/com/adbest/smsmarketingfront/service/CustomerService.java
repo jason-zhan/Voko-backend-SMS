@@ -19,7 +19,7 @@ public interface CustomerService extends UserDetailsService {
 
     Customer findFirstByEmailAndPassword(String username, String encrypt);
 
-    boolean register(CustomerForm vo);
+    boolean register(CustomerForm vo, HttpServletRequest request);
 
     Customer findFirstByEmail(String email);
 

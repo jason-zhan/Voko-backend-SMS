@@ -10,6 +10,7 @@ import java.io.Serializable;
  */
 @Entity
 @Data
+@Table(name = "contacts_link_group")
 public class ContactsLinkGroup implements Serializable {
     
     @Id

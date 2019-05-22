@@ -64,7 +64,6 @@ public class DbImportCustomerTask {
             customer.setPassword(UUID.randomUUID().toString());
             customer.setDisable(false);
             customer.setEmail(vkCustomers.getEmail());
-            customer.setCustomerName(vkCustomers.getName());
             customer.setFirstName(vkCustomers.getFirstname());
             customer.setLastName(vkCustomers.getLastname());
             customerList.add(customer);

@@ -230,7 +230,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         if (inboundMsg.getBody().trim().indexOf(" ")!=-1){return;}
         List<Keyword> keywords = keywordService.findByCustomerIdAndTitle(mobileNumber.getCustomerId(), inboundMsg.getBody().trim());
         if (keywords.size()<=0){return;}
-        //自动回复
+
         MessageRecord send = new MessageRecord();
         send.setCustomerId(mobileNumber.getCustomerId());
         send.setCustomerNumber(inboundMsg.getTo());

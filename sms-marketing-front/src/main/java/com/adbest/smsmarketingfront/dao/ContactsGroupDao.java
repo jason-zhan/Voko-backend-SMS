@@ -25,7 +25,7 @@ public interface ContactsGroupDao extends JpaRepository<ContactsGroup, Long> {
 
     Page<ContactsGroup> findByCustomerId(Long customerId, Pageable pageable);
 
-    @Query(value = "SELECT a.contacts_id,b.title,b.id FROM contacts_link_group a LEFT JOIN contacts_group b ON a.group_id = b.id where a.contacts_id in :ids"
+    @Query(value = "SELECT a.contactsId,b.title,b.id FROM contactslinkgroup a LEFT JOIN contacts_group b ON a.groupId = b.id where a.contactsId in :ids"
             ,nativeQuery = true)
     List<Object> findByContentIn(@Param("ids") List<Long> ids);
 

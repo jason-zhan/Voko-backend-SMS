@@ -25,10 +25,6 @@ public class Customer implements Serializable {
     private String password;  // 密码
     private String firstName;  // 名字
     private String lastName;  // 姓氏
-    /**
-     * 用户姓名
-     */
-    private String customerName;
     private UsArea state;  // 州
     private UsArea city;  // 城市
     private String industry;  // 行业

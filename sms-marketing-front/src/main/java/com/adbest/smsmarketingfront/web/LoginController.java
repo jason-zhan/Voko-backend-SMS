@@ -10,6 +10,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.servlet.http.HttpServletRequest;
+
 @RestController
 public class LoginController {
 
@@ -25,8 +27,8 @@ public class LoginController {
     }
 
     @PostMapping("/register")
-    public ReturnEntity register(CustomerForm vo) {
-        boolean is = customerService.register(vo);
+    public ReturnEntity register(CustomerForm vo, HttpServletRequest request) {
+        boolean is = customerService.register(vo, request);
         return ReturnEntity.success(is);
     }
 }
