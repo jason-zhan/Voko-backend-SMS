@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.entity.vo;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsGroup;
+import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
 import lombok.Data;
 
 import javax.persistence.Column;
@@ -22,6 +23,7 @@ public class ContactsVo implements Serializable {
     private Timestamp createTime;  // 创建时间
     private Timestamp inLockTime;  // 锁定时间
     private List<ContactsGroup> groups;
+    private String source;
     public ContactsVo(Contacts contacts){
         this.id = contacts.getId();
         this.phone = contacts.getPhone();
@@ -32,6 +34,7 @@ public class ContactsVo implements Serializable {
         this.inLock = contacts.getInLock();
         this.createTime = contacts.getCreateTime();
         this.inLockTime = contacts.getInLockTime();
+        this.source = ContactsSource.getText(contacts.getSource());
     }
 
     public ContactsVo() {

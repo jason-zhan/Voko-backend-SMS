@@ -1,7 +1,10 @@
 package com.adbest.smsmarketingfront;
 
+import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingentity.Keyword;
+import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.ServiceNumber;
+import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.PageBase;
@@ -17,6 +20,8 @@ import org.springframework.test.context.junit4.SpringRunner;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -27,6 +32,9 @@ public class InboxApplicationTests {
 
     @Autowired
     private KeywordService keywordService;
+
+    @Autowired
+    private ContactsGroupService contactsGroupService;
     
     @Test
     public void test(){
@@ -37,5 +45,4 @@ public class InboxApplicationTests {
 //        inboundMsg.setTo("654321");
 //        messageRecordService.saveInbox(inboundMsg);
     }
-
 }

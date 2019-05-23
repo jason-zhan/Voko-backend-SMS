@@ -30,4 +30,13 @@ public enum ContactsSource {
     public void setTitle(String title) {
         this.title = title;
     }
+
+    public static String getText(int code){
+        for(ContactsSource s : ContactsSource.values()){
+            if(s.getValue() == code){
+                return s.getTitle();
+            }
+        }
+        return "";
+    }
 }
