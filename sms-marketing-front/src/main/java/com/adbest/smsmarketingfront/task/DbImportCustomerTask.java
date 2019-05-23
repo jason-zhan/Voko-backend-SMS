@@ -38,7 +38,7 @@ public class DbImportCustomerTask {
     @Autowired
     private ContactsService contactsService;
 
-    @Scheduled(cron = "30 0 0/1 * * ?")
+    //@Scheduled(cron = "30 0 0/1 * * ?")
     public void importCustomerTask(){
         List<VkCustomers> list = vkCustomersService.findByInLeadinIsNullAndEmailNotNull();
         if (list.size()<=0){return;}
@@ -75,7 +75,7 @@ public class DbImportCustomerTask {
         }
     }
 
-    @Scheduled(cron = "0/30 * * * * ?")
+    //@Scheduled(cron = "0/30 * * * * ?")
     public void importContactsTask(){
         int size = 500;
         int page = 0;

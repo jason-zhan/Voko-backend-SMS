@@ -22,14 +22,14 @@ public class VkCDRCustomers implements Serializable {
      */
     private String CLI;
     private String CLD;
-    private String setup_time;
+    private Integer setup_time;
     private Timestamp connect_time;
     private Timestamp disconnect_time;
     private Integer disconnect_cause;
     private Integer voice_quality;
     private Integer i_customer;
     private Integer i_dest;
-    private String charged_time;
+    private Integer charged_time;
     private BigDecimal charged_amount;
     private String history;
     private Integer i_vendor;
@@ -44,7 +44,7 @@ public class VkCDRCustomers implements Serializable {
     private Integer bit_flags;
     private String h323_incoming_conf_id;
     private String rating_pattern;
-    private String originating_ip;
+    private byte[] originating_ip;
     private Integer split_order;
     private Integer peak_level;
     private Integer i_dest_group;

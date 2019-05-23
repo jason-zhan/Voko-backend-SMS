@@ -7,15 +7,15 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.sql.Date;
 import java.sql.Timestamp;
-import java.util.Date;
 
 /**
  * V公司商户表
  */
 @Data
 @Entity
-@Table(name = "vkCustomers")
+@Table(name = "vkcustomers")
 public class VkCustomers implements Serializable {
     @Id
     private Integer i_customer;
