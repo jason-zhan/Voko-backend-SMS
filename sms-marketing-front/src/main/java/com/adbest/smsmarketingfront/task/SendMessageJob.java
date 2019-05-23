@@ -45,13 +45,12 @@ public class SendMessageJob implements Job {
         JobKey jobKey = jobDetail.getKey();
         Long planId = Long.valueOf(jobKey.getGroup());
         Integer page = Integer.valueOf(jobKey.getName());
-        Integer size = (Integer) jobDataMap.get("size");
         List<MessageRecord> messageList = (List<MessageRecord>) jobDataMap.get("messageList");
         if (messageList == null || messageList.size() == 0) {
-            System.out.printf("[ERROR] message list is empty,  planId=%s, page=%s, size=%s [task] %n", planId, page, size);
+            System.out.printf("[ERROR] message list is empty,  planId=%s, page=%s, size=%s [task] %n", planId, page, 0);
             return;
         }
-        System.out.printf("will execute send message, planId=%s, page=%s, size=%s [task] %n", planId, page, size);
+        System.out.printf("will execute send message, planId=%s, page=%s, size=%s [task] %n", planId, page, messageList.size());
         // 执行
         sendMessage(messageList, planId, page);
         // 统计任务完成度
@@ -60,18 +59,8 @@ public class SendMessageJob implements Job {
             messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue());
             System.out.printf("complete message plan, planId=%s [task] %n", planId);
         } else {
-            System.out.printf("executed send message, planId=%s, page=%s, size=%s [task] %n", planId, page, size);
+            System.out.printf("executed send message, planId=%s, page=%s, size=%s [task] %n", planId, page, messageList.size());
         }
-        // 测试代码块
-//            for (int i = 30; i > 0; i--) {
-//                try {
-//                    Thread.sleep(1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
-//                System.out.printf("job:%s:page:%s:%s%n", planId, page, i);
-//            }
-    
     }
     
     // 发送消息
@@ -79,11 +68,11 @@ public class SendMessageJob implements Job {
         List<MessageRecord> sentMessageList = new ArrayList<>();
         for (MessageRecord message : messageList) {
             try {
-            message.setSid(UUID.randomUUID().toString());
-//                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
-//                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
-//            messageRecordDao.updateStatusAfterSendMessage(message.getId(), message.getSid(), OutboxStatus.SENT.getValue());
-//                message.setSid(sentMsg.getSid());
+//                message.setSid(UUID.randomUUID().toString());
+                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
+                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
+//                messageRecordDao.updateStatusAfterSendMessage(message.getId(), message.getSid(), OutboxStatus.SENT.getValue());
+                message.setSid(sentMsg.getSid());
                 message.setStatus(OutboxStatus.SENT.getValue());
                 message.setSendTime(TimeTools.now());
                 sentMessageList.add(message);

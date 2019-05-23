@@ -6,17 +6,16 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
-import com.adbest.smsmarketingfront.service.SmsBillComponent;
 import com.adbest.smsmarketingfront.util.TimeTools;
-import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobBuilder;
 import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
+import org.quartz.JobKey;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
-import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
+import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -26,10 +25,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * 消息业务 任务合集
@@ -38,13 +38,9 @@ import java.util.Map;
 @Slf4j
 public class MessageTask {
     
-    @Autowired
-    private TwilioUtil twilioUtil;
-    @Value("${twilio.viewFileUrl}")
-    private String viewFileUrl;
     @Value("${twilio.planExecTimeDelay}")
-    private int planExecTimeDelay;  // 定时发送等候执行分钟数
-    private static final int repairTimeRange = 5;  // 修复定时发送预先探测分钟数
+    private int planExecTimeDelay;  // 定时发送距离当前时间最小间隔分钟数
+    private static final int repairTimeRange = 1;  // 定时发送修复任务探测时间超出当前时间的分钟数
     
     @Autowired
     MessagePlanDao messagePlanDao;
@@ -54,104 +50,51 @@ public class MessageTask {
     @Autowired
     private Scheduler scheduler;
     
-    @Autowired
-    private SmsBillComponent smsBillComponent;
-    
     private static final int singleThreadSendNum = 1000;
     
     /**
-     * 分发定时发送消息作业(job)
+     * 执行定时发送
      */
-    @Scheduled(fixedRate = 10 * 60 * 1000)
-    public void distributeSendMsgJob() {
-        log.info("enter generateSendMsgThread [task]");
-        // 获取待执行定时发送任务
+    @Scheduled(fixedRate = 60 * 1000)
+    public synchronized void executePlan() {
+        log.info("enter executePlan [task]");
+        // 获取所有计划中状态的任务
         List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
                 TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay));
-        for (MessagePlan plan : planList) {
-            log.info("do planId: " + plan.getId());
-            // 锁定任务和消息
-            lockPlanAndMessage(plan.getId());
-            // 分发任务
-            distributeJob(plan);
+        if (planList.isEmpty()) {
+            log.info("leave executePlan for empty list [task]");
+            return;
         }
-        
-        // 测试代码块
-//        for (int i = 0; i < 20; i++) {
-//            log.info("do planId: " + i);
-//            long totalPage = 1 + new Random().nextInt(5);
-//            int number = 0;
-//            while (number < totalPage) {
-//                MessagePlan plan = new MessagePlan();
-//                plan.setId((long) i);
-//                plan.setExecTime(TimeTools.addSeconds(TimeTools.now(), i * 5));
-//                generateScheduledJob(plan, number);
-//                number++;
-//            }
-//        }
-        log.info("leave generateSendMsgThread [task]");
+        // 去除正在执行的任务
+        checkPlanByGroup(planList);
+        if (planList.size() == 0) {
+            log.info("leave executePlan for empty list [task]");
+            return;
+        }
+        // 调度任务
+        scheduledPlan(planList);
+        log.info("leave executePlan [task]");
     }
     
     /**
      * 修补发送消息作业异常
      */
-//    @Scheduled(cron = "0/5 * * * * ?")
-    @Scheduled(initialDelay = 5 * 60 * 1000, fixedRate = 10 * 60 * 1000)
-    public void repairSendMsg() {
+//    @Scheduled(fixedRate = 5000)
+    @Scheduled(initialDelay = 60 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+    public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
-        // 所有队列中的任务
+        // 所有队列中状态的任务
         List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
                 TimeTools.addMinutes(TimeTools.now(), repairTimeRange));
+        // 排除当前正在运行的任务
+        checkPlanByGroup(planList);
         if (planList.size() == 0) {
-            log.info("leave repairSendMsg 0 [task]");
+            log.info("leave repairSendMsg for empty list [task]");
             return;
         }
-        List<String> groupNames = null;
-        try {
-            groupNames = scheduler.getJobGroupNames();
-        } catch (SchedulerException e) {
-            throw new RuntimeException("getJobGroupNames() exception", e);
-        }
-        // 排除当前正在运行的任务
-        for (String name : groupNames) {
-            planList.removeIf(plan -> name.equals(plan.getId().toString()));
-            System.out.println("group [" + name + "] exists");
-        }
-        // 分发任务
-        for (MessagePlan plan : planList) {
-            distributeJob(plan);
-        }
+        // 调度任务
+        scheduledPlan(planList);
         log.info("leave repairSendMsg [task]");
-    }
-    
-    // 分发定时发送作业
-    private void distributeJob(MessagePlan plan) {
-        int page = 0;
-        Page<MessageRecord> messagePage = null;
-        List<JobDetail> jobDetailList = new ArrayList<>();
-        do {
-            messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(),
-                    PageRequest.of(page, singleThreadSendNum, Sort.Direction.ASC, "id"));
-            if (messagePage.isEmpty()) {
-                return;
-            }
-            Map<String, Object> map = new HashMap<>();
-            map.put("messageList", messagePage.getContent());
-            map.put("size", singleThreadSendNum);
-            JobDetail jobDetail = JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
-                    .withIdentity("" + page, plan.getId() + "").build();
-            jobDetailList.add(jobDetail);
-            page++;
-        } while (messagePage.hasNext());
-        // 装配数据后，再分配任务，避免并发
-        for (JobDetail jobDetail : jobDetailList) {
-            Trigger trigger = TriggerBuilder.newTrigger().startAt(plan.getExecTime()).build();
-            try {
-                scheduler.scheduleJob(jobDetail, trigger);
-            } catch (SchedulerException e) {
-                log.info("distributeJob [SchedulerException]", e);
-            }
-        }
     }
     
     @Transactional
@@ -162,4 +105,66 @@ public class MessageTask {
         messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
     }
     
+    private void addJobToScheduler(MessagePlan plan) {
+        int page = 0;
+        boolean locked = false;
+        Page<MessageRecord> messagePage = null;
+        do {
+            messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(),
+                    PageRequest.of(page, singleThreadSendNum, Sort.Direction.ASC, "id"));
+            if (messagePage.isEmpty()) {
+                break;
+            }
+            Map<String, Object> map = new HashMap<>();
+            map.put("execTime", plan.getExecTime());
+            map.put("messageList", messagePage.getContent());
+            JobDetail jobDetail = JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
+                    .withIdentity(page + "", plan.getId().toString()).build();
+            try {
+                scheduler.addJob(jobDetail, false, true);
+                if (!locked) {
+                    // 锁定任务与消息
+                    lockPlanAndMessage(plan.getId());
+                    locked = true;
+                }
+            } catch (SchedulerException e) {
+                log.info("add job err: ", e);
+            }
+            page++;
+        } while (messagePage.hasNext());
+    }
+    
+    private void scheduledPlan(List<MessagePlan> planList) {
+        // 立即增加任务到调度器中
+        for (MessagePlan plan : planList) {
+            addJobToScheduler(plan);
+        }
+        // 关联触发器
+        try {
+            for (MessagePlan plan : planList) {
+                Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.groupEquals(plan.getId().toString()));
+                for (JobKey jobKey : jobKeys) {
+                    JobDataMap jobDataMap = scheduler.getJobDetail(jobKey).getJobDataMap();
+                    scheduler.scheduleJob(TriggerBuilder.newTrigger().forJob(jobKey).startAt((Date) jobDataMap.get("execTime")).build());
+                }
+            }
+        } catch (SchedulerException e) {
+            log.info("link job with trigger err:", e);
+        }
+    }
+    
+    private void checkPlanByGroup(List<MessagePlan> planList) {
+        List<String> groupNames = null;
+        try {
+            groupNames = scheduler.getJobGroupNames();
+            System.out.printf("job total=%s%n", scheduler.getJobKeys(GroupMatcher.anyJobGroup()).size());
+            System.out.printf("executing job total=%s%n", scheduler.getCurrentlyExecutingJobs().size());
+        } catch (SchedulerException e) {
+            throw new RuntimeException("get jobGroupNames or jobKeys exception", e);
+        }
+        for (String name : groupNames) {
+            System.out.printf("group [%s] exists", name);
+            planList.removeIf(plan -> name.equals(plan.getId().toString()));
+        }
+    }
 }
