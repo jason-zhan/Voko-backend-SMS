@@ -80,7 +80,7 @@ public class MessageTask {
      * 修补发送消息作业异常
      */
 //    @Scheduled(fixedRate = 5000)
-    @Scheduled(initialDelay = 60 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
     public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
