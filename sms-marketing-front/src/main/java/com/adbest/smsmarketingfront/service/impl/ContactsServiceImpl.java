@@ -233,7 +233,8 @@ public class ContactsServiceImpl implements ContactsService {
 
     @Override
     public boolean process(ContactsProcessForm contactsProcessForm) {
-        ServiceException.isTrue(contactsProcessForm.getGroupId()!=null && contactsProcessForm.getTempSign()!=null,returnMsgUtil.msg("MISSING_PARAMETER"));
+        ServiceException.isTrue(!StringUtils.isEmpty(contactsProcessForm.getGroupId()) && !StringUtils.isEmpty(contactsProcessForm.getTempSign()),
+                returnMsgUtil.msg("MISSING_PARAMETER"));
         Long customerId = Current.get().getId();
         List<ContactsTemp> list = contactsTempService.findByTempSign(contactsProcessForm.getTempSign());
         Runnable runnable = new Runnable() {

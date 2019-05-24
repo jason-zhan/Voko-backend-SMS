@@ -32,11 +32,11 @@ public interface VkCDRCustomersDao extends JpaRepository<VkCDRCustomers, Integer
 
     @Modifying
     @Transactional
-    @Query(value = "UPDATE vkcdr_customers v, (SELECT * FROM ( " +
+    @Query(value = "UPDATE vkCDR_Customers v, (SELECT * FROM ( " +
             "SELECT " +
             "a.id AS vid " +
             "FROM " +
-            "vkcdr_customers a " +
+            "vkCDR_Customers a " +
             "LEFT JOIN vkcustomers b ON a.i_customer = b.i_customer " +
             "LEFT JOIN customer c ON c.email = b.email " +
             "LEFT JOIN contacts d ON d.phone = a.cli AND d.customer_id = c.id " +
