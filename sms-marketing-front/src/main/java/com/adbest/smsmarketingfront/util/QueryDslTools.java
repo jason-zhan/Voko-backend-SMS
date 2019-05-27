@@ -13,7 +13,9 @@ import org.apache.poi.ss.formula.functions.T;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -109,7 +111,8 @@ public class QueryDslTools {
     
     public static <T extends String> void containsNotEmpty(BooleanBuilder builder, boolean caseSensitive, T string, StringPath... paths) {
         if (!StringUtils.isEmpty(string)) {
-            List<StringPath> pathList = Arrays.asList(paths);
+            List<StringPath> pathList = new ArrayList<>();
+            Collections.addAll(pathList, paths);
             if (caseSensitive) {
                 BooleanExpression expression = pathList.get(0).contains(string);
                 pathList.remove(0);

@@ -112,7 +112,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
             }
         }
-        Assert.isTrue(msgTotal > 0, "No message to be sent, for empty contacts list!");
+        ServiceException.isTrue(msgTotal > 0, bundle.getString("msg-plan-contacts"));
         // 产生消息账单
         if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
             smsBillComponent.saveSmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
