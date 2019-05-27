@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingfront.entity.form.ContactsGroupForm;
+import com.adbest.smsmarketingfront.entity.vo.ContactsGroupVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.util.PageBase;
 
@@ -30,4 +31,7 @@ public interface ContactsGroupService {
     List<ContactsGroup> findAll();
 
     List<Object> findByContentIn(List<Long> ids);
+
+    List<ContactsGroupVo> selectByCustomerId();
+
 }

@@ -39,4 +39,6 @@ public interface MessageRecordService {
     Map<Integer, String> outboxStatusMap();
 
     void saveInbox(InboundMsg inboundMsg);
+
+    void sendCallReminder(List<MessageRecord> messageRecords);
 }

@@ -37,4 +37,9 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         List<MobileNumberVo> list = mobileNumbers.stream().map(s -> new MobileNumberVo(s.getId(),s.getNumber())).collect(Collectors.toList());
         return list;
     }
+
+    @Override
+    public List<MobileNumber> findByCustomerIdInAndDisable(List<Long> customerId, boolean disable) {
+        return mobileNumberDao.findByCustomerIdInAndDisable(customerId, disable);
+    }
 }

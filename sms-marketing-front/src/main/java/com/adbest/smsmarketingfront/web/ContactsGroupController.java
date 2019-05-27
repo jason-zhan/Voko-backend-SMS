@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingfront.entity.form.ContactsGroupForm;
+import com.adbest.smsmarketingfront.entity.vo.ContactsGroupVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.util.Current;
@@ -62,6 +63,12 @@ public class ContactsGroupController {
     @RequestMapping("/all")
     public ReturnEntity selectAll(){
         List<ContactsGroup> list = contactsGroupService.findAll();
+        return ReturnEntity.success(list);
+    }
+
+    @RequestMapping("/list")
+    public ReturnEntity list(){
+        List<ContactsGroupVo> list = contactsGroupService.selectByCustomerId();
         return ReturnEntity.success(list);
     }
 }

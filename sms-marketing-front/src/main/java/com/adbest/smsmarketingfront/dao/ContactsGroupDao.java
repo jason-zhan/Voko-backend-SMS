@@ -31,4 +31,10 @@ public interface ContactsGroupDao extends JpaRepository<ContactsGroup, Long> {
     List<ContactsGroup> findByCustomerId(Long customerId);
  
     ContactsGroup findByIdAndCustomerId(Long id, Long customerId);
+
+   @Query(value = "SELECT a.id,a.title,IFNULL(b.num,0) FROM " +
+           "(SELECT a.id,a.title FROM contacts_group a WHERE a.customer_id = :customerId) a LEFT JOIN  " +
+           "(SELECT group_id,count(DISTINCT contacts_id) num FROM contacts_link_group c WHERE group_id  " +
+           "in (SELECT id FROM contacts_group WHERE customer_id = :customerId) GROUP BY group_id) as b ON a.id = b.group_id order by a.id;",nativeQuery = true)
+    List<?> selectByCustomerId(Long customerId);
 }
