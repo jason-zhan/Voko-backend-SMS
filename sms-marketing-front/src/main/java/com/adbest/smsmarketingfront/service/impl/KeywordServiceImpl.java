@@ -81,7 +81,7 @@ public class KeywordServiceImpl implements KeywordService {
 
     @Override
     public Boolean check(String title) {
-        ServiceException.notNull(title,returnMsgUtil.msg("KEYWORD_NOT_EMPTY"));
+        ServiceException.hasText(title,returnMsgUtil.msg("KEYWORD_NOT_EMPTY"));
         Long customerId = Current.get().getId();
         Long count = keywordDao.countByCustomerIdAndTitle(customerId,title);
         return count<=0;

@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.service.impl;
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
+import com.adbest.smsmarketingfront.entity.enums.CustomerSource;
 import com.adbest.smsmarketingfront.entity.form.CustomerForm;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.entity.vo.UserDetailsVo;
@@ -88,6 +89,9 @@ public class CustomerServiceImpl implements  CustomerService {
     @Autowired
     private AuthenticationManager authenticationManager;
 
+    @Autowired
+    private CustomerSettingsService customerSettingsService;
+
     @Override
     public Customer save(Customer customer) {
         return customerDao.save(customer);
@@ -108,6 +112,7 @@ public class CustomerServiceImpl implements  CustomerService {
     }
 
     @Override
+    @Transactional
     public boolean register(CustomerForm createSysUser, HttpServletRequest request) {
         ServiceException.notNull(createSysUser, returnMsgUtil.msg("PARAM_IS_NULL"));
         ServiceException.hasText(createSysUser.getEmail(), returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
@@ -127,7 +132,11 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setLastName(createSysUser.getLastName());
         customer.setIndustry(createSysUser.getIndustry());
         customer.setOrganization(createSysUser.getOrganization());
+        customer.setSource(CustomerSource.REGISTER.getValue());
         customerDao.save(customer);
+
+        CustomerSettings customerSettings = new CustomerSettings(false, customer.getId());
+        customerSettingsService.save(customerSettings);
         new Thread(){
             public void run() {
                 initCustomerData(customer);

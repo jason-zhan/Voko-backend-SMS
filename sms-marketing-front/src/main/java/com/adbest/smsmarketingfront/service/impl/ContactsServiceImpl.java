@@ -258,6 +258,7 @@ public class ContactsServiceImpl implements ContactsService {
             listob = new ImportExcelUtil().getBankListByExcel(in, file.getOriginalFilename());
             List<ContactsVo> list = Lists.newArrayList();
             ContactsVo vo = null;
+            ServiceException.isTrue(listob.size()<=2000,returnMsgUtil.msg("TOO_MANY_IMPORTS"));
             if (listob.size()>1)
                 for (int i = 1;i<listob.size();i++){
                     List<Object> objects = listob.get(i);

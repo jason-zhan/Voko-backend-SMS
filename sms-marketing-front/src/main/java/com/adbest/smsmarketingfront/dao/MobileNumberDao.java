@@ -9,4 +9,6 @@ public interface MobileNumberDao extends JpaRepository<MobileNumber,Long> {
     List<MobileNumber> findByNumberAndDisable(String phone, boolean disable);
 
     List<MobileNumber> findByCustomerId(Long customerId);
+
+    List<MobileNumber> findByCustomerIdInAndDisable(List<Long> customerId, boolean disable);
 }

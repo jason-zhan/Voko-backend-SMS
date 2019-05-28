@@ -36,7 +36,7 @@ public class RedisLockUtil {
     /**
      * 加锁,同时设置锁超时时间
      * @param key 分布式锁的key
-     * @param expireTime 单位是ms
+     * @param expireTime 单位是s
      * @return
      */
     public boolean lock(String key, long expireTime) {

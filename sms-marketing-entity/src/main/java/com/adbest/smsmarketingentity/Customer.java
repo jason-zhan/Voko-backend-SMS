@@ -35,6 +35,8 @@ public class Customer implements Serializable {
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用
 
+    private Integer source;  // 来源
+
     public static boolean checkEmail(String email) {
 //        Pattern pattern = Pattern.compile("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$", Pattern.CASE_INSENSITIVE);
         Pattern pattern = Pattern.compile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?$",

@@ -39,4 +39,14 @@ public class VkCDRCustomersServiceImpl implements VkCDRCustomersService {
     public Integer updateRepeatInLeadin() {
         return vkCDRCustomersDao.updateRepeatInLeadin();
     }
+
+    @Override
+    public List<?> selectSendPhone(Pageable pageRequest) {
+        return vkCDRCustomersDao.selectSendPhone(pageRequest);
+    }
+
+    @Override
+    public Integer updateSendStatus(List<Long> ids, int status) {
+        return vkCDRCustomersDao.updateSendStatus(ids, status);
+    }
 }

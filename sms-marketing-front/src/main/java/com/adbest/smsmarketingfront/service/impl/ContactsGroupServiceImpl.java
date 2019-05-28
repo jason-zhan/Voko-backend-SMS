@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.ContactsGroup;
 import com.adbest.smsmarketingentity.ContactsLinkGroup;
 import com.adbest.smsmarketingfront.dao.ContactsGroupDao;
 import com.adbest.smsmarketingfront.entity.form.ContactsGroupForm;
+import com.adbest.smsmarketingfront.entity.vo.ContactsGroupVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
@@ -17,9 +18,12 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -41,7 +45,7 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     @Transactional
     public ContactsGroup save(ContactsGroupForm contactsGroup) {
-        ServiceException.notNull(contactsGroup.getTitle(), returnMsgUtil.msg("GROUP_NAME_NOT_EMPTY"));
+        ServiceException.hasText(contactsGroup.getTitle(), returnMsgUtil.msg("GROUP_NAME_NOT_EMPTY"));
         Long count = countByCustomerIdAndTitle(contactsGroup.getCustomerId(), contactsGroup.getTitle());
         ServiceException.isTrue(count<=0, returnMsgUtil.msg("GROUP_NAME_EXISTS"));
         ContactsGroup co = contactsGroupDao.save(contactsGroup.getContactsGroup());
@@ -131,6 +135,18 @@ public class ContactsGroupServiceImpl implements ContactsGroupService {
     @Override
     public List<Object> findByContentIn(List<Long> ids) {
         return contactsGroupDao.findByContentIn(ids);
+    }
+
+    @Override
+    public List<ContactsGroupVo> selectByCustomerId() {
+        Long customerId = Current.get().getId();
+        List<?> objects = contactsGroupDao.selectByCustomerId(customerId);
+        List<ContactsGroupVo> list = new ArrayList<>();
+        for (Object obj: objects) {
+            Object[] objs = (Object[]) obj;
+            list.add(new ContactsGroupVo(Long.valueOf(objs[0].toString()),objs[1].toString(),objs[2].toString()));
+        }
+        return list;
     }
 
 }

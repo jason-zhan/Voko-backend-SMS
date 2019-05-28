@@ -250,11 +250,21 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         sendSms(send);
     }
 
+    @Override
+    public void sendCallReminder(List<MessageRecord> messageRecords) {
+        for (MessageRecord m : messageRecords) {
+            sendSms(m);
+        }
+    }
+
     @Transactional
     public void sendSms(MessageRecord messageRecord) {
         messageRecord.setSegments(MessageTools.calcMsgSegments(messageRecord.getContent()));
         Long sum = smsBillService.sumByCustomerId(messageRecord.getCustomerId());
-        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
+//        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
+        if ((sum == null ? 0l : sum) - messageRecord.getSegments() < 0){
+            return;
+        }
         messageRecordDao.save(messageRecord);
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());

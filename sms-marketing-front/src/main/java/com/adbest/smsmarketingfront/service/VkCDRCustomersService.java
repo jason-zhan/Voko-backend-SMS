@@ -16,4 +16,7 @@ public interface VkCDRCustomersService {
 
     Integer updateRepeatInLeadin();
 
+    List<?> selectSendPhone(Pageable pageRequest);
+
+    Integer updateSendStatus(List<Long> notSendIds, int value);
 }
