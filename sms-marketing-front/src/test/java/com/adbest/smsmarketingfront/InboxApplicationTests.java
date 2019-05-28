@@ -4,8 +4,6 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
-import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,13 +23,13 @@ import java.util.concurrent.TimeUnit;
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class InboxApplicationTests {
-
+    
     @Autowired
     private MessageRecordService messageRecordService;
-
+    
     @Autowired
     private KeywordService keywordService;
-
+    
     @Autowired
     private ContactsGroupService contactsGroupService;
 
@@ -39,7 +37,7 @@ public class InboxApplicationTests {
     private RedisTemplate redisTemplate;
     
     @Test
-    public void test(){
+    public void test() {
 //        InboundMsg inboundMsg = new InboundMsg();
 //        inboundMsg.setMessageSid(UUID.randomUUID().toString());
 //        inboundMsg.setBody("优惠");
