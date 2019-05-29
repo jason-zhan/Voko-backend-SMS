@@ -10,9 +10,9 @@ spring:
   banner:
     charset: UTF-8
   datasource:
-    url: jdbc:mysql://localhost:3306/sms_marketing?useSSL=false&characterEncoding=UTF-8&allowMultiQueries=true&serverTimezone=GMT%2B8
-    username: root
-    password: root
+    url: jdbc:mysql://10.0.10.46:3306/sms_marketing?useSSL=false&characterEncoding=UTF-8&allowMultiQueries=true&serverTimezone=GMT%2B8
+    username: messaging-ro
+    password: V@koDa11as
     driver-class-name: com.mysql.jdbc.Driver
   jpa:
     hibernate:
@@ -23,7 +23,7 @@ spring:
     show-sql: true
   redis:
     host: 127.0.0.1
-    port: 6390
+    port: 6379
     password:
 encrypt:
   salt:

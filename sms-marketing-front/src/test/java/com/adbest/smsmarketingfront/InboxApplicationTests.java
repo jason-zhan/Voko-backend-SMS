@@ -46,4 +46,5 @@ public class InboxApplicationTests {
 //        messageRecordService.saveInbox(inboundMsg);
 
     }
+
 }

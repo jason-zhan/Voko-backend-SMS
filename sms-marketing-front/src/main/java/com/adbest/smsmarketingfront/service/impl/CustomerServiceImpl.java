@@ -164,7 +164,7 @@ public class CustomerServiceImpl implements  CustomerService {
     @Override
     public void initCustomerData(Customer customer){
         //初始化手机号码
-        initPhone(customer,1);
+//        initPhone(customer,1);
         List<MarketSetting> marketSettings = marketSettingService.findAll();
         if (marketSettings.size()<=0)return;
         MarketSetting marketSetting = marketSettings.get(0);
@@ -259,27 +259,27 @@ public class CustomerServiceImpl implements  CustomerService {
         return true;
     }
 
-    public void initPhone(Customer customer,int i){
-        if (i>3){
-            return;
-        }
-        i++;
-        try {
-            ResourceSet<Local> resourceSet = twilioUtil.fetchNumbersByAreaCode(null);
-            Iterator<Local> iterator = resourceSet.iterator();
-            Local next = iterator.next();
-            String phone = next.getPhoneNumber().getEndpoint();
-            IncomingPhoneNumber incomingPhoneNumber = twilioUtil.purchaseNumber(phone);
-            MobileNumber mobileNumber = new MobileNumber();
-            mobileNumber.setCustomerId(customer.getId());
-            mobileNumber.setDisable(false);
-            mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
-            mobileNumberService.save(mobileNumber);
-        }catch (Exception e){
-            log.error("初始化:{}用户号码出错,{}",customer.getId(),e);
-            initPhone(customer,i);
-        }
-    }
+//    public void initPhone(Customer customer,int i){
+//        if (i>3){
+//            return;
+//        }
+//        i++;
+//        try {
+//            ResourceSet<Local> resourceSet = twilioUtil.fetchNumbersByAreaCode(null);
+//            Iterator<Local> iterator = resourceSet.iterator();
+//            Local next = iterator.next();
+//            String phone = next.getPhoneNumber().getEndpoint();
+//            IncomingPhoneNumber incomingPhoneNumber = twilioUtil.purchaseNumber(phone);
+//            MobileNumber mobileNumber = new MobileNumber();
+//            mobileNumber.setCustomerId(customer.getId());
+//            mobileNumber.setDisable(false);
+//            mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
+//            mobileNumberService.save(mobileNumber);
+//        }catch (Exception e){
+//            log.error("初始化:{}用户号码出错,{}",customer.getId(),e);
+//            initPhone(customer,i);
+//        }
+//    }
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
