@@ -68,11 +68,10 @@ public class SendMessageJob implements Job {
         List<MessageRecord> sentMessageList = new ArrayList<>();
         for (MessageRecord message : messageList) {
             try {
-//                message.setSid(UUID.randomUUID().toString());
-                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
-                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
-//                messageRecordDao.updateStatusAfterSendMessage(message.getId(), message.getSid(), OutboxStatus.SENT.getValue());
-                message.setSid(sentMsg.getSid());
+//                PreSendMsg preSendMsg = new PreSendMsg(message, UrlTools.getUriList(viewFileUrl, message.getMediaList()));
+//                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
+//                message.setSid(sentMsg.getSid());
+                message.setSid(UUID.randomUUID().toString());
                 message.setStatus(OutboxStatus.SENT.getValue());
                 message.setSendTime(TimeTools.now());
                 sentMessageList.add(message);

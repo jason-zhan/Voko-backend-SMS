@@ -53,7 +53,6 @@ public class MessageRecord implements Serializable {
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间
     private Timestamp sendTime;  // 发送时间
-    @Column(nullable = false)
     private Timestamp expectedSendTime;  // 预期发送时间
     private Timestamp arrivedTime;  // 送达时间
     /**

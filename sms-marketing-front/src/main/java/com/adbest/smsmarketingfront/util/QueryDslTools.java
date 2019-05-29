@@ -1,21 +1,16 @@
 package com.adbest.smsmarketingfront.util;
 
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.Path;
-import com.querydsl.core.types.dsl.BooleanExpression;
+import com.querydsl.core.types.ExpressionUtils;
+import com.querydsl.core.types.Predicate;
 import com.querydsl.core.types.dsl.BooleanPath;
 import com.querydsl.core.types.dsl.DateTimePath;
 import com.querydsl.core.types.dsl.NumberPath;
 import com.querydsl.core.types.dsl.SimpleExpression;
 import com.querydsl.core.types.dsl.StringPath;
-import com.querydsl.core.types.dsl.TimePath;
-import org.apache.poi.ss.formula.functions.T;
 import org.springframework.util.StringUtils;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
@@ -105,34 +100,28 @@ public class QueryDslTools {
         }
     }
     
-    public <T extends String> void containsNotEmpty(StringPath path, T string, boolean caseSensitive) {
+    public <T extends String> void containsNotEmpty(boolean caseSensitive, T string, StringPath path) {
         containsNotEmpty(this.builder, path, string, caseSensitive);
     }
     
     public static <T extends String> void containsNotEmpty(BooleanBuilder builder, boolean caseSensitive, T string, StringPath... paths) {
         if (!StringUtils.isEmpty(string)) {
-            List<StringPath> pathList = new ArrayList<>();
-            Collections.addAll(pathList, paths);
+            List<Predicate> expressionList = new ArrayList<>();
             if (caseSensitive) {
-                BooleanExpression expression = pathList.get(0).contains(string);
-                pathList.remove(0);
-                pathList.forEach(path -> expression.or(path.contains(string)));
-                builder.and(expression);
+                for (StringPath path : paths) {
+                    expressionList.add(path.contains(string));
+                }
             } else {
-                BooleanExpression expression = pathList.get(0).containsIgnoreCase(string);
-                pathList.remove(0);
-                pathList.forEach(path -> expression.or(path.containsIgnoreCase(string)));
-                builder.and(expression);
+                for (StringPath path : paths) {
+                    expressionList.add(path.containsIgnoreCase(string));
+                }
             }
+            builder.and(ExpressionUtils.anyOf(expressionList));
         }
     }
     
     public <T extends String> void containsNotEmpty(boolean caseSensitive, T string, StringPath... paths) {
         containsNotEmpty(this.builder, caseSensitive, string, paths);
-    }
-    
-    
-    public QueryDslTools() {
     }
     
     public QueryDslTools(BooleanBuilder builder) {
