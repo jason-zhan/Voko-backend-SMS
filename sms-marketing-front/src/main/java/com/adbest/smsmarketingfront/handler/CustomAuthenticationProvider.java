@@ -57,7 +57,6 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
             throw new DisabledException(returnMsgUtil.msg("ACCOUNT_IS_DISABLED"));
         }
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(username, null, null);
-        sysUser.setPassword("");
         authenticationToken.setDetails(new CustomerVo(sysUser));
         return authenticationToken;
     }
