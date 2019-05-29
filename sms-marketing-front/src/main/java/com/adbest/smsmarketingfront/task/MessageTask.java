@@ -71,16 +71,43 @@ public class MessageTask {
             log.info("leave executePlan for empty list [task]");
             return;
         }
-        // 调度任务
-        scheduledPlan(planList);
+        // 产生任务并加入quartz容器
+        for (MessagePlan plan : planList) {
+            // 锁定消息
+            messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+            Page<MessageRecord> messagePage = null;
+            int page = 0;
+            boolean locked = false;
+            do {
+                messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(), PageRequest.of(page, singleThreadSendNum));
+                if (messagePage.isEmpty()) {
+                    log.info("break for empty message list");
+                    break;
+                }
+                JobDetail jobDetail = generateJob(plan, messagePage);
+                try {
+                    scheduler.addJob(jobDetail, false, true);
+                } catch (SchedulerException e) {
+                    log.info("add job err: ", e);
+                }
+                if (!locked) {
+                    // 锁定任务
+                    messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+                    locked = true;
+                }
+                page++;
+            } while (messagePage.hasNext());
+        }
+        // 设定各任务触发条件
+        setTriggers(planList);
         log.info("leave executePlan [task]");
     }
     
     /**
      * 修补发送消息作业异常
      */
-//    @Scheduled(fixedRate = 5000)
-    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+    @Scheduled(fixedRate = 5000)
+//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
     public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
@@ -92,54 +119,33 @@ public class MessageTask {
             log.info("leave repairSendMsg for empty list [task]");
             return;
         }
-        // 调度任务
-        scheduledPlan(planList);
+        // 产生任务并加入quartz容器
+        for (MessagePlan plan : planList) {
+            Page<MessageRecord> messagePage = null;
+            int page = 0;
+            do {
+                messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(), PageRequest.of(page, singleThreadSendNum));
+                if (messagePage.isEmpty()) {
+                    log.info("break for empty message list");
+                    break;
+                }
+                JobDetail jobDetail = generateJob(plan, messagePage);
+                try {
+                    scheduler.addJob(jobDetail, false, true);
+                } catch (SchedulerException e) {
+                    log.info("add job err: ", e);
+                }
+                page++;
+            } while (messagePage.hasNext());
+        }
+        // 设定各任务触发条件
+        setTriggers(planList);
+        
         log.info("leave repairSendMsg [task]");
     }
     
-    @Transactional
-    public void lockPlanAndMessage(Long planId) {
-        // 锁定任务状态
-        messagePlanDao.updateStatusById(planId, MessagePlanStatus.QUEUING.getValue());
-        // 锁定消息状态
-        messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
-    }
-    
-    private void addJobToScheduler(MessagePlan plan) {
-        int page = 0;
-        boolean locked = false;
-        Page<MessageRecord> messagePage = null;
-        do {
-            messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(),
-                    PageRequest.of(page, singleThreadSendNum, Sort.Direction.ASC, "id"));
-            if (messagePage.isEmpty()) {
-                break;
-            }
-            Map<String, Object> map = new HashMap<>();
-            map.put("execTime", plan.getExecTime());
-            map.put("messageList", messagePage.getContent());
-            JobDetail jobDetail = JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
-                    .withIdentity(page + "", plan.getId().toString()).build();
-            try {
-                scheduler.addJob(jobDetail, false, true);
-                if (!locked) {
-                    // 锁定任务与消息
-                    lockPlanAndMessage(plan.getId());
-                    locked = true;
-                }
-            } catch (SchedulerException e) {
-                log.info("add job err: ", e);
-            }
-            page++;
-        } while (messagePage.hasNext());
-    }
-    
-    private void scheduledPlan(List<MessagePlan> planList) {
-        // 立即增加任务到调度器中
-        for (MessagePlan plan : planList) {
-            addJobToScheduler(plan);
-        }
-        // 关联触发器
+    // 设定触发条件
+    private void setTriggers(List<MessagePlan> planList) {
         try {
             for (MessagePlan plan : planList) {
                 Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.groupEquals(plan.getId().toString()));
@@ -163,8 +169,16 @@ public class MessageTask {
             throw new RuntimeException("get jobGroupNames or jobKeys exception", e);
         }
         for (String name : groupNames) {
-            System.out.printf("group [%s] exists", name);
+            System.out.printf("group [%s] exists %n", name);
             planList.removeIf(plan -> name.equals(plan.getId().toString()));
         }
+    }
+    
+    private JobDetail generateJob(MessagePlan plan, Page<MessageRecord> messagePage) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("execTime", plan.getExecTime());
+        map.put("messageList", messagePage.getContent());
+        return JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
+                .withIdentity(messagePage.getNumber() + "", plan.getId().toString()).build();
     }
 }
