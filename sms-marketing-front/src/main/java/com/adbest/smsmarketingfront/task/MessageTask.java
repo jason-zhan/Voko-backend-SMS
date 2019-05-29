@@ -55,7 +55,7 @@ public class MessageTask {
     /**
      * 执行定时发送
      */
-//    @Scheduled(fixedRate = 60 * 1000)
+    @Scheduled(fixedRate = 60 * 1000)
     public synchronized void executePlan() {
         log.info("enter executePlan [task]");
         // 获取所有计划中状态的任务
@@ -80,7 +80,7 @@ public class MessageTask {
      * 修补发送消息作业异常
      */
 //    @Scheduled(fixedRate = 5000)
-//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
     public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
