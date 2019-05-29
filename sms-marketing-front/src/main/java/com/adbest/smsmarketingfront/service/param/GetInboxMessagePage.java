@@ -25,8 +25,8 @@ public class GetInboxMessagePage extends PageBase {
         QueryDslTools dslTools = new QueryDslTools(builder);
         builder.and(qMessageRecord.disable.isFalse());
         builder.and(qMessageRecord.inbox.eq(true));
-        dslTools.ifTrue(hasRead, qMessageRecord.status, InboxStatus.ALREADY_READ.getValue(), InboxStatus.UNREAD.getValue());
-        dslTools.eqNotNull(qMessageRecord.sms, isSms);
-        dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qContacts.phone);
+        dslTools.ifTrue(this.hasRead, qMessageRecord.status, InboxStatus.ALREADY_READ.getValue(), InboxStatus.UNREAD.getValue());
+        dslTools.eqNotNull(qMessageRecord.sms, this.isSms);
+        dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);
     }
 }
