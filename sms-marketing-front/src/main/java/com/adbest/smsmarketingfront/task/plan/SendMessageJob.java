@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.task;
+package com.adbest.smsmarketingfront.task.plan;
 
 import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.MessageRecord;
@@ -6,10 +6,7 @@ import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.util.TimeTools;
-import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
-import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
-import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobDataMap;

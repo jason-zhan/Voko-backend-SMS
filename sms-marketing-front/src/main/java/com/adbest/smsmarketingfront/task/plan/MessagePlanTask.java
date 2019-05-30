@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.task;
+package com.adbest.smsmarketingfront.task.plan;
 
 import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
@@ -6,6 +6,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
+import com.adbest.smsmarketingfront.util.QuartzTools;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobBuilder;
@@ -18,13 +19,10 @@ import org.quartz.TriggerBuilder;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Date;
 import java.util.HashMap;
@@ -37,7 +35,7 @@ import java.util.Set;
  */
 @Component
 @Slf4j
-public class MessageTask {
+public class MessagePlanTask {
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;  // 定时发送距离当前时间最小间隔分钟数
@@ -49,7 +47,8 @@ public class MessageTask {
     MessageRecordDao messageRecordDao;
     
     @Autowired
-    private Scheduler scheduler;
+    QuartzTools quartzTools;
+//    private Scheduler scheduler;
     
     private static final int singleThreadSendNum = 1000;
     
@@ -85,12 +84,13 @@ public class MessageTask {
                     log.info("break for empty message list");
                     break;
                 }
-                JobDetail jobDetail = generateJob(plan, messagePage);
-                try {
-                    scheduler.addJob(jobDetail, false, true);
-                } catch (SchedulerException e) {
-                    log.info("add job err: ", e);
-                }
+                JobDetail jobDetail = PlanTaskCommon.generateJob(plan, messagePage);
+//                try {
+//                    scheduler.addJob(jobDetail, false, true);
+//                } catch (SchedulerException e) {
+//                    log.info("add job err: ", e);
+//                }
+                quartzTools.addJob(jobDetail);
                 if (!locked) {
                     // 锁定任务
                     messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
@@ -129,12 +129,13 @@ public class MessageTask {
                     log.info("break for empty message list");
                     break;
                 }
-                JobDetail jobDetail = generateJob(plan, messagePage);
-                try {
-                    scheduler.addJob(jobDetail, false, true);
-                } catch (SchedulerException e) {
-                    log.info("add job err: ", e);
-                }
+                JobDetail jobDetail = PlanTaskCommon.generateJob(plan, messagePage);
+//                try {
+//                    scheduler.addJob(jobDetail, false, true);
+//                } catch (SchedulerException e) {
+//                    log.info("add job err: ", e);
+//                }
+                quartzTools.addJob(jobDetail);
                 page++;
             } while (messagePage.hasNext());
         }
@@ -146,39 +147,24 @@ public class MessageTask {
     
     // 设定触发条件
     private void setTriggers(List<MessagePlan> planList) {
-        try {
-            for (MessagePlan plan : planList) {
-                Set<JobKey> jobKeys = scheduler.getJobKeys(GroupMatcher.groupEquals(plan.getId().toString()));
-                for (JobKey jobKey : jobKeys) {
-                    JobDataMap jobDataMap = scheduler.getJobDetail(jobKey).getJobDataMap();
-                    scheduler.scheduleJob(TriggerBuilder.newTrigger().forJob(jobKey).startAt((Date) jobDataMap.get("execTime")).build());
-                }
+        for (MessagePlan plan : planList) {
+            Set<JobKey> jobKeys = quartzTools.getJobKeys(plan.getId().toString());
+            for (JobKey jobKey : jobKeys) {
+                JobDataMap jobDataMap = quartzTools.getJobDetail(jobKey).getJobDataMap();
+                quartzTools.scheduleJob(TriggerBuilder.newTrigger().forJob(jobKey).startAt((Date) jobDataMap.get("execTime")).build());
             }
-        } catch (SchedulerException e) {
-            log.info("link job with trigger err:", e);
         }
     }
     
     private void checkPlanByGroup(List<MessagePlan> planList) {
         List<String> groupNames = null;
-        try {
-            groupNames = scheduler.getJobGroupNames();
-            System.out.printf("job total=%s%n", scheduler.getJobKeys(GroupMatcher.anyJobGroup()).size());
-            System.out.printf("executing job total=%s%n", scheduler.getCurrentlyExecutingJobs().size());
-        } catch (SchedulerException e) {
-            throw new RuntimeException("get jobGroupNames or jobKeys exception", e);
-        }
+        groupNames = quartzTools.getGroupNames();
+        System.out.printf("job total=%s%n", quartzTools.totalJob());
+        System.out.printf("executing job total=%s%n", quartzTools.totalExecutingJob());
         for (String name : groupNames) {
             System.out.printf("group [%s] exists %n", name);
             planList.removeIf(plan -> name.equals(plan.getId().toString()));
         }
     }
     
-    private JobDetail generateJob(MessagePlan plan, Page<MessageRecord> messagePage) {
-        Map<String, Object> map = new HashMap<>();
-        map.put("execTime", plan.getExecTime());
-        map.put("messageList", messagePage.getContent());
-        return JobBuilder.newJob(SendMessageJob.class).setJobData(new JobDataMap(map))
-                .withIdentity(messagePage.getNumber() + "", plan.getId().toString()).build();
-    }
 }
