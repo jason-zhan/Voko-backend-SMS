@@ -6,11 +6,13 @@ import com.adbest.smsmarketingfront.util.ResponseCode;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
+import javax.imageio.ImageIO;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
+import java.io.OutputStream;
 
 @RestController
 public class LoginController {
@@ -30,5 +32,21 @@ public class LoginController {
     public ReturnEntity register(CustomerForm vo, HttpServletRequest request) {
         boolean is = customerService.register(vo, request);
         return ReturnEntity.success(is);
+    }
+
+    @RequestMapping(value="/verifyCode")
+    @ResponseBody
+    public ReturnEntity getMiaoshaVerifyCod(HttpServletRequest request, HttpServletResponse response) {
+        try {
+            BufferedImage image  = customerService.createVerifyCode(request);
+            OutputStream out = response.getOutputStream();
+            ImageIO.write(image, "JPEG", out);
+            out.flush();
+            out.close();
+            return null;
+        }catch(Exception e) {
+            e.printStackTrace();
+            return ReturnEntity.fail(returnMsgUtil.msg("T500"));
+        }
     }
 }

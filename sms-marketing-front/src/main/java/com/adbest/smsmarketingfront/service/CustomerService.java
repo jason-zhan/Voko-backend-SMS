@@ -6,6 +6,8 @@ import com.adbest.smsmarketingfront.entity.form.CustomerForm;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,4 +36,6 @@ public interface CustomerService extends UserDetailsService {
     boolean getCode(String email, HttpServletRequest request);
 
     boolean updatePasswordByCode(String code, String password, HttpServletRequest request);
+
+    BufferedImage createVerifyCode(HttpServletRequest request);
 }

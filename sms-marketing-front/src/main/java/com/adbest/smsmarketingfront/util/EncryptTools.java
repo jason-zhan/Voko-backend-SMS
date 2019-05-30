@@ -13,7 +13,6 @@ public class EncryptTools {
     Environment environment;
 
     public String encrypt(String content) {
-        System.out.println(environment.getProperty("encrypt.salt.password"));
         return DigestUtils.md5Hex(environment.getProperty("encrypt.salt.password")+content);
     }
 }

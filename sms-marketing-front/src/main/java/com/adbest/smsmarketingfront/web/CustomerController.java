@@ -42,25 +42,4 @@ public class CustomerController {
         boolean is = customerService.updatePasswordByCode(code, password, request);
         return ReturnEntity.success(is);
     }
-
-    @RequestMapping("/git")
-    public ReturnEntity git(){
-        try {
-            String cmd = "sh test.sh ";
-            File dir = null;
-            dir = new File("/opt/");
-            String[] evnp = {"val=2", "call=Bash Shell"};
-            Process process = Runtime.getRuntime().exec(cmd, evnp, dir);
-            BufferedReader input = new BufferedReader(new InputStreamReader(process.getInputStream()));
-            String line = "";
-            while ((line = input.readLine()) != null) {
-                System.out.println(line);
-            }
-            input.close();
-        }
-        catch (Exception e){
-            e.printStackTrace();
-        }
-        return ReturnEntity.success("success");
-    }
 }

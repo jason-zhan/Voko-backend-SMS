@@ -12,4 +12,6 @@ public class CustomerForm {
     private String city;  // 城市
     private String industry;  // 行业
     private String organization;// 单位（公司/机构）
+
+    private String code;//验证码
 }

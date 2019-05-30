@@ -18,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -29,15 +30,20 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetails;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StringUtils;
 import org.thymeleaf.TemplateEngine;
 import org.thymeleaf.context.Context;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 @Service
@@ -114,6 +120,14 @@ public class CustomerServiceImpl implements  CustomerService {
     @Override
     @Transactional
     public boolean register(CustomerForm createSysUser, HttpServletRequest request) {
+
+        String sessionId = request.getSession().getId();
+        ServiceException.hasText(createSysUser.getCode(), returnMsgUtil.msg("CODE_NOT_EMPTY"));
+        Object rCode = redisTemplate.opsForValue().get("code:"+sessionId);
+        ServiceException.notNull(rCode, returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
+        ServiceException.isTrue(createSysUser.getCode().equals(rCode), returnMsgUtil.msg("VERIFICATION_CODE_ERROR"));
+        redisTemplate.delete("code:"+sessionId);
+
         ServiceException.notNull(createSysUser, returnMsgUtil.msg("PARAM_IS_NULL"));
         ServiceException.hasText(createSysUser.getEmail(), returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
         ServiceException.hasText(createSysUser.getPassword(), returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
@@ -133,6 +147,19 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setIndustry(createSysUser.getIndustry());
         customer.setOrganization(createSysUser.getOrganization());
         customer.setSource(CustomerSource.REGISTER.getValue());
+        String realIp = getRealIp(request);
+        String key = "register:" + realIp;
+        Boolean is = redisTemplate.opsForValue().setIfAbsent(key, "1", 60*60, TimeUnit.SECONDS);
+        if (!is){
+            Object count = redisTemplate.opsForValue().get(key);
+            if (count==null){
+                redisTemplate.opsForValue().setIfAbsent(key, "1", 1, TimeUnit.SECONDS);
+            }else {
+                Long expire = redisTemplate.getExpire(key, TimeUnit.SECONDS);
+                ServiceException.isTrue(Long.valueOf(count.toString())<=5, returnMsgUtil.msg("EXCEED_MAX_REGISTRATIONS"));
+                redisTemplate.opsForValue().set(key, Long.valueOf(count.toString())+1, expire>0?expire:60*60, TimeUnit.SECONDS);
+            }
+        }
         customerDao.save(customer);
 
         CustomerSettings customerSettings = new CustomerSettings(false, customer.getId());
@@ -256,7 +283,33 @@ public class CustomerServiceImpl implements  CustomerService {
         ServiceException.isTrue(!customer.getPassword().equals(encryptTools.encrypt(password)), returnMsgUtil.msg("PASSWORD_INCORRECT"));
         customer.setPassword(encryptTools.encrypt(password));
         customerDao.save(customer);
+        redisTemplate.delete("login:"+customer.getEmail());
         return true;
+    }
+
+    @Override
+    public BufferedImage createVerifyCode(HttpServletRequest request) {
+        int width = 115;
+        int height = 40;
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        Graphics g = image.getGraphics();
+        g.setColor(new Color(0xDCDCDC));
+        g.fillRect(0, 0, width, height);
+        g.setColor(Color.black);
+        g.drawRect(0, 0, width - 1, height - 1);
+        Random rdm = new Random();
+        for (int i = 0; i < 50; i++) {
+            int x = rdm.nextInt(width);
+            int y = rdm.nextInt(height);
+            g.drawOval(x, y, 0, 0);
+        }
+        String verifyCode = getNumber(5);
+        g.setColor(new Color(0, 100, 0));
+        g.setFont(new Font("Candara", Font.BOLD, 32));
+        g.drawString(verifyCode, 15, 28);
+        g.dispose();
+        redisTemplate.opsForValue().set("code:"+request.getSession().getId(),verifyCode,3, TimeUnit.MINUTES);
+        return image;
     }
 
 //    public void initPhone(Customer customer,int i){
@@ -317,5 +370,22 @@ public class CustomerServiceImpl implements  CustomerService {
         context.setVariables(dataMap);
         String emailText = templateEngine.process(TemplatesName,context);
         return emailText;
+    }
+
+    private String getRealIp(HttpServletRequest request) {
+        String ip = request.getHeader("X-Forwarded-For");
+        if(!StringUtils.isEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)){
+            int index = ip.indexOf(",");
+            if(index != -1){
+                return ip.substring(0,index);
+            }else{
+                return ip;
+            }
+        }
+        ip = request.getHeader("X-Real-IP");
+        if(!StringUtils.isEmpty(ip) && !"unKnown".equalsIgnoreCase(ip)){
+            return ip;
+        }
+        return request.getRemoteAddr();
     }
 }
