@@ -18,6 +18,7 @@ import org.quartz.TriggerBuilder;
 import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -106,8 +107,7 @@ public class MessageTask {
     /**
      * 修补发送消息作业异常
      */
-    @Scheduled(fixedRate = 5000)
-//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
     public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
