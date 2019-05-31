@@ -16,4 +16,6 @@ public interface CustomerSettingsService {
     boolean update(CustomerSettingsForm customerSettingsForm);
 
     List<CustomerSettings> findByCustomerIdInAndCallReminder(List<Long> customerId, Boolean callReminder);
+
+    CustomerSettings findByCustomerId(Long id);
 }

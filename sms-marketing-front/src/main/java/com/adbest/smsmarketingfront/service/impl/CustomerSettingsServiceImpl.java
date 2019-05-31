@@ -61,4 +61,13 @@ public class CustomerSettingsServiceImpl implements CustomerSettingsService {
     public List<CustomerSettings> findByCustomerIdInAndCallReminder(List<Long> customerId, Boolean callReminder) {
         return customerSettingsDao.findByCustomerIdInAndCallReminder(customerId, callReminder);
     }
+
+    @Override
+    public CustomerSettings findByCustomerId(Long id) {
+        List<CustomerSettings> customerSettings = customerSettingsDao.findByCustomerId(id);
+        if (customerSettings.size()>0){
+            return customerSettings.get(0);
+        }
+        return null;
+    }
 }

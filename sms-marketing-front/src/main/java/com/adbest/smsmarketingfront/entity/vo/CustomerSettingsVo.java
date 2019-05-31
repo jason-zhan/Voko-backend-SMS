@@ -10,11 +10,14 @@ public class CustomerSettingsVo {
 
     private String content;
 
+    private Boolean numberReceivingStatus;
+
     public CustomerSettingsVo() {
     }
 
     public CustomerSettingsVo(CustomerSettings customerSettings) {
         this.callReminder = customerSettings.getCallReminder();
         this.content = customerSettings.getContent();
+        this.numberReceivingStatus = customerSettings.getNumberReceivingStatus();
     }
 }

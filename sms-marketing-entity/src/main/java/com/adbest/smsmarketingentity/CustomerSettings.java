@@ -39,11 +39,17 @@ public class CustomerSettings implements Serializable {
     @Column(nullable = false, unique = true)
     private Long customerId;
 
+    /**
+     * 号码领取状态
+     */
+    private Boolean numberReceivingStatus;
+
     public CustomerSettings() {
     }
 
-    public CustomerSettings(Boolean callReminder, Long customerId) {
+    public CustomerSettings(Boolean callReminder, Long customerId, Boolean numberReceivingStatus) {
         this.callReminder = callReminder;
         this.customerId = customerId;
+        this.numberReceivingStatus = numberReceivingStatus;
     }
 }
