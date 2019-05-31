@@ -80,7 +80,7 @@ public class DbImportCustomerTask {
         }
         customerService.saveAll(customerList);
         for (Customer c:customerList) {
-            customerSettings = new CustomerSettings(false, customer.getId());
+            customerSettings = new CustomerSettings(false, customer.getId(), false);
             customerSettingsList.add(customerSettings);
         }
         customerSettingsService.saveAll(customerSettingsList);

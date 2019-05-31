@@ -11,4 +11,6 @@ public interface CustomerSettingsDao extends JpaRepository<CustomerSettings, Lon
     CustomerSettings findFirstByCustomerId(Long customerId);
 
     List<CustomerSettings> findByCustomerIdInAndCallReminder(List<Long> customerId, Boolean callReminder);
+
+    List<CustomerSettings> findByCustomerId(Long id);
 }

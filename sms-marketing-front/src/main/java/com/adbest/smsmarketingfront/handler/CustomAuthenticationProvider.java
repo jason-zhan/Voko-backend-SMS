@@ -66,7 +66,7 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         String key = "login:" + username;
         Object count = redisTemplate.opsForValue().get(key);
         if (count!=null){
-            if (Long.valueOf(count.toString())>5){throw new BadCredentialsException(returnMsgUtil.msg("PASSWORD_ERROR_EXCEED_MAX"));}
+            if (Long.valueOf(count.toString())>=5){throw new BadCredentialsException(returnMsgUtil.msg("PASSWORD_ERROR_EXCEED_MAX"));}
         }
 
         if(StringUtils.isEmpty(username)){

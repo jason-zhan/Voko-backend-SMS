@@ -44,7 +44,6 @@ public class InboxApplicationTests {
 //        inboundMsg.setFrom("123456");
 //        inboundMsg.setTo("654321");
 //        messageRecordService.saveInbox(inboundMsg);
-
     }
 
 }

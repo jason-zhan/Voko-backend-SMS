@@ -13,4 +13,6 @@ public interface MobileNumberService {
     List<MobileNumberVo> findAll();
 
     List<MobileNumber> findByCustomerIdInAndDisable(List<Long> customerId, boolean disable);
+
+    MobileNumberVo init();
 }

@@ -162,14 +162,14 @@ public class CustomerServiceImpl implements  CustomerService {
         }
         customerDao.save(customer);
 
-        CustomerSettings customerSettings = new CustomerSettings(false, customer.getId());
+        CustomerSettings customerSettings = new CustomerSettings(false, customer.getId(), false);
         customerSettingsService.save(customerSettings);
-        new Thread(){
-            public void run() {
-                initCustomerData(customer);
-            }
-        }.start();
-
+//        new Thread(){
+//            public void run() {
+//                initCustomerData(customer);
+//            }
+//        }.start();
+        initCustomerData(customer);
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getEmail(), createSysUser.getPassword());
         Authentication authenticatedUser = authenticationManager
         .authenticate(authenticationToken);

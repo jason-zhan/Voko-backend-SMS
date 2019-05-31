@@ -22,4 +22,10 @@ public class MobileNumberController {
         return ReturnEntity.success(mobileNumberService.findAll());
     }
 
+    @RequestMapping("/open")
+    public ReturnEntity init(){
+        MobileNumberVo vo = mobileNumberService.init();
+        return ReturnEntity.success(vo);
+    }
+
 }
