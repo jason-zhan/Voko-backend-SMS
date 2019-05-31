@@ -11,6 +11,8 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
 import org.springframework.test.context.junit4.SpringRunner;
 
+import java.util.Map;
+
 import static org.junit.Assert.*;
 
 
@@ -38,6 +40,12 @@ public class MessageRecordServiceTest {
         getInbox.setKeyword("54321");
         Page<MessageVo> messagePage = messageRecordService.findInboxByConditions(getInbox);
         System.out.println(messagePage);
+    }
+    
+    @Test
+    public void testBundleStatus(){
+        Map<Integer, String> map = messageRecordService.outboxStatusMap();
+        System.out.println(map.size());
     }
     
 }

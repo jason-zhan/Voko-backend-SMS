@@ -31,7 +31,7 @@ public class MessagePlanController {
     
     @RequestMapping("/createInstant")
     @ResponseBody
-    public ReturnEntity createInstant(CreateMessagePlan create) {
+    public ReturnEntity createInstant(@RequestBody CreateMessagePlan create) {
         int result = messagePlanService.createInstant(create);
         return ReturnEntity.successIfTrue(result > 0);
     }
