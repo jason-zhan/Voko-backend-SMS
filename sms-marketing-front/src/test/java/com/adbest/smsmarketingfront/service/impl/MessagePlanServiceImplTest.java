@@ -10,10 +10,17 @@ import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
+import com.adbest.smsmarketingfront.util.QuartzTools;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import org.junit.Test;
 import org.junit.runner.RunWith;
+import org.quartz.Job;
+import org.quartz.JobBuilder;
+import org.quartz.JobDataMap;
+import org.quartz.JobDetail;
+import org.quartz.JobExecutionContext;
+import org.quartz.JobExecutionException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.data.domain.Page;
@@ -24,7 +31,9 @@ import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 
@@ -40,7 +49,9 @@ public class MessagePlanServiceImplTest {
     private ContactsLinkGroupDao contactsLinkGroupDao;
     @Autowired
     private MessageRecordDao messageRecordDao;
-
+    @Autowired
+    private QuartzTools quartzTools;
+    
     @Test
     public void testStr() {
 //        String chStr = "\u4e00\u4e8c\u4e09\u56db\u4e94\u516d\u4e03\u516b\u4e5d\u5341";
@@ -128,8 +139,21 @@ public class MessagePlanServiceImplTest {
         Page<MessageRecord> msgPage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(2L, 2, PageRequest.of(0, 1000));
         for (MessageRecord msg : msgPage.getContent()) {
             msg.setSid(UUID.randomUUID().toString());
-            messageRecordDao.updateStatusAfterSendMessage(msg.getId(),msg.getSid(),OutboxStatus.SENT.getValue());
+            messageRecordDao.updateStatusAfterSendMessage(msg.getId(), msg.getSid(), OutboxStatus.SENT.getValue());
         }
+    }
+    
+    @Test
+    public void addJobTest() {
+        Map<String, Object> map = new HashMap<>();
+        String id = "001";
+        String groupName = "job-test";
+        map.put("id", id);
+        map.put("groupName", groupName);
+        JobDetail jobDetail = JobBuilder.newJob(JobTest.class).withIdentity(id, groupName).setJobData(new JobDataMap(map)).build();
+        quartzTools.addJob(jobDetail);
+        boolean result = quartzTools.groupExists("222");
+        System.out.println("group exists: " + result);
     }
     
     
@@ -156,5 +180,31 @@ public class MessagePlanServiceImplTest {
     public void batchSaveContacts(List<Contacts> contactsList, List<ContactsLinkGroup> linkList) {
         contactsDao.saveAll(contactsList);
         contactsLinkGroupDao.saveAll(linkList);
+    }
+    
+    @Test
+    public void createInstant() {
+        CreateMessagePlan create = new CreateMessagePlan();
+        create.setTitle("测试立即发送");
+        create.setText("2019-5-31 15:51:36");
+        create.setRemark("测试");
+        create.setFromList(Arrays.asList(1L, 2L, 3L));
+        create.setToNumberList(Arrays.asList("0000000", "0000001", "0000002", "0000003", "0000004"));
+        messagePlanService.createInstant(create);
+        try {
+            Thread.sleep(100 * 1000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+    
+    public class JobTest implements Job {
+        
+        @Override
+        public void execute(JobExecutionContext context) throws JobExecutionException {
+            JobDetail jobDetail = context.getJobDetail();
+            JobDataMap dataMap = jobDetail.getJobDataMap();
+            System.out.println("jobKey: " + jobDetail.getKey());
+        }
     }
 }

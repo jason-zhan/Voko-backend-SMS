@@ -21,9 +21,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -39,23 +41,23 @@ public class MessagePlanTask {
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;  // 定时发送距离当前时间最小间隔分钟数
+    @Value("${twilio.singleThreadSendNum}")
+    private int singleThreadSendNum;
     private static final int repairTimeRange = 1;  // 定时发送修复任务探测时间超出当前时间的分钟数
     
     @Autowired
-    MessagePlanDao messagePlanDao;
+    private MessagePlanDao messagePlanDao;
     @Autowired
-    MessageRecordDao messageRecordDao;
+    private MessageRecordDao messageRecordDao;
     
     @Autowired
-    QuartzTools quartzTools;
-//    private Scheduler scheduler;
+    private QuartzTools quartzTools;
     
-    private static final int singleThreadSendNum = 1000;
     
     /**
      * 执行定时发送
      */
-    @Scheduled(fixedRate = 60 * 1000)
+//    @Scheduled(fixedDelay = 60 * 1000)
     public synchronized void executePlan() {
         log.info("enter executePlan [task]");
         // 获取所有计划中状态的任务
@@ -65,55 +67,23 @@ public class MessagePlanTask {
             log.info("leave executePlan for empty list [task]");
             return;
         }
-        // 去除正在执行的任务
-        checkPlanByGroup(planList);
-        if (planList.size() == 0) {
-            log.info("leave executePlan for empty list [task]");
-            return;
-        }
-        // 产生任务并加入quartz容器
+        // 循环分配任务到quartz容器
         for (MessagePlan plan : planList) {
-            // 锁定消息
-            messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
-            Page<MessageRecord> messagePage = null;
-            int page = 0;
-            boolean locked = false;
-            do {
-                messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(), PageRequest.of(page, singleThreadSendNum));
-                if (messagePage.isEmpty()) {
-                    log.info("break for empty message list");
-                    break;
-                }
-                JobDetail jobDetail = PlanTaskCommon.generateJob(plan, messagePage);
-//                try {
-//                    scheduler.addJob(jobDetail, false, true);
-//                } catch (SchedulerException e) {
-//                    log.info("add job err: ", e);
-//                }
-                quartzTools.addJob(jobDetail);
-                if (!locked) {
-                    // 锁定任务
-                    messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
-                    locked = true;
-                }
-                page++;
-            } while (messagePage.hasNext());
+            scheduledPlan(plan);
         }
-        // 设定各任务触发条件
-        setTriggers(planList);
         log.info("leave executePlan [task]");
     }
     
     /**
      * 修补发送消息作业异常
      */
-    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
     public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
         List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
                 TimeTools.addMinutes(TimeTools.now(), repairTimeRange));
-        // 排除当前正在运行的任务
+        // 排除当前正在运行的任务（避免与正常执行作业重复）
         checkPlanByGroup(planList);
         if (planList.size() == 0) {
             log.info("leave repairSendMsg for empty list [task]");
@@ -124,47 +94,65 @@ public class MessagePlanTask {
             Page<MessageRecord> messagePage = null;
             int page = 0;
             do {
-                messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue(), PageRequest.of(page, singleThreadSendNum));
+                messagePage = getQueueUsableMessagePage(plan.getId(), page);
                 if (messagePage.isEmpty()) {
                     log.info("break for empty message list");
                     break;
                 }
                 JobDetail jobDetail = PlanTaskCommon.generateJob(plan, messagePage);
-//                try {
-//                    scheduler.addJob(jobDetail, false, true);
-//                } catch (SchedulerException e) {
-//                    log.info("add job err: ", e);
-//                }
                 quartzTools.addJob(jobDetail);
                 page++;
             } while (messagePage.hasNext());
+            // 关联触发器
+            setTriggers(plan);
         }
-        // 设定各任务触发条件
-        setTriggers(planList);
-        
         log.info("leave repairSendMsg [task]");
     }
     
     // 设定触发条件
-    private void setTriggers(List<MessagePlan> planList) {
-        for (MessagePlan plan : planList) {
-            Set<JobKey> jobKeys = quartzTools.getJobKeys(plan.getId().toString());
-            for (JobKey jobKey : jobKeys) {
-                JobDataMap jobDataMap = quartzTools.getJobDetail(jobKey).getJobDataMap();
-                quartzTools.scheduleJob(TriggerBuilder.newTrigger().forJob(jobKey).startAt((Date) jobDataMap.get("execTime")).build());
-            }
+    private void setTriggers(MessagePlan plan) {
+        Set<JobKey> jobKeys = quartzTools.getJobKeys(plan.getId().toString());
+        for (JobKey jobKey : jobKeys) {
+            quartzTools.scheduleJob(PlanTaskCommon.generateTrigger(quartzTools.getJobDetail(jobKey)));
         }
     }
     
+    // 检测并打印当前容器中任务和组信息
     private void checkPlanByGroup(List<MessagePlan> planList) {
         List<String> groupNames = null;
         groupNames = quartzTools.getGroupNames();
-        System.out.printf("job total=%s%n", quartzTools.totalJob());
-        System.out.printf("executing job total=%s%n", quartzTools.totalExecutingJob());
+        System.out.printf("job[all] total=%s%n", quartzTools.totalJob());
+        System.out.printf("job[executing] total=%s%n", quartzTools.totalExecutingJob());
         for (String name : groupNames) {
             System.out.printf("group [%s] exists %n", name);
             planList.removeIf(plan -> name.equals(plan.getId().toString()));
         }
+    }
+    
+    // 获取队列中的可用消息列表
+    private Page<MessageRecord> getQueueUsableMessagePage(Long planId, int page) {
+        return messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue(), PageRequest.of(page, singleThreadSendNum));
+    }
+    
+    // 分配任务到quartz容器
+    @Async
+    public void scheduledPlan(MessagePlan plan) {
+        // 锁定消息
+        messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
+        Page<MessageRecord> messagePage = getQueueUsableMessagePage(plan.getId(), 0);
+        // 任务排他性加入容器
+        if (!quartzTools.addJobIfGroupNone(PlanTaskCommon.generateJob(plan, messagePage))) {
+            return;
+        }
+        // 锁定任务
+        messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+        // 后续任务加入容器
+        while (messagePage.hasNext()) {
+            messagePage = getQueueUsableMessagePage(plan.getId(), messagePage.nextPageable().getPageNumber());
+            quartzTools.addJob(PlanTaskCommon.generateJob(plan, messagePage));
+        }
+        // 关联触发器
+        setTriggers(plan);
     }
     
 }

@@ -24,6 +24,7 @@ import com.adbest.smsmarketingfront.service.SmsBillComponent;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
+import com.adbest.smsmarketingfront.task.plan.MessagePlanTask;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
@@ -36,9 +37,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.JobBuilder;
-import org.quartz.JobDetail;
-import org.quartz.Scheduler;
+import org.quartz.JobKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -50,7 +49,6 @@ import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -84,7 +82,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Autowired
     RedisTemplate redisTemplate;
     @Autowired
-    QuartzTools quartzTools;
+    MessagePlanTask messagePlanTask;
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;
@@ -92,6 +90,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Autowired
     private Map<Integer, String> messagePlanStatusMap;
     
+    @Transactional
     @Override
     public int create(CreateMessagePlan createPlan) {
         log.info("enter create, param={}", createPlan);
@@ -100,23 +99,19 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return 1;
     }
     
+    @Transactional
     @Override
     public int createInstant(CreateMessagePlan create) {
         log.info("enter createInstant, param={}", create);
         Assert.notNull(create, CommonMessage.PARAM_IS_NULL);
         // 设定执行时间
         create.setExecTime(TimeTools.now());
-        // 创建任务
+        // 持久化定时发送任务实体
         MessagePlan plan = createMessagePlan(create);
-        // 检查是否已存在任务中
-        if (quartzTools.groupExists(plan.getId().toString())) {
-            return 1;
-        }
-        // 循环创建job
-        
-        
+        // 分配任务、执行
+        messagePlanTask.scheduledPlan(plan);
         log.info("leave createInstant");
-        return 0;
+        return 1;
     }
     
     @Transactional
@@ -136,7 +131,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         List<String> fromNumList = validFromNumberLi(update.getFromList());
         update.setFromNumList(fromNumList);
         // 更新定时任务
-        Assert.isTrue(Current.get().getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
+        Assert.isTrue(cur.getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
         ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == found.getStatus(),
                 bundle.getString("msg-plan-status").replace("$action$", "update")
                         .replace("$status$", MessagePlanStatus.EDITING.getTitle())
@@ -392,10 +387,13 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     // 批量创建联系人
     private List<Contacts> batchSaveContacts(List<String> numberList) {
         List<Contacts> contactsList = new ArrayList<>();
+        List<Contacts> newContactsList = new ArrayList<>();
         Long curId = Current.get().getId();
+//        Long curId = 1L;
         for (String number : numberList) {
             List<Contacts> foundList = contactsDao.findByPhoneAndCustomerId(number, curId);
             if (foundList.size() > 0) {
+                contactsList.add(foundList.get(0));
                 continue;
             }
             Contacts contacts = new Contacts();
@@ -404,18 +402,17 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             contacts.setCustomerId(curId);
             contacts.setInLock(false);
             contacts.setIsDelete(false);
-            contactsList.add(contacts);
+            newContactsList.add(contacts);
         }
-        contactsDao.saveAll(contactsList);
+        contactsList.addAll(contactsDao.saveAll(newContactsList));
         return contactsList;
     }
     
-    @Transactional
-    public MessagePlan createMessagePlan(CreateMessagePlan createPlan) {
+    private MessagePlan createMessagePlan(CreateMessagePlan createPlan) {
         Assert.notNull(createPlan, CommonMessage.PARAM_IS_NULL);
         // 参数检查
         checkMessagePlan(createPlan);
-        ServiceException.isTrue(createPlan.getExecTime().after(TimeTools.now()),
+        ServiceException.isTrue(createPlan.getExecTime().after(TimeTools.addSeconds(TimeTools.now(), -10)),
                 bundle.getString("msg-plan-execute-time-later"));
         // 检查客户有效号码
         List<String> fromNumList = validFromNumberLi(createPlan.getFromList());
@@ -423,6 +420,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
+//        plan.setCustomerId(1L);
         plan.setCustomerId(Current.get().getId());
         plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         plan.setDisable(false);

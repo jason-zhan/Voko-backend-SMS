@@ -47,6 +47,7 @@ twilio:
   msgStatusCallback: http://sms.duopin360.com/twilio/message-status-callback
   viewFileUrl: http://sms.duopin360.com/file/view
   planExecTimeDelay: 2  # minutes
+  singleThreadSendNum: 1000
 
 logging:
   pattern:

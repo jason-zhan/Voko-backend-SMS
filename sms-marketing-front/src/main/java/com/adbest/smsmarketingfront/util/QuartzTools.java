@@ -137,4 +137,19 @@ public class QuartzTools {
         }
     }
     
+    /**
+     * 如果组不存在则加入 job
+     *
+     * @param jobDetail 必须携带完整 JobKey(name 和 groupName)
+     * @return
+     */
+    public synchronized boolean addJobIfGroupNone(JobDetail jobDetail) {
+        if (groupExists(jobDetail.getKey().getGroup())) {
+            return false;
+        } else {
+            addJob(jobDetail);
+            return true;
+        }
+    }
+    
 }

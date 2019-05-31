@@ -28,6 +28,14 @@ public class MessagePlanController {
         int result = messagePlanService.create(create);
         return ReturnEntity.successIfTrue(result > 0);
     }
+    
+    @RequestMapping("/createInstant")
+    @ResponseBody
+    public ReturnEntity createInstant(CreateMessagePlan create) {
+        int result = messagePlanService.createInstant(create);
+        return ReturnEntity.successIfTrue(result > 0);
+    }
+    
     @RequestMapping("/update")
     @ResponseBody
     public ReturnEntity update(@RequestBody UpdateMessagePlan update) {

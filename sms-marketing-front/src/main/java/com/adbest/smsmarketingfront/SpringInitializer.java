@@ -81,7 +81,8 @@ public class SpringInitializer implements InitializingBean {
     }
     
     @Bean
-    public Map<Integer, String> outboxStatusMap() {
+    @Autowired
+    public Map<Integer, String> outboxStatusMap(ResourceBundle resourceBundle) {
         return getValuesMap(OutboxStatus.class);
     }
     
