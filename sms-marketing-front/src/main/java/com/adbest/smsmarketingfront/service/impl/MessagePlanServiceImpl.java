@@ -24,9 +24,11 @@ import com.adbest.smsmarketingfront.service.SmsBillComponent;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
+import com.adbest.smsmarketingfront.task.plan.MessagePlanTask;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
+import com.adbest.smsmarketingfront.util.QuartzTools;
 import com.adbest.smsmarketingfront.util.QueryDslTools;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import com.adbest.smsmarketingfront.util.UrlTools;
@@ -35,6 +37,7 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.quartz.JobKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -78,6 +81,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     ResourceBundle bundle;
     @Autowired
     RedisTemplate redisTemplate;
+    @Autowired
+    MessagePlanTask messagePlanTask;
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;
@@ -89,37 +94,23 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Override
     public int create(CreateMessagePlan createPlan) {
         log.info("enter create, param={}", createPlan);
-        // 参数检查
-        checkMessagePlan(createPlan);
-        // 检查客户有效号码
-        List<String> fromNumList = validFromNumberLi(createPlan.getFromList());
-        createPlan.setFromNumList(fromNumList);
-        // 消息定时任务入库，为下文提供id
-        MessagePlan plan = new MessagePlan();
-        createPlan.copy(plan);
-        plan.setCustomerId(Current.get().getId());
-//        plan.setCustomerId(1L);
-        plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
-        plan.setDisable(false);
-        messagePlanDao.save(plan);
-        // 消息入库
-        int msgTotal = 0;
-        if (createPlan.getToNumberList() != null) {
-            msgTotal += batchSaveMessage(createPlan, plan.getId());
-        }
-        if (createPlan.getGroupList() != null) {
-            for (Long contactsGroupId : createPlan.getGroupList()) {
-                msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
-            }
-        }
-        ServiceException.isTrue(msgTotal > 0, bundle.getString("msg-plan-contacts"));
-        // 产生消息账单
-        if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
-            smsBillComponent.saveSmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
-        } else {
-            mmsBillComponent.saveMmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
-        }
+        createMessagePlan(createPlan);
         log.info("leave create");
+        return 1;
+    }
+    
+    @Transactional
+    @Override
+    public int createInstant(CreateMessagePlan create) {
+        log.info("enter createInstant, param={}", create);
+        Assert.notNull(create, CommonMessage.PARAM_IS_NULL);
+        // 设定执行时间
+        create.setExecTime(TimeTools.now());
+        // 持久化定时发送任务实体
+        MessagePlan plan = createMessagePlan(create);
+        // 分配任务、执行
+        messagePlanTask.scheduledPlan(plan);
+        log.info("leave createInstant");
         return 1;
     }
     
@@ -129,6 +120,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         log.info("enter update, param={}", update);
         // 参数检查
         checkMessagePlan(update);
+        ServiceException.isTrue(update.getExecTime().after(TimeTools.now()),
+                bundle.getString("msg-plan-execute-time-later"));
         // 检查任务
         Assert.notNull(update.getId(), CommonMessage.ID_CANNOT_EMPTY);
         CustomerVo cur = Current.get();
@@ -138,7 +131,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         List<String> fromNumList = validFromNumberLi(update.getFromList());
         update.setFromNumList(fromNumList);
         // 更新定时任务
-        Assert.isTrue(Current.get().getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
+        Assert.isTrue(cur.getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
         ServiceException.isTrue(MessagePlanStatus.EDITING.getValue() == found.getStatus(),
                 bundle.getString("msg-plan-status").replace("$action$", "update")
                         .replace("$status$", MessagePlanStatus.EDITING.getTitle())
@@ -207,8 +200,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 bundle.getString("msg-plan-status").replace("$action$", "restart")
                         .replace("$status$", MessagePlanStatus.EDITING.getTitle())
         );
-        ServiceException.isTrue(found.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
-                bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
+        ServiceException.isTrue(found.getExecTime().after(TimeTools.now()),
+                bundle.getString("msg-plan-execute-time-later"));
         // 更新
         found.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         messagePlanDao.save(found);
@@ -260,13 +253,12 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     private void checkMessagePlan(CreateMessagePlan create) {
-        Assert.notNull(create, CommonMessage.PARAM_IS_NULL);
-        
         ServiceException.hasText(create.getTitle(), bundle.getString("msg-plan-title"));
         
         ServiceException.notNull(create.getExecTime(), bundle.getString("msg-plan-execute-time"));
-        ServiceException.isTrue(create.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
-                bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
+
+//        ServiceException.isTrue(create.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
+//                bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
         
         ServiceException.hasText(create.getText(), bundle.getString("msg-plan-content"));
         
@@ -395,10 +387,13 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     // 批量创建联系人
     private List<Contacts> batchSaveContacts(List<String> numberList) {
         List<Contacts> contactsList = new ArrayList<>();
+        List<Contacts> newContactsList = new ArrayList<>();
         Long curId = Current.get().getId();
+//        Long curId = 1L;
         for (String number : numberList) {
             List<Contacts> foundList = contactsDao.findByPhoneAndCustomerId(number, curId);
             if (foundList.size() > 0) {
+                contactsList.add(foundList.get(0));
                 continue;
             }
             Contacts contacts = new Contacts();
@@ -407,10 +402,47 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             contacts.setCustomerId(curId);
             contacts.setInLock(false);
             contacts.setIsDelete(false);
-            contactsList.add(contacts);
+            newContactsList.add(contacts);
         }
-        contactsDao.saveAll(contactsList);
+        contactsList.addAll(contactsDao.saveAll(newContactsList));
         return contactsList;
+    }
+    
+    private MessagePlan createMessagePlan(CreateMessagePlan createPlan) {
+        Assert.notNull(createPlan, CommonMessage.PARAM_IS_NULL);
+        // 参数检查
+        checkMessagePlan(createPlan);
+        ServiceException.isTrue(createPlan.getExecTime().after(TimeTools.addSeconds(TimeTools.now(), -10)),
+                bundle.getString("msg-plan-execute-time-later"));
+        // 检查客户有效号码
+        List<String> fromNumList = validFromNumberLi(createPlan.getFromList());
+        createPlan.setFromNumList(fromNumList);
+        // 消息定时任务入库，为下文提供id
+        MessagePlan plan = new MessagePlan();
+        createPlan.copy(plan);
+//        plan.setCustomerId(1L);
+        plan.setCustomerId(Current.get().getId());
+        plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
+        plan.setDisable(false);
+        messagePlanDao.save(plan);
+        // 消息入库
+        int msgTotal = 0;
+        if (createPlan.getToNumberList() != null) {
+            msgTotal += batchSaveMessage(createPlan, plan.getId());
+        }
+        if (createPlan.getGroupList() != null) {
+            for (Long contactsGroupId : createPlan.getGroupList()) {
+                msgTotal += batchSaveMessage(contactsGroupId, createPlan, plan.getId());
+            }
+        }
+        ServiceException.isTrue(msgTotal > 0, bundle.getString("msg-plan-contacts"));
+        // 产生消息账单
+        if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
+            smsBillComponent.saveSmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
+        } else {
+            mmsBillComponent.saveMmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
+        }
+        return plan;
     }
     
 }

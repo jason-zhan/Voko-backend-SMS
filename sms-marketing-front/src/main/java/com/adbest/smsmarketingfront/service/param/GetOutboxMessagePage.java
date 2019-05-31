@@ -8,6 +8,7 @@ import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.QueryDslTools;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import com.querydsl.core.BooleanBuilder;
+import com.querydsl.core.types.dsl.DateTimePath;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -30,9 +31,7 @@ public class GetOutboxMessagePage extends PageBase {
         QueryDslTools dslTools = new QueryDslTools(builder);
         builder.and(qMessageRecord.disable.isFalse());
         builder.and(qMessageRecord.inbox.eq(false));
-        if (this.hasSent != null && this.start != null && this.end != null) {
-            this.start = TimeTools.dayStart(this.start);
-            this.end = TimeTools.dayEnd(this.end);
+        if (this.hasSent != null) {
             if (this.hasSent) {
                 dslTools.isNotNull(qMessageRecord.sendTime);
                 dslTools.betweenNotNull(qMessageRecord.sendTime, this.start, this.end);

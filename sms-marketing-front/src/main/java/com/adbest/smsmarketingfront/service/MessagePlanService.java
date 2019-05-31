@@ -17,6 +17,9 @@ public interface MessagePlanService {
     // 新增定时任务
     int create(CreateMessagePlan create);
     
+    // 创建立即发送任务
+    int createInstant(CreateMessagePlan create);
+    
     // 修改定时任务（编辑中状态）
     int update(UpdateMessagePlan update);
     

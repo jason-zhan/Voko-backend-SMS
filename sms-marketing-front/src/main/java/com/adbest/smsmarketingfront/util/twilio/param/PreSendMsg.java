@@ -18,6 +18,7 @@ public class PreSendMsg {
     }
     
     public PreSendMsg(MessageRecord record, List<URI> mediaUriList) {
+        record.setContactsNumber("+1" + record.getContactsNumber());
         this.record = record;
         this.mediaUriList = mediaUriList;
     }

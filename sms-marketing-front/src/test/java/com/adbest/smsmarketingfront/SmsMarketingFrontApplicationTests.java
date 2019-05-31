@@ -1,7 +1,6 @@
 package com.adbest.smsmarketingfront;
 
 import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingfront.task.MessageTask;
 import com.adbest.smsmarketingfront.util.EncryptTools;
 import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
@@ -24,8 +23,6 @@ public class SmsMarketingFrontApplicationTests {
     TwilioUtil twilioUtil;
     @Autowired
     ResourceBundle res;
-    @Autowired
-    MessageTask messageTask;
     @Autowired
     EncryptTools encryptTools;
     
@@ -53,9 +50,9 @@ public class SmsMarketingFrontApplicationTests {
     
     
     @Test
-    public void testGenerateSendMsgThread(){
+    public void testGenerateSendMsgThread() {
 //        messageTask.distributeSendMsgJob();
-        System.out.println("encrypt: "+encryptTools.encrypt("123123")); // ecc44937642cd28e9491f10756e7df39
+        System.out.println("encrypt: " + encryptTools.encrypt("123123")); // ecc44937642cd28e9491f10756e7df39
     }
     
 }
