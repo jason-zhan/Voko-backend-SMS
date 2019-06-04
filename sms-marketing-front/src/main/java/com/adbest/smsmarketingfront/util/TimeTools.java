@@ -157,6 +157,11 @@ public class TimeTools {
         return new Timestamp(instance.getTimeInMillis());
     }
     
+    public static String formatDateStr( String pattern) {
+        simpleDateFormat = new SimpleDateFormat(pattern);
+        return simpleDateFormat.format(System.currentTimeMillis());
+    }
+    
     public static String formatDateStr(long time, String pattern) {
         simpleDateFormat = new SimpleDateFormat(pattern);
         return simpleDateFormat.format(new Date(time));
