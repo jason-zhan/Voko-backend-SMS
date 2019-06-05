@@ -5,6 +5,7 @@ import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
+import java.sql.Timestamp;
 import java.util.List;
 
 public interface VkCDRCustomersService {
@@ -16,7 +17,7 @@ public interface VkCDRCustomersService {
 
     Integer updateRepeatInLeadin();
 
-    List<?> selectSendPhone(Pageable pageRequest);
+    List<?> selectSendPhone(Timestamp time, Pageable pageRequest);
 
-    Integer updateSendStatus(List<Long> notSendIds, int value);
+    Integer updateSendStatus(List<Integer> notSendIds, int value);
 }

@@ -68,7 +68,6 @@ public class TwilioUtil {
     public ResourceSet<TollFree> fetchTollFreeNumbers() {
         return TollFree.reader("US")
                 .setSmsEnabled(true)
-                .setMmsEnabled(true)
                 .read();
     }
     

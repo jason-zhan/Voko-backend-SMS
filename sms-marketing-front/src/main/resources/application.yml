@@ -39,13 +39,13 @@ server:
     uri-encoding: UTF-8
 # twilio config
 twilio:
-  accountSid: AC147c8ad10b7467f1e17b4da63bbf2fec
-#  accountSid: AC78d701a6c62260711c507cd3510872b8
-  authToken: 9250418056a421f0ab7839c45c1f6d37
-#  authToken: 5902b7f33bb1de4c13dcbfda295b657f
-  msgUrl: http://sms.duopin360.com/twilio/receive-message
-  msgStatusCallback: http://sms.duopin360.com/twilio/message-status-callback
-  viewFileUrl: http://sms.duopin360.com/file/view
+  #accountSid: AC147c8ad10b7467f1e17b4da63bbf2fec
+  accountSid: AC1da9cfc9e0987ca53d158ebabcd9bbe9
+  #authToken: 9250418056a421f0ab7839c45c1f6d37
+  authToken: 5b4c21f95986aa7d5dc79eb9b304f049
+  #msgUrl: http://sms.duopin360.com/twilio/receive-message
+  #msgStatusCallback: http://sms.duopin360.com/twilio/message-status-callback
+  #viewFileUrl: http://sms.duopin360.com/file/view
   planExecTimeDelay: 2  # minutes
   singleThreadSendNum: 1000
 
@@ -55,3 +55,6 @@ logging:
   file: logs/log.log
   level:
     com.adbest.smsmarketingfront: info
+mobilePrice:
+  free: 2
+  ordinary: 1

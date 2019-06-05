@@ -65,6 +65,9 @@ public class ContactsServiceImpl implements ContactsService {
     @Autowired
     private RedisLockUtil redisLockUtil;
 
+    @Autowired
+    private ContactsService contactsService;
+
     @Override
     public PageDataVo findByContactsGroupId(String contactsGroupId, PageBase pageBase) {
         Pageable pageable = PageRequest.of(pageBase.getPage(), pageBase.getSize());
@@ -240,7 +243,7 @@ public class ContactsServiceImpl implements ContactsService {
         Runnable runnable = new Runnable() {
             @Override
             public void run() {
-                saveData(list, customerId, contactsProcessForm.getGroupId());
+                contactsService.saveData(list, customerId, contactsProcessForm.getGroupId());
             }
         };
         runnable.run();;

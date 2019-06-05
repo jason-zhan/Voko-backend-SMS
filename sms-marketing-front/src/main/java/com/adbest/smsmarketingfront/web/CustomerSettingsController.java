@@ -27,7 +27,7 @@ public class CustomerSettingsController {
 
     @RequestMapping("/update")
     public ReturnEntity update(CustomerSettingsForm customerSettingsForm){
-        boolean is = customerSettingsService.update(customerSettingsForm);
-        return ReturnEntity.success(is);
+        CustomerSettingsVo vo = customerSettingsService.update(customerSettingsForm);
+        return ReturnEntity.success(vo);
     }
 }

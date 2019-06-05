@@ -13,7 +13,7 @@ public interface CustomerSettingsService {
 
     CustomerSettingsVo get();
 
-    boolean update(CustomerSettingsForm customerSettingsForm);
+    CustomerSettingsVo update(CustomerSettingsForm customerSettingsForm);
 
     List<CustomerSettings> findByCustomerIdInAndCallReminder(List<Long> customerId, Boolean callReminder);
 

@@ -6,6 +6,7 @@ import com.adbest.smsmarketingfront.entity.form.CustomerSettingsForm;
 import com.adbest.smsmarketingfront.entity.vo.CustomerSettingsVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CustomerSettingsService;
+import com.adbest.smsmarketingfront.service.MobileNumberService;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -44,7 +45,7 @@ public class CustomerSettingsServiceImpl implements CustomerSettingsService {
 
     @Override
     @Transactional
-    public boolean update(CustomerSettingsForm customerSettingsForm) {
+    public CustomerSettingsVo update(CustomerSettingsForm customerSettingsForm) {
         ServiceException.notNull(customerSettingsForm.getCallReminder(), returnMsgUtil.msg("SEND_STATUS_NOT_EMPTY"));
         Long customerId = Current.get().getId();
         CustomerSettings customerSettings = customerSettingsDao.findFirstByCustomerId(customerId);
@@ -54,7 +55,7 @@ public class CustomerSettingsServiceImpl implements CustomerSettingsService {
             customerSettings.setContent(customerSettingsForm.getContent());
         }
         customerSettingsDao.save(customerSettings);
-        return true;
+        return new CustomerSettingsVo(customerSettings);
     }
 
     @Override

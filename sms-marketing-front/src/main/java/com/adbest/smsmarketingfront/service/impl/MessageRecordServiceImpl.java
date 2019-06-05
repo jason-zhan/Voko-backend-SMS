@@ -69,6 +69,12 @@ public class MessageRecordServiceImpl implements MessageRecordService {
 
     @Autowired
     private TwilioUtil twilioUtil;
+
+    @Autowired
+    private MessageRecordService messageRecordService;
+
+    @Autowired
+    private CustomerService customerService;
     
     @Override
     public int delete(List<Long> idList) {
@@ -236,8 +242,11 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setCustomerId(mobileNumber.getCustomerId());
         send.setCustomerNumber(inboundMsg.getTo());
         String content = keywords.get(0).getContent();
+        Customer customer = customerService.findById(mobileNumber.getCustomerId());
         content = content.replaceAll(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), StringUtils.isEmpty(contacts.getFirstName()) ? "" : contacts.getFirstName())
-                .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), StringUtils.isEmpty(contacts.getLastName()) ? "" : contacts.getLastName());
+                .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), StringUtils.isEmpty(contacts.getLastName()) ? "" : contacts.getLastName())
+                .replaceAll(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), StringUtils.isEmpty(customer.getFirstName()) ? "" : customer.getFirstName())
+                .replaceAll(MsgTemplateVariable.CUS_LASTNAME.getTitle(), StringUtils.isEmpty(customer.getLastName()) ? "" : customer.getLastName());
         send.setContent(content);
         send.setSms(true);
         send.setContactsId(contacts.getId());
@@ -248,13 +257,13 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setSendTime(timestamp);
         send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
-        sendSms(send);
+        messageRecordService.sendSms(send);
     }
 
     @Override
     public void sendCallReminder(List<MessageRecord> messageRecords) {
         for (MessageRecord m : messageRecords) {
-            sendSms(m);
+            messageRecordService.sendSms(m);
         }
     }
 

@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
 import java.util.List;
 
 public interface VkCDRCustomersDao extends JpaRepository<VkCDRCustomers, Integer> {
@@ -46,21 +47,22 @@ public interface VkCDRCustomersDao extends JpaRepository<VkCDRCustomers, Integer
             "AND d.id IS NOT NULL) as obj) obj SET v.in_leadin = FALSE WHERE v.id = obj.vid AND v.in_leadin IS NULL;",nativeQuery = true)
     Integer updateRepeatInLeadin();
 
-    @Query("SELECT a.id, a.CLI, d.id, c.id, d.firstName, d.lastName " +
+    @Query("SELECT a.id, a.CLI, d.id, c.id, d.firstName, d.lastName, c.firstName, c.lastName " +
             " FROM " +
             "VkCDRCustomers a " +
             "LEFT JOIN VkCustomers b ON a.i_customer = b.i_customer " +
             "LEFT JOIN Customer c ON c.email = b.email " +
             "LEFT JOIN Contacts d ON d.phone = a.CLI AND d.customerId = c.id " +
             "WHERE " +
-            "a.CLI IS NOT NULL " +
+            "a.disconnect_time >= :time " +
+            "AND a.CLI IS NOT NULL " +
             "AND c.id IS NOT NULL " +
             "AND d.id IS NOT NULL " +
             "AND a.sendStatus IS null order by a.id desc")
-    List<?> selectSendPhone(Pageable pageable);
+    List<?> selectSendPhone(Timestamp time, Pageable pageable);
 
     @Modifying
     @Transactional
     @Query(value = "update VkCDRCustomers v set v.sendStatus = :status where v.id in :ids")
-    Integer updateSendStatus(List<Long> ids, int status);
+    Integer updateSendStatus(List<Integer> ids, int status);
 }

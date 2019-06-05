@@ -119,7 +119,7 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Override
     @Transactional
-    public boolean register(CustomerForm createSysUser, HttpServletRequest request) {
+    public CustomerVo register(CustomerForm createSysUser, HttpServletRequest request) {
 
         String sessionId = request.getSession().getId();
         ServiceException.hasText(createSysUser.getCode(), returnMsgUtil.msg("CODE_NOT_EMPTY"));
@@ -175,7 +175,7 @@ public class CustomerServiceImpl implements  CustomerService {
         .authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
         request.getSession().setAttribute(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY, SecurityContextHolder.getContext());
-        return true;
+        return new CustomerVo(customer);
     }
 
     @Override
@@ -190,21 +190,19 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Override
     public void initCustomerData(Customer customer){
-        //初始化手机号码
-//        initPhone(customer,1);
         List<MarketSetting> marketSettings = marketSettingService.findAll();
         if (marketSettings.size()<=0)return;
         MarketSetting marketSetting = marketSettings.get(0);
         //初始化关键字
-        List<Keyword> keywords = new ArrayList<>();
-        Keyword keyword = null;
-        if (marketSetting.getKeywordTotal()>0){
-            for (int i = 0;i<marketSetting.getKeywordTotal();i++){
-                keyword = new Keyword(customer.getId(), UUID.randomUUID().toString().replaceAll("-",""));
-                keywords.add(keyword);
-            }
-            keywordService.saveAll(keywords);
-        }
+//        List<Keyword> keywords = new ArrayList<>();
+//        Keyword keyword = null;
+//        if (marketSetting.getKeywordTotal()>0){
+//            for (int i = 0;i<marketSetting.getKeywordTotal();i++){
+//                keyword = new Keyword(customer.getId(), UUID.randomUUID().toString().replaceAll("-",""));
+//                keywords.add(keyword);
+//            }
+//            keywordService.saveAll(keywords);
+//        }
         String infoDescribe ="experience gift";
         //初始化短信条数
         if (marketSetting.getSmsTotal()>0){
@@ -312,27 +310,14 @@ public class CustomerServiceImpl implements  CustomerService {
         return image;
     }
 
-//    public void initPhone(Customer customer,int i){
-//        if (i>3){
-//            return;
-//        }
-//        i++;
-//        try {
-//            ResourceSet<Local> resourceSet = twilioUtil.fetchNumbersByAreaCode(null);
-//            Iterator<Local> iterator = resourceSet.iterator();
-//            Local next = iterator.next();
-//            String phone = next.getPhoneNumber().getEndpoint();
-//            IncomingPhoneNumber incomingPhoneNumber = twilioUtil.purchaseNumber(phone);
-//            MobileNumber mobileNumber = new MobileNumber();
-//            mobileNumber.setCustomerId(customer.getId());
-//            mobileNumber.setDisable(false);
-//            mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
-//            mobileNumberService.save(mobileNumber);
-//        }catch (Exception e){
-//            log.error("初始化:{}用户号码出错,{}",customer.getId(),e);
-//            initPhone(customer,i);
-//        }
-//    }
+    @Override
+    public Customer findById(Long customerId) {
+        Optional<Customer> optional = customerDao.findById(customerId);
+        if (optional.isPresent()){
+            return optional.get();
+        }
+        return null;
+    }
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {

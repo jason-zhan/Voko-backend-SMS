@@ -4,6 +4,12 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
+import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
+import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
+import com.twilio.base.ResourceSet;
+import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
+import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
+import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFree;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +18,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.util.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
@@ -35,15 +42,18 @@ public class InboxApplicationTests {
 
     @Autowired
     private RedisTemplate redisTemplate;
-    
+
+    @Autowired
+    private TwilioUtil twilioUtil;
+
     @Test
     public void test() {
-//        InboundMsg inboundMsg = new InboundMsg();
-//        inboundMsg.setMessageSid(UUID.randomUUID().toString());
-//        inboundMsg.setBody("优惠");
-//        inboundMsg.setFrom("123456");
-//        inboundMsg.setTo("654321");
-//        messageRecordService.saveInbox(inboundMsg);
+        InboundMsg inboundMsg = new InboundMsg();
+        inboundMsg.setMessageSid(UUID.randomUUID().toString());
+        inboundMsg.setBody("优惠");
+        inboundMsg.setFrom("123456");
+        inboundMsg.setTo("+123456789");
+        messageRecordService.saveInbox(inboundMsg);
     }
 
 }

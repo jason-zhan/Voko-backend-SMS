@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingfront.entity.form.CustomerForm;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.util.ResponseCode;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
@@ -30,8 +31,8 @@ public class LoginController {
 
     @PostMapping("/register")
     public ReturnEntity register(CustomerForm vo, HttpServletRequest request) {
-        boolean is = customerService.register(vo, request);
-        return ReturnEntity.success(is);
+        CustomerVo customerVo = customerService.register(vo, request);
+        return ReturnEntity.success(customerVo);
     }
 
     @RequestMapping(value="/verifyCode")

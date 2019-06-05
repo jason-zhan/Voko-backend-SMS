@@ -90,7 +90,7 @@ public class DbImportCustomerTask {
         }
     }
 
-    //@Scheduled(cron = "0/30 * * * * ?")
+//    @Scheduled(cron = "0/30 * * * * ?")
     public void importContactsTask(){
         int size = 500;
         int page = 0;
@@ -103,7 +103,7 @@ public class DbImportCustomerTask {
             if (list.size()<size){is = false;break;}
         }while (is);
         vkCDRCustomersService.updateRepeatInLeadin();
-
+        sendSms();
     }
 
     public void sendSms(){
@@ -111,35 +111,48 @@ public class DbImportCustomerTask {
         int page = 0;
         boolean is = true;
         Map<Long, CustomerSettings> settingsMap = null;
-        List<MessageRecord> messageRecords = null;
+        List<MessageRecord> messageRecords = new ArrayList<>();
+        List<?> list = null;
+        List<Long> customerId = null;
+        List<CustomerSettings> customerSettingsList = null;
+        List<Integer> notSendIds = new ArrayList<>();
+        List<Integer> sendIds = new ArrayList<>();
+        List<MobileNumber> numbers = null;
+        Map<Long, MobileNumber> numberMap = null;
         do {
             PageRequest pageRequest = PageRequest.of(page,size);
-            List<?> list = vkCDRCustomersService.selectSendPhone(pageRequest);
-            if (list.size()==0){is = false;break;}
+            list = vkCDRCustomersService.selectSendPhone(new Timestamp(System.currentTimeMillis()-3*60*1000), pageRequest);
+             if (list.size()==0){is = false;break;}
             page++;
-            List<Long> customerId = list.stream().map(s -> Long.valueOf(((Object[]) s)[3].toString())).distinct().collect(Collectors.toList());
-            List<CustomerSettings> customerSettingsList = customerSettingsService.findByCustomerIdInAndCallReminder(customerId, true);
-            List<Long> notSendIds = new ArrayList<>();
-            List<Long> sendIds = new ArrayList<>();
+            customerId = list.stream().map(s -> Long.valueOf(((Object[]) s)[3].toString())).distinct().collect(Collectors.toList());
+            customerSettingsList = customerSettingsService.findByCustomerIdInAndCallReminder(customerId, true);
             if (customerSettingsList.size()>0){
                 settingsMap = customerSettingsList.stream().collect(Collectors.toMap(CustomerSettings::getCustomerId, customerSettings -> customerSettings));
-                List<MobileNumber> numbers = mobileNumberService.findByCustomerIdInAndDisable(new ArrayList<>(settingsMap.keySet()), false);
-                Map<Long, MobileNumber> numberMap = numbers.stream().collect(Collectors.toMap(MobileNumber::getCustomerId, mobileNumber -> mobileNumber, (mobileNumber1, mobileNumber2) -> mobileNumber1));
+                numbers = mobileNumberService.findByCustomerIdInAndDisable(new ArrayList<>(settingsMap.keySet()), false);
+                numberMap = numbers.stream().collect(Collectors.toMap(MobileNumber::getCustomerId, mobileNumber -> mobileNumber, (mobileNumber1, mobileNumber2) -> mobileNumber1));
                 for (Object obj : list) {
                     Object[] objects = (Object[]) obj;
                     CustomerSettings customerSettings = settingsMap.get(Long.valueOf(objects[3].toString()));
                     if (customerSettings==null){
-                        notSendIds.add(Long.valueOf(objects[0].toString()));
+                        notSendIds.add(Integer.valueOf(objects[0].toString()));
                         continue;
                     }else {
-                        sendIds.add(Long.valueOf(objects[0].toString()));
+                        sendIds.add(Integer.valueOf(objects[0].toString()));
+                    }
+                    MobileNumber mobileNumber = numberMap.get(Long.valueOf(objects[3].toString()));
+                    if(mobileNumber==null){
+                        notSendIds.add(Integer.valueOf(objects[0].toString()));
+                        sendIds.remove(Integer.valueOf(objects[0].toString()));
+                        continue;
                     }
                     String content = customerSettings.getContent();
                     MessageRecord send = new MessageRecord();
                     send.setCustomerId(Long.valueOf(objects[3].toString()));
-                    send.setCustomerNumber(numberMap.get(Long.valueOf(objects[3].toString())).getNumber());
-                    content = content.replaceAll(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), StringUtils.isEmpty(objects[4].toString()) ? "" : objects[4].toString())
-                            .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), StringUtils.isEmpty(objects[5].toString()) ? "" : objects[5].toString());
+                    send.setCustomerNumber(mobileNumber.getNumber());
+                    content = content.replaceAll(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), StringUtils.isEmpty(objects[4]) ? "" : objects[4].toString())
+                            .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), StringUtils.isEmpty(objects[5]) ? "" : objects[5].toString())
+                            .replaceAll(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), StringUtils.isEmpty(objects[6]) ? "" : objects[6].toString())
+                            .replaceAll(MsgTemplateVariable.CUS_LASTNAME.getTitle(), StringUtils.isEmpty(objects[7]) ? "" : objects[7].toString());
                     send.setContent(content);
                     send.setSms(true);
                     send.setContactsId(Long.valueOf(objects[2].toString()));
@@ -154,8 +167,11 @@ public class DbImportCustomerTask {
                 }
 
                 messageRecordService.sendCallReminder(messageRecords);
-                vkCDRCustomersService.updateSendStatus(notSendIds, VkCDRCustomersSendStatus.UNWANTED_SENT.getValue());
-                vkCDRCustomersService.updateSendStatus(sendIds, VkCDRCustomersSendStatus.ALREADY_SENT.getValue());
+                messageRecords.clear();
+                if (notSendIds.size()>0){vkCDRCustomersService.updateSendStatus(notSendIds, VkCDRCustomersSendStatus.UNWANTED_SENT.getValue());}
+                notSendIds.clear();
+                if(sendIds.size()>0){vkCDRCustomersService.updateSendStatus(sendIds, VkCDRCustomersSendStatus.ALREADY_SENT.getValue());}
+                sendIds.clear();
             }
             if (list.size()<size){is = false;break;}
         }while (is);

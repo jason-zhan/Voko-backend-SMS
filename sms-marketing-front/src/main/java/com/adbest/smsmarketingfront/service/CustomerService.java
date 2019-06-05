@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.service;
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
 import com.adbest.smsmarketingfront.entity.form.CustomerForm;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import org.springframework.security.core.userdetails.UserDetailsService;
 
 import javax.servlet.http.HttpServletRequest;
@@ -21,7 +22,7 @@ public interface CustomerService extends UserDetailsService {
 
     Customer findFirstByEmailAndPassword(String username, String encrypt);
 
-    boolean register(CustomerForm vo, HttpServletRequest request);
+    CustomerVo register(CustomerForm vo, HttpServletRequest request);
 
     Customer findFirstByEmail(String email);
 
@@ -38,4 +39,7 @@ public interface CustomerService extends UserDetailsService {
     boolean updatePasswordByCode(String code, String password, HttpServletRequest request);
 
     BufferedImage createVerifyCode(HttpServletRequest request);
+
+    Customer findById(Long customerId);
+
 }
