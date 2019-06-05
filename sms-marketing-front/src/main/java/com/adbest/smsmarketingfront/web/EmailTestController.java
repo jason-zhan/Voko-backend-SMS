@@ -22,6 +22,6 @@ public class EmailTestController {
         billList.add("2019-5-20 17:06:16 sent sms 200");
         billList.add("2019-5-31 17:06:16 sent sms 205");
         model.addAttribute("billList", billList);
-        return "./doc/email/monthly-bill";
+        return "./doc/email/monthly-financial-bill";
     }
 }

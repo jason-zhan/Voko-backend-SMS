@@ -23,28 +23,28 @@ public class ExcelUtil {
     private static ResourceBundle bundle;
     
     // 安全获取枚举title
-    public static String notNullType(String type) {
+    public static String typeNotNull(String type) {
         return StringUtils.isEmpty(type) ? bundle.getString("all") : type;
     }
     
     // 安全获取枚举title
-    public static String notNullTypeForItem(String type) {
+    public static String typeNotNullForItem(String type) {
         return StringUtils.isEmpty(type) ? bundle.getString("unknown") : type;
     }
     
     // 安全获取数值
-    public static String notNullNum(BigDecimal value) {
-        return value == null ? "--" : value.toPlainString();
+    public static <T extends Number> String numNotNull(T number) {
+        return number == null ? "--" : number.toString();
     }
     
     // 安全获取字符串
-    public static String notNullStr(String str) {
+    public static String strNotNull(String str) {
         return str == null ? "" : str;
     }
     
     // 安全获取布尔值
-    public static String notNullBoo(Boolean boo) {
-        return boo == null ? "" : bundle.getString((boo ? "yes" : "no"));
+    public static String boolNotNull(Boolean bool) {
+        return bool == null ? "" : bundle.getString((bool ? "yes" : "no"));
     }
     
     public static InputStream getInputStream(HSSFWorkbook workbook) {

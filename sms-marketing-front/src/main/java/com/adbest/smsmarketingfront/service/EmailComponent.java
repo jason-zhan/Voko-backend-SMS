@@ -8,6 +8,6 @@ public interface EmailComponent {
     // 发送套餐余量提醒
     void sendPackageRemainingTip(String toAddress, int smsRemaining);
     
-    // 发送月度账单(附件)
+    // 发送月度金融账单
     void sendMonthlyBill(Long customerId);
 }

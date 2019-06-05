@@ -180,9 +180,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 返还消息条数
         List<String> urlList = UrlTools.getUrlList(found.getMediaIdList());
         if (urlList.size() > 0) {
-            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), msgTotal);
+            mmsBillComponent.saveMmsBill(bundle.getString("msg-plan-cancel") + " " + found.getTitle(), msgTotal);
         } else {
-            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), msgTotal);
+            smsBillComponent.saveSmsBill(bundle.getString("msg-plan-cancel") + " " + found.getTitle(), msgTotal);
         }
         log.info("leave cancel");
         return 1;

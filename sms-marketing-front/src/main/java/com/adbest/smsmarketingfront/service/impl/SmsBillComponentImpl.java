@@ -23,6 +23,7 @@ import org.springframework.util.Assert;
 
 import javax.annotation.Syntax;
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.util.ResourceBundle;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -48,15 +49,14 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         if (amount == 0) {
             return 0;
         }
-//        Long curId = Current.get().getId();
-        Long curId = 1L;
+        Long curId = Current.get().getId();
+//        Long curId = 1L;
         if (amount < 0) {
             Long sum = smsBillDao.sumByCustomerId(curId);
             ServiceException.isTrue(sum + amount >= 0, bundle.getString("sms-balance-not-enough"));
         }
         SmsBill smsBill = new SmsBill();
         smsBill.setCustomerId(curId);
-//        smsBill.setCustomerId(1L);
         smsBill.setInfoDescribe(describe);
         smsBill.setAmount(amount);
         smsBillDao.save(smsBill);
@@ -91,18 +91,7 @@ public class SmsBillComponentImpl implements SmsBillComponent {
     @Override
     public HSSFWorkbook findByConditionsToExcel(GetSmsBillPage getSmsBillPage) {
         log.info("enter findByConditionsToExcel, param={}", getSmsBillPage);
-        Assert.notNull(getSmsBillPage, CommonMessage.PARAM_IS_NULL);
-        // 1. 创建工作簿，全局设置
-        HSSFWorkbook workbook = new HSSFWorkbook();
-        String sheetName = bundle.getString("sms-bill-report") + " - " + TimeTools.formatDateStr("yy-MM-dd HH:mm:ss");
-        HSSFSheet sheet = workbook.createSheet(sheetName);
-        sheet.setDefaultRowHeightInPoints(30);
-        sheet.setDefaultColumnWidth(12);
-        // 2. 统计数据，设定表头
         
-        // 3. 循环设定行数据
-        
-        // 4. 成表后调整(可选)
         log.info("leave findByConditionsToExcel");
         return null;
     }
