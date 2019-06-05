@@ -41,6 +41,14 @@ public class PageBase {
         }
     }
     
+    /**
+     * @deprecated
+     * @param queryResults
+     * @param p
+     * @param <T>
+     * @param <P>
+     * @return
+     */
     public static <T, P extends PageBase> Page<T> toPageEntity(QueryResults<T> queryResults, P p) {
         Page<T> pageEntity = new PageImpl<>(
                 queryResults.getResults(),
@@ -48,5 +56,9 @@ public class PageBase {
                 queryResults.getTotal()
         );
         return pageEntity;
+    }
+    
+    public <T> Page<T> toPageEntity(QueryResults<T> queryResults) {
+        return new PageImpl<T>(queryResults.getResults(), PageRequest.of(this.page, this.size), queryResults.getTotal());
     }
 }

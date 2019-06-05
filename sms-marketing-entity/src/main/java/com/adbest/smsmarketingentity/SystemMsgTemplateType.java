@@ -10,7 +10,7 @@ public enum  SystemMsgTemplateType {
     NONPROFITS(6, "NONPROFITS"),  // 非盈利组织
     RETAIL(7, "RETAIL"),  // 零售
     SPORTS_CLUBS(8, "SPORTS_CLUBS"),  // 体育俱乐部
-    HOLIDAY(9, "HOLIDAY"),  // 
+    HOLIDAY(9, "HOLIDAY"),  // 度假
     ;
     
     private int value;

@@ -5,6 +5,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.QContacts;
 import com.adbest.smsmarketingentity.QMessageRecord;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
+import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.QueryDslTools;
 import com.querydsl.core.BooleanBuilder;
@@ -22,9 +23,10 @@ public class GetInboxMessagePage extends PageBase {
     private String keyword;  // 关键词(联系人名字/姓氏/号码)
     
     public void fillConditions(BooleanBuilder builder, QMessageRecord qMessageRecord, QContacts qContacts) {
-        QueryDslTools dslTools = new QueryDslTools(builder);
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         builder.and(qMessageRecord.disable.isFalse());
-        builder.and(qMessageRecord.inbox.eq(true));
+        builder.and(qMessageRecord.inbox.isTrue());
+        QueryDslTools dslTools = new QueryDslTools(builder);
         dslTools.ifTrue(this.hasRead, qMessageRecord.status, InboxStatus.ALREADY_READ.getValue(), InboxStatus.UNREAD.getValue());
         dslTools.eqNotNull(qMessageRecord.sms, this.isSms);
         dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);

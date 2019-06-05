@@ -6,4 +6,5 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 
 public interface SystemMsgTemplateDao extends JpaRepository<SystemMsgTemplate, Long>, JpaSpecificationExecutor<SystemMsgTemplate> {
 
+    SystemMsgTemplate findByIdAndDisableIsFalse(Long id);
 }

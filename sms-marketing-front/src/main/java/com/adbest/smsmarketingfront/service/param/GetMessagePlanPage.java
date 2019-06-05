@@ -20,7 +20,7 @@ import java.sql.Timestamp;
 public class GetMessagePlanPage extends PageBase {
     
     /**
-     * 定时发送任务状态
+     * 发送任务状态
      *
      * @see MessagePlanStatus
      */
@@ -30,6 +30,8 @@ public class GetMessagePlanPage extends PageBase {
     private String keyword;  // 关键词(标题)
     
     public void fillConditions(BooleanBuilder builder, QMessagePlan qMessagePlan) {
+        builder.and(qMessagePlan.customerId.eq(Current.get().getId()));
+        builder.and(qMessagePlan.disable.isFalse());
         QueryDslTools dslTools = new QueryDslTools(builder);
         dslTools.eqNotNull(qMessagePlan.status, this.status);
         dslTools.betweenNotNull(qMessagePlan.createTime, this.start, this.end);

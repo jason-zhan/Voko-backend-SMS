@@ -9,7 +9,7 @@ import org.springframework.data.domain.Page;
 import java.util.Map;
 
 /**
- * 消息定时任务前端业务
+ * 消息发送任务前端业务
  * @see MessagePlan
  */
 public interface MessagePlanService {
@@ -29,15 +29,15 @@ public interface MessagePlanService {
     // 重启定时任务
     int restart(Long id);
     
-    // 删除定时任务(禁用)
+    // 删除发送任务(禁用)
     int delete(Long id);
     
-    // 根据id查询定时任务
+    // 根据id查询发送任务
     MessagePlan findById(Long id);
     
-    // 根据条件查询定时任务
+    // 根据条件查询发送任务
     Page<MessagePlan> findByConditions(GetMessagePlanPage getPlanPage);
     
-    // 获取定时任务状态
+    // 获取消息发送任务状态
     Map<Integer, String> statusMap();
 }

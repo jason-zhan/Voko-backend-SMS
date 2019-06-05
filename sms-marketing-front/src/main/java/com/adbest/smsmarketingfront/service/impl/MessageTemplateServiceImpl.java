@@ -100,7 +100,6 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         Assert.notNull(getTemplatePage, CommonMessage.PARAM_IS_NULL);
         BooleanBuilder builder = new BooleanBuilder();
         QMessageTemplate qTemplate = QMessageTemplate.messageTemplate;
-        builder.and(qTemplate.customerId.eq(Current.get().getId()));
         getTemplatePage.fillConditions(builder,qTemplate);
         QueryResults<MessageTemplate> queryResults = jpaQueryFactory.select(qTemplate).from(qTemplate)
                 .where(builder)

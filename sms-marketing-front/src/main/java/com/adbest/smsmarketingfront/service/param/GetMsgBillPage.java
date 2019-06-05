@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.MmsBill;
 import com.adbest.smsmarketingentity.QMmsBill;
 import com.adbest.smsmarketingentity.QSmsBill;
 import com.adbest.smsmarketingentity.SmsBill;
+import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.QueryDslTools;
 import com.querydsl.core.BooleanBuilder;
@@ -22,10 +23,12 @@ public class GetMsgBillPage extends PageBase {
     private Timestamp end;  // 结束时间
     
     public void fillConditions(BooleanBuilder builder, QSmsBill qSmsBill) {
+        builder.and(qSmsBill.customerId.eq(Current.get().getId()));
         QueryDslTools.betweenNotNull(builder, qSmsBill.time, this.start, this.end);
     }
     
     public void fillConditions(BooleanBuilder builder, QMmsBill qMmsBill) {
+        builder.and(qMmsBill.customerId.eq(Current.get().getId()));
         QueryDslTools.betweenNotNull(builder, qMmsBill.time, this.start, this.end);
     }
 }

@@ -1,7 +1,7 @@
 package com.adbest.smsmarketingentity;
 
 /**
- * 定时任务状态
+ * 消息发送任务状态
  * @see MessagePlan#status
  */
 public enum MessagePlanStatus {

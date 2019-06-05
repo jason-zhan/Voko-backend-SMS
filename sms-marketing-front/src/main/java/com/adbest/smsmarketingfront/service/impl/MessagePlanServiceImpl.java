@@ -106,7 +106,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(create, CommonMessage.PARAM_IS_NULL);
         // 设定执行时间
         create.setExecTime(TimeTools.now());
-        // 持久化定时发送任务实体
+        // 持久化发送任务实体
         MessagePlan plan = createMessagePlan(create);
         // 分配任务、执行
         messagePlanTask.scheduledPlan(plan);
@@ -243,7 +243,6 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(getPlanPage, CommonMessage.PARAM_IS_NULL);
         QMessagePlan qMessagePlan = QMessagePlan.messagePlan;
         BooleanBuilder builder = new BooleanBuilder();
-        builder.and(qMessagePlan.customerId.eq(Current.get().getId()));
         getPlanPage.fillConditions(builder, qMessagePlan);
         QueryResults<MessagePlan> queryResults = jpaQueryFactory.select(qMessagePlan).from(qMessagePlan)
                 .where(builder)

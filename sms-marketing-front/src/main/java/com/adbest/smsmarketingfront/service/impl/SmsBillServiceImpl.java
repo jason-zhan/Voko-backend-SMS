@@ -41,7 +41,6 @@ public class SmsBillServiceImpl implements SmsBillService {
         Assert.notNull(getBillPage, CommonMessage.PARAM_IS_NULL);
         BooleanBuilder builder = new BooleanBuilder();
         QSmsBill qSmsBill = QSmsBill.smsBill;
-        builder.and(qSmsBill.customerId.eq(Current.get().getId()));
         getBillPage.fillConditions(builder, qSmsBill);
         QueryResults<SmsBill> queryResults = queryFactory.select(qSmsBill).from(qSmsBill)
                 .where(builder)

@@ -42,7 +42,6 @@ public class MmsBillServiceImpl implements MmsBillService {
         Assert.notNull(getBillPage, CommonMessage.PARAM_IS_NULL);
         BooleanBuilder builder = new BooleanBuilder();
         QMmsBill qMmsBill = QMmsBill.mmsBill;
-        builder.and(qMmsBill.customerId.eq(Current.get().getId()));
         getBillPage.fillConditions(builder, qMmsBill);
         QueryResults<MmsBill> queryResults = queryFactory.select(qMmsBill).from(qMmsBill)
                 .where(builder)

@@ -25,6 +25,12 @@ public class SystemMsgTemplate implements Serializable {
     private Long id;
     @Column(nullable = false)
     private Boolean sms;  // 是否短信模板(true:是)
+    /**
+     * 模板类型
+     * @see SystemMsgTemplateType
+     */
+    @Column(nullable = false)
+    private Integer type;
     @Column(nullable = false)
     private String title;  // 标题
     protected String subject;  // 主题

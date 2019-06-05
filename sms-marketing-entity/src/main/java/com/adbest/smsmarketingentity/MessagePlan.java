@@ -9,7 +9,7 @@ import java.io.Serializable;
 import java.sql.Timestamp;
 
 /**
- * 消息定时任务
+ * 消息发送任务
  */
 @Entity
 @Data
@@ -34,7 +34,7 @@ public class MessagePlan implements Serializable {
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
     /**
-     * 定时任务状态
+     * 任务状态
      * @see MessagePlanStatus
      */
     private Integer status;
