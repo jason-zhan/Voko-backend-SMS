@@ -71,24 +71,6 @@ public class SmsBillComponentImpl implements SmsBillComponent {
     }
     
     @Override
-    public Page<SmsBill> findByConditions(GetSmsBillPage getSmsBillPage) {
-        log.info("enter findByConditions, param={}", getSmsBillPage);
-        Assert.notNull(getSmsBillPage, CommonMessage.PARAM_IS_NULL);
-        BooleanBuilder builder = new BooleanBuilder();
-        QSmsBill qSmsBill = QSmsBill.smsBill;
-        getSmsBillPage.fillConditions(builder, qSmsBill);
-        QueryResults<SmsBill> queryResults = jpaQueryFactory.select(qSmsBill).from(qSmsBill)
-                .where(builder)
-                .orderBy(qSmsBill.time.desc())
-                .offset(getSmsBillPage.getPage() * getSmsBillPage.getSize())
-                .limit(getSmsBillPage.getSize())
-                .fetchResults();
-        Page<SmsBill> billPage = PageBase.toPageEntity(queryResults, getSmsBillPage);
-        log.info("leave findByConditions");
-        return billPage;
-    }
-    
-    @Override
     public HSSFWorkbook findByConditionsToExcel(GetSmsBillPage getSmsBillPage) {
         log.info("enter findByConditionsToExcel, param={}", getSmsBillPage);
         

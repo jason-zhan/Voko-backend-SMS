@@ -100,7 +100,7 @@ public class QueryDslTools {
         }
     }
     
-    public <T extends String> void containsNotEmpty(boolean caseSensitive, T string, StringPath path) {
+    public <T extends String> void containsNotEmpty(boolean caseSensitive, StringPath path, T string) {
         containsNotEmpty(this.builder, path, string, caseSensitive);
     }
     

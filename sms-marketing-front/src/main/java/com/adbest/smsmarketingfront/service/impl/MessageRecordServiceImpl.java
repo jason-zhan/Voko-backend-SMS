@@ -130,7 +130,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
         BooleanBuilder builder = new BooleanBuilder();
-//        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
         QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
                 Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
@@ -154,7 +154,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         QContacts qContacts = QContacts.contacts;
         QContactsGroup qCGroup = QContactsGroup.contactsGroup;
         BooleanBuilder builder = new BooleanBuilder();
-//        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         getOutboxPage.fillConditions(builder, qMessageRecord, qContacts);
         QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
                 Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, qCGroup.title))

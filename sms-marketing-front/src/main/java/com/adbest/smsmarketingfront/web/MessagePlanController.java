@@ -57,6 +57,13 @@ public class MessagePlanController {
         return ReturnEntity.successIfTrue(result > 0);
     }
     
+    @RequestMapping("/delete")
+    @ResponseBody
+    public ReturnEntity delete(Long id) {
+        int result = messagePlanService.delete(id);
+        return ReturnEntity.successIfTrue(result > 0);
+    }
+    
     @RequestMapping("/details")
     @ResponseBody
     public ReturnEntity findById(Long id) {

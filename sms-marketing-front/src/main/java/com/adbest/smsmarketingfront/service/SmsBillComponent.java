@@ -16,9 +16,6 @@ public interface SmsBillComponent {
 
     SmsBill save(SmsBill smsBill);
     
-    // 根据查询条件查询短信账单
-    Page<SmsBill> findByConditions(GetSmsBillPage getSmsBillPage);
-    
     // 根据查询条件生成短信账单报表
     HSSFWorkbook findByConditionsToExcel(GetSmsBillPage getSmsBillPage);
     
