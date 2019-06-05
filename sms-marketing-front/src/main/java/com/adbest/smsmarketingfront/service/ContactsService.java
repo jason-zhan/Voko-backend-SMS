@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.Contacts;
+import com.adbest.smsmarketingentity.ContactsTemp;
 import com.adbest.smsmarketingfront.entity.form.AddContactsToGroupsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsProcessForm;
@@ -41,4 +42,6 @@ public interface ContactsService {
     Contacts save(Contacts contacts);
 
     List<Contacts> findByPhoneAndCustomerId(String from, Long customerId);
+
+    void saveData(List<ContactsTemp> list, Long customerId, String groupId);
 }

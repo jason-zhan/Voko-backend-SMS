@@ -36,4 +36,8 @@ public class MobileNumber implements Serializable {
     private Boolean disable;  // 是否可用(true:禁用)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间
+
+    private Boolean sms;
+
+    private Boolean mms;
 }

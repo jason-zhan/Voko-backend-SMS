@@ -41,4 +41,6 @@ public interface MessageRecordService {
     void saveInbox(InboundMsg inboundMsg);
 
     void sendCallReminder(List<MessageRecord> messageRecords);
+
+    void sendSms(MessageRecord send);
 }

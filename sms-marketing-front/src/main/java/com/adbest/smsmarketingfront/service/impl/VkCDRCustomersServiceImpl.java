@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
 import java.util.List;
 
 @Service
@@ -41,12 +42,13 @@ public class VkCDRCustomersServiceImpl implements VkCDRCustomersService {
     }
 
     @Override
-    public List<?> selectSendPhone(Pageable pageRequest) {
-        return vkCDRCustomersDao.selectSendPhone(pageRequest);
+    public List<?> selectSendPhone(Timestamp time, Pageable pageRequest) {
+        return vkCDRCustomersDao.selectSendPhone(time, pageRequest);
     }
 
     @Override
-    public Integer updateSendStatus(List<Long> ids, int status) {
+    @Transactional
+    public Integer updateSendStatus(List<Integer> ids, int status) {
         return vkCDRCustomersDao.updateSendStatus(ids, status);
     }
 }

@@ -28,3 +28,7 @@ spring:
 encrypt:
   salt:
     password: Aasda65asd58wd
+twilio:
+  msgUrl: http://text.vokophone.com/twilio/receive-message
+  msgStatusCallback: http://text.vokophone.com/twilio/message-status-callback
+  viewFileUrl: http://text.vokophone.com/file/view

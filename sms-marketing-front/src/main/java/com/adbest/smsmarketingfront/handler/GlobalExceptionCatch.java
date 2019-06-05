@@ -68,7 +68,21 @@ public class GlobalExceptionCatch implements ErrorController {
             status = e.getCode();
             msg = e.getMessage();
         }
-        returnEntity = ReturnEntity.fail(status, "".equals(msg)?returnMsgUtil.msg("T500"):msg);
+        switch (status) {
+            case 401:
+                msg = returnMsgUtil.msg("T401");
+                break;
+            case 403:
+                msg = returnMsgUtil.msg("T403");
+                break;
+            case 404:
+                msg = returnMsgUtil.msg("T404");
+                break;
+            default:
+                msg = "".equals(msg)?returnMsgUtil.msg("T500"):msg;
+                break;
+        }
+        returnEntity = ReturnEntity.fail(status, msg);
         HttpTools.responseForJson(response, returnEntity);
     }
     
