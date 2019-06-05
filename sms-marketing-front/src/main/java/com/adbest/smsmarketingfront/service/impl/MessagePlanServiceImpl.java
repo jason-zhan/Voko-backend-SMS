@@ -27,6 +27,7 @@ import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.task.plan.MessagePlanTask;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
+import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.QuartzTools;
 import com.adbest.smsmarketingfront.util.QueryDslTools;
@@ -421,7 +422,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(createPlan, CommonMessage.PARAM_IS_NULL);
         // 参数检查
         checkMessagePlan(createPlan);
-        ServiceException.isTrue(createPlan.getExecTime().after(TimeTools.addSeconds(TimeTools.now(), -10)),
+        ServiceException.isTrue(createPlan.getExecTime().after(EasyTime.init().addSeconds(-10).stamp()),
                 bundle.getString("msg-plan-execute-time-later"));
         // 检查客户有效号码
         List<String> fromNumList = validFromNumberLi(createPlan.getFromList());

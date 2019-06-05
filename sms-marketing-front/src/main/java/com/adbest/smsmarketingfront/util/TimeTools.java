@@ -7,6 +7,7 @@ import java.util.Date;
 
 /**
  * 时间工具类
+ * @deprecated
  */
 public class TimeTools {
     

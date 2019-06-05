@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.service.param;
 import com.adbest.smsmarketingentity.QSmsBill;
 import com.adbest.smsmarketingentity.SmsBill;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
+import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import com.querydsl.core.BooleanBuilder;
@@ -11,7 +12,7 @@ import java.sql.Timestamp;
 
 /**
  * @see SmsBill
- * @see SmsBillComponent#findByConditions(GetSmsBillPage)
+ * @see SmsBillComponent#findByConditionsToExcel(GetSmsBillPage)
  */
 public class GetSmsBillPage extends PageBase {
     
@@ -20,8 +21,8 @@ public class GetSmsBillPage extends PageBase {
     
     public void fillConditions(BooleanBuilder builder, QSmsBill qSmsBill) {
         if (this.start == null || this.end == null) {
-            this.start = TimeTools.addMonth(TimeTools.monthStart(TimeTools.now()), -2);
-            this.end = TimeTools.dayEnd(TimeTools.now());
+            this.start = EasyTime.init().monthStart().addMonths(-2).stamp();
+            this.end = EasyTime.init().dayEnd().stamp();
         }
         builder.and(qSmsBill.time.between(this.start, this.end));
     }
