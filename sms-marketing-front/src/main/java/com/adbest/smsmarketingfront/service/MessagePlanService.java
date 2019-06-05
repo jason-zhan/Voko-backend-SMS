@@ -29,6 +29,9 @@ public interface MessagePlanService {
     // 重启定时任务
     int restart(Long id);
     
+    // 删除定时任务(禁用)
+    int delete(Long id);
+    
     // 根据id查询定时任务
     MessagePlan findById(Long id);
     

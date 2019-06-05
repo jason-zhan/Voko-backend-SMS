@@ -4,11 +4,13 @@ import com.adbest.smsmarketingentity.InboxStatus;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.MsgTemplateVariable;
 import com.adbest.smsmarketingentity.OutboxStatus;
+import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import org.apache.poi.ss.formula.functions.T;
 import org.quartz.Scheduler;
 import org.quartz.SchedulerException;
 import org.quartz.impl.StdSchedulerFactory;
@@ -21,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
+import org.springframework.util.Assert;
 
 import javax.persistence.EntityManager;
 import java.lang.reflect.InvocationTargetException;
@@ -37,7 +40,6 @@ public class SpringInitializer implements InitializingBean {
     
     
     @Bean
-    @Autowired
     public JPAQueryFactory jpaQueryFactory(EntityManager entityManager) {
         return new JPAQueryFactory(entityManager);
     }
@@ -71,19 +73,18 @@ public class SpringInitializer implements InitializingBean {
     }
     
     @Bean
-    public Map<Integer, String> messagePlanStatusMap() {
-        return getValuesMap(MessagePlanStatus.class);
+    public Map<Integer, String> messagePlanStatusMap(ResourceBundle bundle) {
+        return getBundleValuesMap(MessagePlanStatus.class, "message-plan-status-", bundle);
     }
     
     @Bean
-    public Map<Integer, String> inboxStatusMap() {
-        return getValuesMap(InboxStatus.class);
+    public Map<Integer, String> inboxStatusMap(ResourceBundle bundle) {
+        return getBundleValuesMap(InboxStatus.class, "inbox-status-", bundle);
     }
     
     @Bean
-    @Autowired
-    public Map<Integer, String> outboxStatusMap(ResourceBundle resourceBundle) {
-        return getValuesMap(OutboxStatus.class);
+    public Map<Integer, String> outboxStatusMap(ResourceBundle bundle) {
+        return getBundleValuesMap(OutboxStatus.class, "outbox-status-", bundle);
     }
     
     @Bean
@@ -98,6 +99,21 @@ public class SpringInitializer implements InitializingBean {
     
     }
     
+    private <T extends Enum> Map<Integer, String> getBundleValuesMap(Class<T> tClass, String prefix, ResourceBundle bundle) {
+        Map<Integer, String> map = new HashMap<>();
+        T[] ts = tClass.getEnumConstants();
+        try {
+            for (T t : ts) {
+                Integer value = (Integer) tClass.getMethod("getValue").invoke(t);
+                String text = bundle.getString(prefix + value);
+                Assert.hasText(text, CommonMessage.OBJECT_NOT_FOUND + ": " + prefix);
+                map.put(value, text);
+            }
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("getBundleValuesMap execute err: ", e);
+        }
+        return map;
+    }
     
     private <T extends Enum> Map<Integer, String> getValuesMap(Class<T> tClass) {
         Map<Integer, String> map = new HashMap<>();
@@ -107,14 +123,9 @@ public class SpringInitializer implements InitializingBean {
                 map.put((Integer) tClass.getMethod("getValue").invoke(t),
                         (String) tClass.getMethod("getTitle").invoke(t));
             }
-        } catch (NoSuchMethodException e) {
-            e.printStackTrace();
-        } catch (IllegalAccessException e) {
-            e.printStackTrace();
-        } catch (InvocationTargetException e) {
-            e.printStackTrace();
-        } finally {
-            return map;
+        } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+            throw new RuntimeException("getValuesMap execute err: ", e);
         }
+        return map;
     }
 }

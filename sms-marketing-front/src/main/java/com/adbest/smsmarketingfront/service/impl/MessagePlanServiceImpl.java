@@ -152,9 +152,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         // 产生消息账单
         if (update.getMediaIdlList() == null || update.getMediaIdlList().size() == 0) {
-            smsBillComponent.saveSmsBill(bundle.getString("scheduled send: " + found.getTitle()), -msgTotal);
+            smsBillComponent.saveSmsBill("scheduled send: " + found.getTitle(), -msgTotal);
         } else {
-            mmsBillComponent.saveMmsBill(bundle.getString("scheduled send: " + found.getTitle()), -msgTotal);
+            mmsBillComponent.saveMmsBill("scheduled send: " + found.getTitle(), -msgTotal);
         }
         log.info("leave update");
         return 1;
@@ -180,9 +180,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 返还消息条数
         List<String> urlList = UrlTools.getUrlList(found.getMediaIdList());
         if (urlList.size() > 0) {
-            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), msgTotal);
+            mmsBillComponent.saveMmsBill("cancel scheduled send: " + found.getTitle(), msgTotal);
         } else {
-            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), msgTotal);
+            smsBillComponent.saveSmsBill("cancel scheduled send: " + found.getTitle(), msgTotal);
         }
         log.info("leave cancel");
         return 1;
@@ -208,12 +208,24 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         int msgTotal = messageRecordDao.sumMsgNumByPlanId(found.getId());
         // 扣除消息条数
         if (StringUtils.hasText(found.getMediaIdList())) {
-            mmsBillComponent.saveMmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), -msgTotal);
+            mmsBillComponent.saveMmsBill("restart scheduled send: " + found.getTitle(), -msgTotal);
         } else {
-            smsBillComponent.saveSmsBill(bundle.getString("cancel scheduled send: " + found.getTitle()), -msgTotal);
+            smsBillComponent.saveSmsBill("restart scheduled send: " + found.getTitle(), -msgTotal);
         }
         log.info("leave restart");
         return 1;
+    }
+    
+    @Override
+    public int delete(Long id) {
+        log.info("enter delete, id={}", id);
+        Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
+        Long curId = Current.get().getId();
+        MessagePlan found = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(id, curId);
+        ServiceException.notNull(found, bundle.getString("msg-plan-not-exists"));
+        int result = messagePlanDao.disableByIdAndCustomerId(id, curId, true);
+        log.info("leave delete");
+        return result;
     }
     
     @Override
@@ -231,10 +243,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(getPlanPage, CommonMessage.PARAM_IS_NULL);
         QMessagePlan qMessagePlan = QMessagePlan.messagePlan;
         BooleanBuilder builder = new BooleanBuilder();
-        QueryDslTools dslTools = new QueryDslTools(builder);
-        dslTools.eqNotNull(qMessagePlan.status, getPlanPage.getStatus());
-        dslTools.betweenNotNull(qMessagePlan.createTime, getPlanPage.getStart(), getPlanPage.getEnd());
-        dslTools.containsNotEmpty(false, getPlanPage.getKeyword(), qMessagePlan.title);
+        builder.and(qMessagePlan.customerId.eq(Current.get().getId()));
+        getPlanPage.fillConditions(builder, qMessagePlan);
         QueryResults<MessagePlan> queryResults = jpaQueryFactory.select(qMessagePlan).from(qMessagePlan)
                 .where(builder)
                 .offset(getPlanPage.getPage() * getPlanPage.getSize())

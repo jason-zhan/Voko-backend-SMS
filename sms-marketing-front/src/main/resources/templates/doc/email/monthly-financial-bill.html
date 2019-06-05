@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>monthly bill</title>
+</head>
+<body>
+<p>Dear Mr. / Ms. :</p>
+<p>&emsp;Your consumption on <a href="#">Voko Marketing</a> in
+    <span th:text="${#dates.format(date, 'MMM yyyy')}?:''"></span> was: <span th:text="${smsTotal}?:''"></span> SMS
+    messages and 1 keyword. Please refer to the attachment for a detailed bill.
+</p>
+<p>Best wishes,</p>
+<p>Voko Marketing Service.</p>
+</body>
+</html>

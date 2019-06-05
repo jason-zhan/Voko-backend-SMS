@@ -29,9 +29,9 @@ public class MessagePlanController {
         return ReturnEntity.successIfTrue(result > 0);
     }
     
-    @RequestMapping("/createInstant")
+    @RequestMapping("/create-instant")
     @ResponseBody
-    public ReturnEntity createInstant(CreateMessagePlan create) {
+    public ReturnEntity createInstant(@RequestBody CreateMessagePlan create) {
         int result = messagePlanService.createInstant(create);
         return ReturnEntity.successIfTrue(result > 0);
     }
@@ -54,6 +54,13 @@ public class MessagePlanController {
     @ResponseBody
     public ReturnEntity restart(Long id) {
         int result = messagePlanService.restart(id);
+        return ReturnEntity.successIfTrue(result > 0);
+    }
+    
+    @RequestMapping("/delete")
+    @ResponseBody
+    public ReturnEntity delete(Long id) {
+        int result = messagePlanService.delete(id);
         return ReturnEntity.successIfTrue(result > 0);
     }
     

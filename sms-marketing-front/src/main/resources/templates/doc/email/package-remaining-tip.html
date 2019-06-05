@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>package remaining tip</title>
+</head>
+<body>
+<div>
+    <p>Dear Mr. / Ms. :</p>
+    <p>&emsp;The package you purchased on <a href="#">Voko Marketing</a> is seemed to be not enough. There are
+        <span th:text="${smsRemaining?:''}"></span> sms, 2 keyword(s), as of
+        <span th:text="${#dates.format(time,'yyyy-MM-dd HH:mm:ss')}?:''"></span>.
+    </p>
+    <p>&emsp;You can choose to upgrade to a larger package, or you can keep the status quo, and we will charge for each
+        message in excess.
+    </p>
+    <p>Best wishes,</p>
+    <p>Voko Marketing Service.</p>
+</div>
+</body>
+</html>
