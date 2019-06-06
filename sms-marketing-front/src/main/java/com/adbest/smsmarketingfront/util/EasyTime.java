@@ -7,6 +7,10 @@ import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
 
+/**
+ * A time tools class.
+ * Depend on {@link Calendar}
+ */
 public class EasyTime {
     
     private Calendar instance;
@@ -19,14 +23,32 @@ public class EasyTime {
         return System.currentTimeMillis();
     }
     
+    /**
+     * Init use current time.
+     * @return
+     */
     public static EasyTime init() {
         return new EasyTime(now());
     }
     
+    /**
+     * Init use specific time.
+     * @param time
+     * @param <T>
+     * @return
+     */
     public static <T extends Date> EasyTime init(@NotNull T time) {
         return new EasyTime(time);
     }
     
+    /**
+     * return format time string use specific time and pattern.
+     * Depend on {@link SimpleDateFormat}
+     * @param time
+     * @param pattern
+     * @param <T>
+     * @return
+     */
     public static <T extends Date> String format(@NotNull T time, @NotEmpty String pattern){
         return new SimpleDateFormat(pattern).format(time);
     }

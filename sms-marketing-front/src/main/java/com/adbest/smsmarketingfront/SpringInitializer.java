@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.InboxStatus;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.MsgTemplateVariable;
 import com.adbest.smsmarketingentity.OutboxStatus;
+import com.adbest.smsmarketingentity.SystemMsgTemplateType;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
@@ -85,6 +86,11 @@ public class SpringInitializer implements InitializingBean {
     @Bean
     public Map<Integer, String> outboxStatusMap(ResourceBundle bundle) {
         return getBundleValuesMap(OutboxStatus.class, "outbox-status-", bundle);
+    }
+    
+    @Bean
+    public Map<Integer, String> systemMsgTemplateTypeMap(ResourceBundle bundle) {
+        return getBundleValuesMap(SystemMsgTemplateType.class, "sys-msg-template-type-", bundle);
     }
     
     @Bean

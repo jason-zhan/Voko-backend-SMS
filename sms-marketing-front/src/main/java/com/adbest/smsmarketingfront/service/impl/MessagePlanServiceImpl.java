@@ -29,16 +29,12 @@ import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.QuartzTools;
-import com.adbest.smsmarketingfront.util.QueryDslTools;
-import com.adbest.smsmarketingfront.util.TimeTools;
 import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.JobKey;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -106,7 +102,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         log.info("enter createInstant, param={}", create);
         Assert.notNull(create, CommonMessage.PARAM_IS_NULL);
         // 设定执行时间
-        create.setExecTime(TimeTools.now());
+        create.setExecTime(EasyTime.now());
         // 持久化发送任务实体
         MessagePlan plan = createMessagePlan(create);
         // 分配任务、执行
@@ -121,7 +117,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         log.info("enter update, param={}", update);
         // 参数检查
         checkMessagePlan(update);
-        ServiceException.isTrue(update.getExecTime().after(TimeTools.now()),
+        ServiceException.isTrue(update.getExecTime().after(EasyTime.now()),
                 bundle.getString("msg-plan-execute-time-later"));
         // 检查任务
         Assert.notNull(update.getId(), CommonMessage.ID_CANNOT_EMPTY);
@@ -201,7 +197,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 bundle.getString("msg-plan-status").replace("$action$", "restart")
                         .replace("$status$", MessagePlanStatus.EDITING.getTitle())
         );
-        ServiceException.isTrue(found.getExecTime().after(TimeTools.now()),
+        ServiceException.isTrue(found.getExecTime().after(EasyTime.now()),
                 bundle.getString("msg-plan-execute-time-later"));
         // 更新
         found.setStatus(MessagePlanStatus.SCHEDULING.getValue());
@@ -267,8 +263,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         
         ServiceException.notNull(create.getExecTime(), bundle.getString("msg-plan-execute-time"));
 
-//        ServiceException.isTrue(create.getExecTime().after(TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay)),
-//                bundle.getString("msg-plan-execute-time-later").replace("$min$", Integer.toString(planExecTimeDelay)));
+        // TODO valid execTime
         
         ServiceException.hasText(create.getText(), bundle.getString("msg-plan-content"));
         

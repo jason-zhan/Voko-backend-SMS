@@ -49,5 +49,5 @@ public class SystemMsgTemplate implements Serializable {
     @UpdateTimestamp
     private Timestamp updateTime;  // 更新时间
     @Column(nullable = false)
-    private Long updateBy;  // 最后修改者
+    private Long updateBy;  // 最后修改人
 }

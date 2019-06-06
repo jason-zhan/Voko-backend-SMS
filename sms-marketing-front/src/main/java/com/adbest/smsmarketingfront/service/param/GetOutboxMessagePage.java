@@ -7,9 +7,7 @@ import com.adbest.smsmarketingentity.QMessageRecord;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.QueryDslTools;
-import com.adbest.smsmarketingfront.util.TimeTools;
 import com.querydsl.core.BooleanBuilder;
-import com.querydsl.core.types.dsl.DateTimePath;
 import lombok.Data;
 
 import java.sql.Timestamp;

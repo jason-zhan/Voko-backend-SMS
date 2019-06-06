@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/system-msg-template")
 public class SystemMsgTemplateController {
@@ -30,5 +32,12 @@ public class SystemMsgTemplateController {
     public ReturnEntity findByConditions(@RequestBody GetSystemMsgTemplatePage getSysTemplatePage) {
         Page<SystemMsgTemplate> templatePage = systemMsgTemplateService.findByConditions(getSysTemplatePage);
         return ReturnEntity.success(templatePage);
+    }
+    
+    @RequestMapping("/types")
+    @ResponseBody
+    public ReturnEntity typeMap() {
+        Map<Integer, String> typeMap = systemMsgTemplateService.typeMap();
+        return ReturnEntity.success(typeMap);
     }
 }

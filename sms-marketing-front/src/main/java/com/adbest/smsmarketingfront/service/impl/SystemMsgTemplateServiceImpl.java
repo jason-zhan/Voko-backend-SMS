@@ -14,6 +14,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.Map;
+
 @Service
 @Slf4j
 public class SystemMsgTemplateServiceImpl implements SystemMsgTemplateService {
@@ -23,6 +25,8 @@ public class SystemMsgTemplateServiceImpl implements SystemMsgTemplateService {
     
     @Autowired
     JPAQueryFactory jpaQueryFactory;
+    @Autowired
+    Map<Integer, String> systemMsgTemplateTypeMap;
     
     @Override
     public SystemMsgTemplate findById(Long id) {
@@ -47,5 +51,12 @@ public class SystemMsgTemplateServiceImpl implements SystemMsgTemplateService {
         Page<SystemMsgTemplate> templatePage = getSysTemplatePage.toPageEntity(queryResults);
         log.info("leave findByConditions");
         return templatePage;
+    }
+    
+    @Override
+    public Map<Integer, String> typeMap() {
+        log.info("enter typeMap");
+        log.info("leave typeMap");
+        return systemMsgTemplateTypeMap;
     }
 }

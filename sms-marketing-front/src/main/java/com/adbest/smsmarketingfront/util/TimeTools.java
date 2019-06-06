@@ -7,7 +7,7 @@ import java.util.Date;
 
 /**
  * 时间工具类
- * @deprecated
+ * @deprecated  1.非线程安全 2.使用不方便
  */
 public class TimeTools {
     

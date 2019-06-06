@@ -6,17 +6,11 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
+import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.QuartzTools;
-import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.extern.slf4j.Slf4j;
-import org.quartz.JobBuilder;
-import org.quartz.JobDataMap;
 import org.quartz.JobDetail;
 import org.quartz.JobKey;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.TriggerBuilder;
-import org.quartz.impl.matchers.GroupMatcher;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
@@ -25,11 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -62,7 +52,7 @@ public class MessagePlanTask {
         log.info("enter executePlan [task]");
         // 获取所有计划中状态的任务
         List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
-                TimeTools.addMinutes(TimeTools.now(), planExecTimeDelay));
+                EasyTime.init().addMinutes(planExecTimeDelay).stamp());
         if (planList.isEmpty()) {
             log.info("leave executePlan for empty list [task]");
             return;
@@ -82,7 +72,7 @@ public class MessagePlanTask {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
         List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
-                TimeTools.addMinutes(TimeTools.now(), repairTimeRange));
+                EasyTime.init().addMinutes(repairTimeRange).stamp());
         // 排除当前正在运行的任务（避免与正常执行作业重复）
         checkPlanByGroup(planList);
         if (planList.size() == 0) {

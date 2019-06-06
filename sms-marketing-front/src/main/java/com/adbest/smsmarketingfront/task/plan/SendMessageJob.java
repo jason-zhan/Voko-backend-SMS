@@ -5,7 +5,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
-import com.adbest.smsmarketingfront.util.TimeTools;
+import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
@@ -70,7 +70,7 @@ public class SendMessageJob implements Job {
 //                message.setSid(sentMsg.getSid());
                 message.setSid(UUID.randomUUID().toString());
                 message.setStatus(OutboxStatus.SENT.getValue());
-                message.setSendTime(TimeTools.now());
+                message.setSendTime(EasyTime.now());
                 sentMessageList.add(message);
                 System.out.printf("sent(%s) planId=%s page=%s%n", message.getId(), planId, page);
             } catch (Exception e) {
