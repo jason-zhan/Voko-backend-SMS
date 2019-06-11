@@ -2,14 +2,17 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
+import com.adbest.smsmarketingfront.dao.FinanceBillDao;
 import com.adbest.smsmarketingfront.service.EmailComponent;
 import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.EmailTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -23,6 +26,11 @@ public class EmailComponentImpl implements EmailComponent {
     
     @Autowired
     CustomerDao customerDao;
+    @Autowired
+    FinanceBillDao financeBillDao;
+    
+    @Value("${web.login}")
+    private String webLogin;
     
     @Override
     public void sendPackageRemainingTip(String toAddress, int smsRemaining) {
@@ -43,8 +51,13 @@ public class EmailComponentImpl implements EmailComponent {
         Assert.isTrue(optional.isPresent(), "customer not exists!");
         Customer customer = optional.get();
         Map<String, Object> data = new HashMap<>();
-        data.put("time", EasyTime.now());
-        // TODO 统计金融账单
+        BigDecimal monthAmount = financeBillDao.sumWithCustomerIdAndTimeRange(
+                customerId,
+                EasyTime.init().addMonths(-1).monthStart().stamp(),
+                EasyTime.init().addMonths(-1).monthEnd().stamp()
+        );
+        data.put("monthAmount", monthAmount);
+        data.put("webLogin", webLogin);
         emailTools.send("Monthly Bill", customer.getEmail(), "./doc/email/monthly-financial-bill", data);
         log.info("leave sendMonthlyBill");
     }

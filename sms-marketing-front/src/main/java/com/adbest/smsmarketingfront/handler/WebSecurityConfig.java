@@ -68,7 +68,7 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
         web.ignoring().antMatchers(
                 "/index.html",
                 "/static/**",
-                "/email/page-test",
+                "/email/page-test",  // TODO 测试后删除
                 "/nologin",
                 "/favicon.ico",
                 "/register",

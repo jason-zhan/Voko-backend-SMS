@@ -17,6 +17,7 @@ public class EmailComponentTest {
     
     @Test
     public void sendPackageRemainingTip() {
-        emailComponent.sendPackageRemainingTip("midakun1667@dingtalk.com", 100);
+//        emailComponent.sendPackageRemainingTip("midakun1667@dingtalk.com", 100);
+        emailComponent.sendMonthlyBill(1L);
     }
 }

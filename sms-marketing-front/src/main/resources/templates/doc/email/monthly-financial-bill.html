@@ -8,11 +8,10 @@
 </head>
 <body>
 <p>Dear Mr. / Ms. :</p>
-<p>&emsp;Your consumption on <a href="#">Voko Marketing</a> in
-    <span th:text="${#dates.format(date, 'MMM yyyy')}?:''"></span> was: <span th:text="${smsTotal}?:''"></span> SMS
-    messages and 1 keyword. Please refer to the attachment for a detailed bill.
+<p>&emsp;Your consumption on Voko Marketing last month </span> was: $ <span th:text="${monthAmount}?:''"></span>.
+    For more information, please visit our official website: <a th:href="${webLogin}?:'#'" th:text="${webLogin}?:''"></a>.
 </p>
-<p>Best wishes,</p>
+<p>Your sincerely,</p>
 <p>Voko Marketing Service.</p>
 </body>
 </html>
