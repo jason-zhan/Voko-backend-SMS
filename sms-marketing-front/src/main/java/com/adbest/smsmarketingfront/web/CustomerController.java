@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingfront.entity.form.CustomerForm;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.util.ReturnEntity;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,6 +12,8 @@ import javax.servlet.http.HttpServletRequest;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/customer")
@@ -27,8 +30,8 @@ public class CustomerController {
 
     @RequestMapping("/updateInfo")
     public ReturnEntity updateInfo(CustomerForm customerForm){
-        boolean is = customerService.updateInfo(customerForm);
-        return ReturnEntity.success(is);
+        CustomerVo vo = customerService.updateInfo(customerForm);
+        return ReturnEntity.success(vo);
     }
 
     @RequestMapping("/getCode")

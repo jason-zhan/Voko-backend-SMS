@@ -42,5 +42,5 @@ public interface MessageRecordService {
 
     void sendCallReminder(List<MessageRecord> messageRecords);
 
-    void sendSms(MessageRecord send);
+    void sendSms(MessageRecord send, String msg);
 }

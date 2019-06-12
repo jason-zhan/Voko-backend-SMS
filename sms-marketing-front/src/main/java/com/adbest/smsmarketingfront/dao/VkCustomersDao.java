@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.dao;
 
 import com.adbest.smsmarketingentity.VkCustomers;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -11,7 +12,7 @@ import java.util.List;
 public interface VkCustomersDao extends JpaRepository<VkCustomers, Integer> {
     List<VkCustomers> findByInLeadinIsNull();
 
-    List<VkCustomers> findByInLeadinIsNullAndEmailNotNull();
+    List<VkCustomers> findByInLeadinIsNullAndEmailNotNull(Pageable pageable);
 
     @Modifying
     @Transactional

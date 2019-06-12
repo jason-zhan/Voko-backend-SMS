@@ -24,6 +24,7 @@ import org.springframework.util.Assert;
 import javax.annotation.Syntax;
 import javax.transaction.Transactional;
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.LockSupport;
@@ -76,5 +77,11 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         
         log.info("leave findByConditionsToExcel");
         return null;
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<SmsBill> smsBills) {
+        smsBillDao.saveAll(smsBills);
     }
 }

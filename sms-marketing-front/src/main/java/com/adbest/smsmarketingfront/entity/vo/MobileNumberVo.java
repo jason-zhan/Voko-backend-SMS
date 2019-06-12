@@ -1,8 +1,10 @@
 package com.adbest.smsmarketingfront.entity.vo;
 
+import com.adbest.smsmarketingentity.MobileNumber;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.sql.Timestamp;
 
 @Data
 public class MobileNumberVo implements Serializable {
@@ -10,12 +12,14 @@ public class MobileNumberVo implements Serializable {
     private String number;
     private Boolean sms;
     private Boolean mms;
+    private Timestamp createTime;
 
-    public MobileNumberVo(Long id, String number, Boolean sms, Boolean mms) {
-        this.id = id;
-        this.number = number;
-        this.sms = sms;
-        this.mms = mms;
+    public MobileNumberVo(MobileNumber mobileNumber) {
+        this.id = mobileNumber.getId();
+        this.number = mobileNumber.getNumber();
+        this.sms = mobileNumber.getSms();
+        this.mms = mobileNumber.getMms();
+        this.createTime = mobileNumber.getCreateTime();
     }
 
     public MobileNumberVo() {

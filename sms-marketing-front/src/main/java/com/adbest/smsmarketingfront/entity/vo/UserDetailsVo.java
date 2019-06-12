@@ -19,6 +19,7 @@ public class UserDetailsVo implements UserDetails {
     private String organization;  // 单位（公司/机构）
     private Timestamp registerTime;  // 注册时间
     private Boolean disable;  // 注册时间
+    private Integer source;
 
     public UserDetailsVo() {
     }
@@ -32,6 +33,7 @@ public class UserDetailsVo implements UserDetails {
         this.organization = customer.getOrganization();
         this.registerTime = customer.getRegisterTime();
         this.disable = customer.getDisable();
+        this.source = customer.getSource();
     }
 
     @Override

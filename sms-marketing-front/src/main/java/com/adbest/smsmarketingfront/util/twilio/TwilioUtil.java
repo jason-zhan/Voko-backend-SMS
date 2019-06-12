@@ -11,6 +11,7 @@ import com.twilio.rest.api.v2010.account.MessageCreator;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.LocalReader;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFree;
+import com.twilio.security.RequestValidator;
 import com.twilio.twiml.MessagingResponse;
 import com.twilio.twiml.messaging.Body;
 import com.twilio.twiml.messaging.Media;
@@ -21,10 +22,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 import java.io.IOException;
+import java.util.Enumeration;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * twilio 工具类
@@ -40,6 +45,8 @@ public class TwilioUtil {
     private String msgStatusCallback;  // 消息状态回调路径
     @Value("${twilio.viewFileUrl}")
     private String viewFileUrl;  // 外部访问文件路径
+    @Value("${twilio.authToken}")
+    private String authToken;
     
     @Autowired
     public TwilioUtil(@Value("${twilio.accountSid}") String accountSid, @Value("${twilio.authToken}") String authToken) {
@@ -143,5 +150,24 @@ public class TwilioUtil {
         } catch (IOException e) {
             log.error("replyMessage failed: {}", e);
         }
+    }
+
+    /**
+     * 验证请求是否来自Twilio
+     *
+     * @param request
+     * @return
+     */
+    public boolean validate(@NotNull HttpServletRequest request){
+        Enumeration enu=request.getParameterNames();
+        Map<String, String> params = new HashMap<>();
+        while(enu.hasMoreElements()){
+            String paraName=(String)enu.nextElement();
+            params.put(paraName, request.getParameter(paraName));
+        }
+        String url = request.getRequestURL().toString();
+        RequestValidator validator = new RequestValidator(authToken);
+        String twilioSignature = request.getHeader("X-Twilio-Signature");
+        return validator.validate(url, params, twilioSignature);
     }
 }

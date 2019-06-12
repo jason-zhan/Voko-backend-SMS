@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.service.impl;
 import com.adbest.smsmarketingentity.CustomerSettings;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingfront.dao.MobileNumberDao;
+import com.adbest.smsmarketingfront.entity.enums.RedisKey;
 import com.adbest.smsmarketingfront.entity.form.SearchTwilioForm;
 import com.adbest.smsmarketingfront.entity.vo.MobileNumberVo;
 import com.adbest.smsmarketingfront.entity.vo.TwilioPhoneVo;
@@ -22,6 +23,7 @@ import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFreeRea
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
@@ -53,6 +55,8 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     @Value("${mobilePrice.ordinary}")
     private BigDecimal ordinaryMobilePrice;
 
+    private RedisTemplate redisTemplate;
+
     @Override
     @Transactional
     public MobileNumber save(MobileNumber mobileNumber) {
@@ -68,7 +72,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     public List<MobileNumberVo> findAll() {
         Long customerId = Current.get().getId();
         List<MobileNumber> mobileNumbers = mobileNumberDao.findByCustomerIdAndDisable(customerId, false);
-        List<MobileNumberVo> list = mobileNumbers.stream().map(s -> new MobileNumberVo(s.getId(),s.getNumber(), s.getSms(), s.getMms())).collect(Collectors.toList());
+        List<MobileNumberVo> list = mobileNumbers.stream().map(s -> new MobileNumberVo(s)).collect(Collectors.toList());
         return list;
     }
 
@@ -81,6 +85,8 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     @Transactional
     public MobileNumberVo init() {
         Long id = Current.get().getId();
+        Boolean is = redisTemplate.opsForValue().setIfAbsent(RedisKey.INIT_PHONE.getKey() + id, System.currentTimeMillis(), RedisKey.INIT_PHONE.getExpireTime(), RedisKey.INIT_PHONE.getTimeUnit());
+        ServiceException.isTrue(is,returnMsgUtil.msg("CLICK_FREQUENTLY"));
         CustomerSettings customerSettings = customerSettingsService.findByCustomerId(id);
         ServiceException.isTrue(!customerSettings.getNumberReceivingStatus(), returnMsgUtil.msg("FREE_NUMBER_UPPER_LIMIT"));
         ResourceSet<TollFree> tollFrees = twilioUtil.fetchTollFreeNumbers();
@@ -97,7 +103,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumberDao.save(mobileNumber);
         customerSettings.setNumberReceivingStatus(true);
         customerSettingsService.save(customerSettings);
-        return new MobileNumberVo(mobileNumber.getId(), mobileNumber.getNumber(), mobileNumber.getSms(), mobileNumber.getMms());
+        return new MobileNumberVo(mobileNumber);
     }
 
     @Override
@@ -167,21 +173,21 @@ public class MobileNumberServiceImpl implements MobileNumberService {
 
 
 
-        IncomingPhoneNumber incomingPhoneNumber = null;
-        try {
-            incomingPhoneNumber = twilioUtil.purchaseNumber(phoneNumber);
-        }catch (ApiException e){
-            log.error("购买手机号出错，{}",e);
-            ServiceException.isTrue(false, returnMsgUtil.msg("MOBILE_NOT_BUY"));
-        }
-        Long customerId = Current.get().getId();
-        MobileNumber mobileNumber = new MobileNumber();
-        mobileNumber.setDisable(false);
-        mobileNumber.setCustomerId(customerId);
-        mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
-        mobileNumber.setMms(incomingPhoneNumber.getCapabilities().getMms());
-        mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
-        mobileNumberDao.save(mobileNumber);
+//        IncomingPhoneNumber incomingPhoneNumber = null;
+//        try {
+//            incomingPhoneNumber = twilioUtil.purchaseNumber(phoneNumber);
+//        }catch (ApiException e){
+//            log.error("购买手机号出错，{}",e);
+//            ServiceException.isTrue(false, returnMsgUtil.msg("MOBILE_NOT_BUY"));
+//        }
+//        Long customerId = Current.get().getId();
+//        MobileNumber mobileNumber = new MobileNumber();
+//        mobileNumber.setDisable(false);
+//        mobileNumber.setCustomerId(customerId);
+//        mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
+//        mobileNumber.setMms(incomingPhoneNumber.getCapabilities().getMms());
+//        mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
+//        mobileNumberDao.save(mobileNumber);
         return true;
     }
 }
