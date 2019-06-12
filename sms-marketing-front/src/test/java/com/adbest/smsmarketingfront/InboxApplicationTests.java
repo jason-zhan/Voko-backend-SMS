@@ -6,6 +6,7 @@ import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
+import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.twilio.base.ResourceSet;
 import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
@@ -20,6 +21,7 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StringUtils;
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -48,12 +50,26 @@ public class InboxApplicationTests {
 
     @Test
     public void test() {
-        InboundMsg inboundMsg = new InboundMsg();
-        inboundMsg.setMessageSid(UUID.randomUUID().toString());
-        inboundMsg.setBody("优惠");
-        inboundMsg.setFrom("123456");
-        inboundMsg.setTo("+123456789");
-        messageRecordService.saveInbox(inboundMsg);
+//        InboundMsg inboundMsg = new InboundMsg();
+//        inboundMsg.setMessageSid(UUID.randomUUID().toString());
+//        inboundMsg.setBody("优惠");
+//        inboundMsg.setFrom("123456");
+//        inboundMsg.setTo("+123456789");
+//        messageRecordService.saveInbox(inboundMsg);
+        MessageRecord send = new MessageRecord();
+        send.setCustomerNumber("+12565768219");
+        send.setContent("qq00test..");
+        send.setSms(true);
+        send.setContactsNumber("");
+        send.setInbox(false);
+        send.setDisable(false);
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis());
+        send.setSendTime(timestamp);
+        send.setExpectedSendTime(timestamp);
+        send.setStatus(OutboxStatus.SENT.getValue());
+        PreSendMsg preSendMsg = new PreSendMsg();
+        preSendMsg.setRecord(send);
+        twilioUtil.sendMessage(preSendMsg);
     }
 
 }

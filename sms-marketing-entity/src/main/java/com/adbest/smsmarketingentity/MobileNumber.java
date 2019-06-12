@@ -40,4 +40,9 @@ public class MobileNumber implements Serializable {
     private Boolean sms;
 
     private Boolean mms;
+
+    /**
+     * 是否为赠送号码
+     */
+    private Boolean giftNumber;
 }

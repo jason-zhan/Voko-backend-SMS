@@ -45,22 +45,28 @@ public class DbImportCustomerTask {
     @Autowired
     private MessageRecordService messageRecordService;
 
-    //@Scheduled(cron = "30 0 0/1 * * ?")
+    //@Scheduled(cron = "15 0/10 * * * ?")
     public void importCustomerTask(){
-        List<VkCustomers> list = vkCustomersService.findByInLeadinIsNullAndEmailNotNull();
-        if (list.size()<=0){return;}
-        Map<String, VkCustomers> map = list.stream().collect(Collectors.toMap(VkCustomers::getEmail, vkCustomers -> vkCustomers, (vc, newVc) -> vc));
-        List<Customer> customers = customerService.findByEmailIn(new ArrayList<>(map.keySet()));
-        if (customers.size()>0){
-            for (Customer c : customers) {
-                map.remove(c.getEmail());
+        int size = 1000;
+        int page = 0;
+        do {
+            PageRequest pageRequest = PageRequest.of(page,size);
+            List<VkCustomers> list = vkCustomersService.findByInLeadinIsNullAndEmailNotNull(pageRequest);
+            page++;
+            if (list.size()<=0){break;}
+            Map<String, VkCustomers> map = list.stream().collect(Collectors.toMap(VkCustomers::getEmail, vkCustomers -> vkCustomers, (vc, newVc) -> vc));
+            List<Customer> customers = customerService.findByEmailIn(new ArrayList<>(map.keySet()));
+            if (customers.size()>0){
+                for (Customer c : customers) {
+                    map.remove(c.getEmail());
+                }
+                vkCustomersService.updateInLeadinByEmailIn(false, customers.stream().map(customer -> customer.getEmail()).collect(Collectors.toList()));
             }
-            vkCustomersService.updateInLeadinByEmailIn(false, customers.stream().map(customer -> customer.getEmail()).collect(Collectors.toList()));
-        }
-        intoCustomer(map);
+            intoCustomer(map);
+            if (list.size()<size){break;}
+        }while (true);
     }
 
-    @Transactional
     public void intoCustomer(Map<String, VkCustomers> map){
         if (map.size()<=0){return;}
         List<Customer> customerList = new ArrayList<>();
@@ -78,16 +84,7 @@ public class DbImportCustomerTask {
             customer.setSource(CustomerSource.API_Added.getValue());
             customerList.add(customer);
         }
-        customerService.saveAll(customerList);
-        for (Customer c:customerList) {
-            customerSettings = new CustomerSettings(false, customer.getId(), false);
-            customerSettingsList.add(customerSettings);
-        }
-        customerSettingsService.saveAll(customerSettingsList);
-        vkCustomersService.updateInLeadinByEmailIn(true, customerList.stream().map(c -> c.getEmail()).collect(Collectors.toList()));
-        for (Customer c : customerList) {
-            customerService.initCustomerData(c);
-        }
+        customerService.saveImportCustomer(customerList);
     }
 
 //    @Scheduled(cron = "0/30 * * * * ?")
@@ -172,6 +169,9 @@ public class DbImportCustomerTask {
                 notSendIds.clear();
                 if(sendIds.size()>0){vkCDRCustomersService.updateSendStatus(sendIds, VkCDRCustomersSendStatus.ALREADY_SENT.getValue());}
                 sendIds.clear();
+            }else {
+                notSendIds = list.stream().map(s -> Integer.valueOf(((Object[])s)[0].toString())).collect(Collectors.toList());
+                vkCDRCustomersService.updateSendStatus(notSendIds, VkCDRCustomersSendStatus.UNWANTED_SENT.getValue());
             }
             if (list.size()<size){is = false;break;}
         }while (is);

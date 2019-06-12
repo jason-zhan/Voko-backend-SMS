@@ -32,7 +32,7 @@ public interface CustomerService extends UserDetailsService {
 
     boolean changePassword(String password, String newPassword);
 
-    boolean updateInfo(CustomerForm customerForm);
+    CustomerVo updateInfo(CustomerForm customerForm);
 
     boolean getCode(String email, HttpServletRequest request);
 
@@ -42,4 +42,5 @@ public interface CustomerService extends UserDetailsService {
 
     Customer findById(Long customerId);
 
+    void saveImportCustomer(List<Customer> customerList);
 }

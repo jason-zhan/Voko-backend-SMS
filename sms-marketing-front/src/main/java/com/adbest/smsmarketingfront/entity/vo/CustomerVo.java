@@ -15,6 +15,7 @@ public class CustomerVo implements Serializable {
     private String industry;  // 行业
     private String organization;  // 单位（公司/机构）
     private Timestamp registerTime;  // 注册时间
+    private Integer source;//来源
 
     public CustomerVo() {
     }
@@ -27,6 +28,7 @@ public class CustomerVo implements Serializable {
         this.industry = customer.getIndustry();
         this.organization = customer.getOrganization();
         this.registerTime = customer.getRegisterTime();
+        this.source = customer.getSource();
     }
 
     public CustomerVo(UserDetailsVo customer) {
@@ -37,5 +39,6 @@ public class CustomerVo implements Serializable {
         this.industry = customer.getIndustry();
         this.organization = customer.getOrganization();
         this.registerTime = customer.getRegisterTime();
+        this.source = customer.getSource();
     }
 }

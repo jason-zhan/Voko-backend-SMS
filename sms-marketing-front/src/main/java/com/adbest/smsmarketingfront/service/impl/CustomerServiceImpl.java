@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 @Service
 @Slf4j
@@ -97,6 +98,9 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Autowired
     private CustomerSettingsService customerSettingsService;
+
+    @Autowired
+    private VkCustomersService vkCustomersService;
 
     @Override
     public Customer save(Customer customer) {
@@ -211,7 +215,7 @@ public class CustomerServiceImpl implements  CustomerService {
         }
         //初始化彩信条数
         if (marketSetting.getMmsTotal()>0){
-            MmsBill mmsBill = new MmsBill(customer.getId(),infoDescribe,marketSetting.getSmsTotal());
+            MmsBill mmsBill = new MmsBill(customer.getId(),infoDescribe,marketSetting.getMmsTotal());
             mmsBillComponent.save(mmsBill);
         }
     }
@@ -232,7 +236,7 @@ public class CustomerServiceImpl implements  CustomerService {
 
     @Override
     @Transactional
-    public boolean updateInfo(CustomerForm customerForm) {
+    public CustomerVo updateInfo(CustomerForm customerForm) {
         Long customerId = Current.get().getId();
         Customer customer = customerDao.findById(customerId).get();
         customer.setOrganization(customerForm.getOrganization());
@@ -240,7 +244,7 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setLastName(customerForm.getLastName());
         customer.setFirstName(customerForm.getFirstName());
         customerDao.save(customer);
-        return true;
+        return new CustomerVo(customer);
     }
 
     @Override
@@ -253,7 +257,10 @@ public class CustomerServiceImpl implements  CustomerService {
         redisTemplate.opsForValue().set(email, number, 10, TimeUnit.MINUTES);
         Map<String,Object> dataMap = new HashMap<>();
         dataMap.put("code",number);
-        String emailText = createTemplates(dataMap,"emailTemplates");
+        if (customer.getFirstName()!=null){
+            dataMap.put("name",customer.getFirstName());
+        }
+        String emailText = createTemplates(dataMap,"email-code-templates");
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message);
         try {
@@ -317,6 +324,37 @@ public class CustomerServiceImpl implements  CustomerService {
             return optional.get();
         }
         return null;
+    }
+
+    @Override
+    @Transactional
+    public void saveImportCustomer(List<Customer> customerList) {
+        customerDao.saveAll(customerList);
+        CustomerSettings customerSettings = null;
+        List<CustomerSettings> customerSettingsList = new ArrayList<>();
+        List<SmsBill> smsBills = new ArrayList<>();
+        List<MmsBill> mmsBills = new ArrayList<>();
+        MmsBill mmsBill = null;
+        SmsBill smsBill = null;
+        List<MarketSetting> marketSettings = marketSettingService.findAll();
+        MarketSetting marketSetting = marketSettings.get(0);
+        String infoDescribe ="experience gift";
+        for (Customer c:customerList) {
+            customerSettings = new CustomerSettings(false, c.getId(), false);
+            customerSettingsList.add(customerSettings);
+            if (marketSetting.getMmsTotal()>0){
+                mmsBill = new MmsBill(c.getId(),infoDescribe,marketSetting.getMmsTotal());
+                mmsBills.add(mmsBill);
+            }
+            if (marketSetting.getSmsTotal()>0){
+                smsBill = new SmsBill(c.getId(),infoDescribe,marketSetting.getSmsTotal());
+                smsBills.add(smsBill);
+            }
+        }
+        customerSettingsService.saveAll(customerSettingsList);
+        if (smsBills.size()>0){smsBillComponent.saveAll(smsBills);}
+        if (mmsBills.size()>0){mmsBillComponent.saveAll(mmsBills);}
+        vkCustomersService.updateInLeadinByEmailIn(true, customerList.stream().map(c -> c.getEmail()).collect(Collectors.toList()));
     }
 
     @Override

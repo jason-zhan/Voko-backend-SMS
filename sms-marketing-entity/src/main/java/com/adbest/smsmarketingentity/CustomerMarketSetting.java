@@ -4,16 +4,15 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.io.Serializable;
-import java.math.BigDecimal;
+import java.sql.Timestamp;
 
 /**
- * 营销方案
+ * 用户套餐
  */
 @Data
 @Entity
-@Table(name = "market_setting")
-public class MarketSetting implements Serializable {
-    
+public class CustomerMarketSetting implements Serializable {
+
     @Id
     @GeneratedValue(strategy= GenerationType.IDENTITY)
     private Long id;
@@ -25,12 +24,19 @@ public class MarketSetting implements Serializable {
     private Integer mmsTotal;  // 彩信条数
     @Column(nullable = false)
     private Integer keywordTotal;  // 赠送关键字个数
+
     /**
-     * 天数
+     * 套餐id
      */
-    private Integer daysNumber;
+    private Long marketSettingId;
     /**
-     * 价格
+     * 订购时间
      */
-    private BigDecimal price;
+    private Timestamp orderTime;
+
+    /**
+     * 过期时间
+     */
+    private Timestamp invalidTime;
+
 }

@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.VkCustomers;
 import com.adbest.smsmarketingfront.dao.VkCustomersDao;
 import com.adbest.smsmarketingfront.service.VkCustomersService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -20,8 +21,8 @@ public class VkCustomersServiceImpl implements VkCustomersService {
     }
 
     @Override
-    public List<VkCustomers> findByInLeadinIsNullAndEmailNotNull() {
-        return vkCustomersDao.findByInLeadinIsNullAndEmailNotNull();
+    public List<VkCustomers> findByInLeadinIsNullAndEmailNotNull(Pageable pageable) {
+        return vkCustomersDao.findByInLeadinIsNullAndEmailNotNull(pageable);
     }
 
     @Override

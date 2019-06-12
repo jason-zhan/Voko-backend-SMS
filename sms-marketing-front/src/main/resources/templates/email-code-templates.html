@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title></title>
+    <meta charset="utf-8" />
+</head>
+<body>
+    <div class="content">
+        <div class="top">
+            <p>Voko SMS Marketing</p>
+        </div>
+        <div class="main">
+            <p>Hi <span th:text="${name}"></span>,</p>
+            <p>Someone tried to log in to your Voko SMS Marketing account.</p>
+            <p>If this was you, please use the following code to confirm your identity:</p>
+            <p class="code" ><b><span th:text="${code}"></span></b></p>
+            <p>If this wasn't you, please reset your password to secure your account.</p>
+        </div>
+    </div>
+</body>
+<style>
+    .content{
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 0 20px;
+        margin: 0 auto;
+        width: 450px;
+        font-size: 18px;
+        font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif
+    }
+    .top{
+        border-bottom: 1px solid #ccc;
+        /* padding: 10px 0; */
+        color: #f6a21c;
+        font-size: 30px;
+    }
+    .code{
+        font-size: 24px;
+    }
+</style>
+</html>

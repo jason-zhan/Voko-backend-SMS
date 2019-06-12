@@ -11,6 +11,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.ResourceBundle;
 
 
@@ -50,5 +51,11 @@ public class MmsBillComponentImpl implements MmsBillComponent {
     @Transactional
     public MmsBill save(MmsBill mmsBill) {
         return mmsBillDao.save(mmsBill);
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<MmsBill> mmsBills) {
+        mmsBillDao.saveAll(mmsBills);
     }
 }

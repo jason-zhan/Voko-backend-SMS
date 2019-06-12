@@ -14,6 +14,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.Assert;
 
 import javax.transaction.Transactional;
+import java.util.List;
 import java.util.ResourceBundle;
 
 
@@ -64,5 +65,11 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         
         log.info("leave findByConditionsToExcel");
         return null;
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<SmsBill> smsBills) {
+        smsBillDao.saveAll(smsBills);
     }
 }

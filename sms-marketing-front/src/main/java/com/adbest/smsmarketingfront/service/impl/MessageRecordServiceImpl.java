@@ -257,18 +257,19 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setSendTime(timestamp);
         send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
-        messageRecordService.sendSms(send);
+        messageRecordService.sendSms(send,"keyword automatic recovery");
     }
 
     @Override
     public void sendCallReminder(List<MessageRecord> messageRecords) {
+        String msg = "Call response";
         for (MessageRecord m : messageRecords) {
-            messageRecordService.sendSms(m);
+            messageRecordService.sendSms(m,msg);
         }
     }
 
     @Transactional
-    public void sendSms(MessageRecord messageRecord) {
+    public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcMsgSegments(messageRecord.getContent()));
         Long sum = smsBillService.sumByCustomerId(messageRecord.getCustomerId());
 //        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
@@ -283,6 +284,6 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         smsBillComponent.save(smsBill);
         PreSendMsg preSendMsg = new PreSendMsg();
         preSendMsg.setRecord(messageRecord);
-        twilioUtil.sendMessage(preSendMsg);
+//        twilioUtil.sendMessage(preSendMsg);
     }
 }
