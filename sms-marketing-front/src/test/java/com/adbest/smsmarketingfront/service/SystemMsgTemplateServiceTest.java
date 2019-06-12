@@ -19,7 +19,7 @@ public class SystemMsgTemplateServiceTest {
     @Test
     public void findByConditions() {
         GetSystemMsgTemplatePage getSysTempPage = new GetSystemMsgTemplatePage();
-        getSysTempPage.setType(2);
+//        getSysTempPage.setType(2);
         Page<SystemMsgTemplate> templatePage = systemMsgTemplateService.findByConditions(getSysTempPage);
         System.out.println(templatePage.getTotalElements());
     }

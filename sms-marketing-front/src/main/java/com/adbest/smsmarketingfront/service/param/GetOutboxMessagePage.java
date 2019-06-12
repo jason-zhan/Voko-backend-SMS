@@ -49,4 +49,19 @@ public class GetOutboxMessagePage extends PageBase {
         dslTools.eqNotNull(qMessageRecord.contactsGroupId, this.contactsGroupId);
         dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);
     }
+    
+    @Override
+    public String toString() {
+        return "GetOutboxMessagePage{" +
+                "hasSent=" + hasSent +
+                ", status=" + status +
+                ", isSms=" + isSms +
+                ", contactsGroupId=" + contactsGroupId +
+                ", start=" + start +
+                ", end=" + end +
+                ", keyword='" + keyword +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

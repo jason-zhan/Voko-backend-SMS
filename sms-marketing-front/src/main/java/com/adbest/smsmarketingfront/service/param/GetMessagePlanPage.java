@@ -37,4 +37,16 @@ public class GetMessagePlanPage extends PageBase {
         dslTools.betweenNotNull(qMessagePlan.createTime, this.start, this.end);
         dslTools.containsNotEmpty(false, qMessagePlan.title, this.keyword);
     }
+    
+    @Override
+    public String toString() {
+        return "GetMessagePlanPage{" +
+                "status=" + status +
+                ", start=" + start +
+                ", end=" + end +
+                ", keyword='" + keyword +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

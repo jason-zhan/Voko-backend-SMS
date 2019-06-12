@@ -31,4 +31,14 @@ public class GetMsgBillPage extends PageBase {
         builder.and(qMmsBill.customerId.eq(Current.get().getId()));
         QueryDslTools.betweenNotNull(builder, qMmsBill.time, this.start, this.end);
     }
+    
+    @Override
+    public String toString() {
+        return "GetMsgBillPage{" +
+                "start=" + start +
+                ", end=" + end +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

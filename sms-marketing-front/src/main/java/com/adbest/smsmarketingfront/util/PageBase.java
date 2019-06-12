@@ -58,6 +58,13 @@ public class PageBase {
         return pageEntity;
     }
     
+    /**
+     * 将查询结果转化为分页实体
+     * 推荐使用本方法
+     * @param queryResults
+     * @param <T>
+     * @return
+     */
     public <T> Page<T> toPageEntity(QueryResults<T> queryResults) {
         return new PageImpl<T>(queryResults.getResults(), PageRequest.of(this.page, this.size), queryResults.getTotal());
     }

@@ -13,5 +13,16 @@ public class SelectContactsForm extends PageBase{
     private String groupId;
 
     private Boolean inLock;
-
+    
+    @Override
+    public String toString() {
+        return "SelectContactsForm{" +
+                "keyWord='" + keyWord +
+                ", source='" + source +
+                ", groupId='" + groupId +
+                ", inLock=" + inLock +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

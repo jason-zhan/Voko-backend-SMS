@@ -25,4 +25,14 @@ public class GetSmsBillPage extends PageBase {
         }
         builder.and(qSmsBill.time.between(this.start, this.end));
     }
+    
+    @Override
+    public String toString() {
+        return "GetSmsBillPage{" +
+                "start=" + start +
+                ", end=" + end +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

@@ -27,4 +27,13 @@ public class GetSystemMsgTemplatePage extends PageBase {
         builder.and(qSystemMsgTemplate.disable.isFalse());
         QueryDslTools.eqNotNull(builder, qSystemMsgTemplate.type, this.type);
     }
+    
+    @Override
+    public String toString() {
+        return "GetSystemMsgTemplatePage{" +
+                "type=" + type +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

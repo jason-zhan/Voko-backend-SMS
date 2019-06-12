@@ -31,4 +31,15 @@ public class GetInboxMessagePage extends PageBase {
         dslTools.eqNotNull(qMessageRecord.sms, this.isSms);
         dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);
     }
+    
+    @Override
+    public String toString() {
+        return "GetInboxMessagePage{" +
+                "hasRead=" + hasRead +
+                ", isSms=" + isSms +
+                ", keyword='" + keyword +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }

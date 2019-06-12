@@ -25,4 +25,14 @@ public class GetMsgTemplatePage extends PageBase {
         dslTools.eqNotNull(qTemplate.sms, this.sms);
         dslTools.eqNotNull(qTemplate.disable, this.disable);
     }
+    
+    @Override
+    public String toString() {
+        return "GetMsgTemplatePage{" +
+                "sms=" + sms +
+                ", disable=" + disable +
+                ", page=" + page +
+                ", size=" + size +
+                "}";
+    }
 }
