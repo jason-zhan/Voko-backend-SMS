@@ -125,7 +125,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         MessagePlan found = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(update.getId(), cur.getId());
         ServiceException.notNull(found, bundle.getString("msg-plan-not-exists"));
         // 检查客户有效号码
-        List<String> fromNumList = validFromNumberLi(update.getFromList());
+        List<String> fromNumList = checkFromNumbers(update.getFromNumList());
         update.setFromNumList(fromNumList);
         // 更新定时任务
         Assert.isTrue(cur.getId().equals(found.getCustomerId()), "Can only modify their own message plan.");
@@ -270,7 +270,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM,
                 bundle.getString("msg-plan-media-list"));
         
-        ServiceException.isTrue(create.getFromList() != null && create.getFromList().size() > 0,
+        ServiceException.isTrue(create.getFromNumList() != null && create.getFromNumList().size() > 0,
                 bundle.getString("msg-plan-from"));
         
         ServiceException.isTrue((create.getToNumberList() != null && create.getToNumberList().size() > 0) ||
@@ -278,11 +278,11 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 bundle.getString("msg-plan-contacts"));
     }
     
-    private List<String> validFromNumberLi(List<Long> numberIdList) {
+    private List<String> checkFromNumbers(List<String> fromNumList) {
         Set<String> numberSet = new HashSet<>();
         CustomerVo cur = Current.get();
-        for (Long numberId : numberIdList) {
-            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, cur.getId());
+        for (String number : fromNumList) {
+            MobileNumber mobileNumber = mbNumberLibDao.findTopByCustomerIdAndNumberAndDisableIsFalse(cur.getId(), number);
 //            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, 1L);
             if (mobileNumber != null) {
                 numberSet.add(mobileNumber.getNumber());
@@ -420,7 +420,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.isTrue(createPlan.getExecTime().after(EasyTime.init().addSeconds(-10).stamp()),
                 bundle.getString("msg-plan-execute-time-later"));
         // 检查客户有效号码
-        List<String> fromNumList = validFromNumberLi(createPlan.getFromList());
+        List<String> fromNumList = checkFromNumbers(createPlan.getFromNumList());
         createPlan.setFromNumList(fromNumList);
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();

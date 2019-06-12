@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface MbNumberLibDao extends JpaRepository<MobileNumber, Long>, JpaSpecificationExecutor<MobileNumber> {
 
-    MobileNumber findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
+    MobileNumber findTopByCustomerIdAndNumberAndDisableIsFalse(Long customerId, String number);
 }

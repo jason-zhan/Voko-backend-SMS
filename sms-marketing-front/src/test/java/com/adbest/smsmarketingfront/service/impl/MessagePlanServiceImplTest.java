@@ -94,7 +94,7 @@ public class MessagePlanServiceImplTest {
                 "But nobody " +
                 "Can understand our words ");
         create.setExecTime(new Timestamp(1558324820000L));
-        create.setFromList(Arrays.asList(1L, 2L, 3L));
+//        create.setFromList(Arrays.asList(1L, 2L, 3L));
 //        create.setToList(Arrays.asList(3L, 4L, 5L, 6L));
         create.setGroupList(Arrays.asList(1L));
         messagePlanService.create(create);
@@ -186,7 +186,7 @@ public class MessagePlanServiceImplTest {
         create.setTitle("测试立即发送");
         create.setText("2019-5-31 15:51:36");
         create.setRemark("测试");
-        create.setFromList(Arrays.asList(1L, 2L, 3L));
+//        create.setFromList(Arrays.asList(1L, 2L, 3L));
         create.setToNumberList(Arrays.asList("0000000", "0000001", "0000002", "0000003", "0000004"));
         messagePlanService.createInstant(create);
         try {
