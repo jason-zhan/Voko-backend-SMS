@@ -288,7 +288,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         smsBill.setCustomerId(messageRecord.getCustomerId());
         smsBill.setInfoDescribe("keyword automatic recovery");
         smsBillComponent.save(smsBill);
-        PreSendMsg preSendMsg = new PreSendMsg(messageRecord, UrlTools.getUriList(viewFileUrl,messageRecord.getMediaList()));
+        PreSendMsg preSendMsg = new PreSendMsg(messageRecord);
 //        twilioUtil.sendMessage(preSendMsg);
     }
 }

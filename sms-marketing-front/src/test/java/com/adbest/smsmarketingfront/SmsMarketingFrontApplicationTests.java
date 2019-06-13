@@ -25,7 +25,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 
 import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.ResourceBundle;
 
 @RunWith(SpringRunner.class)
@@ -44,12 +47,11 @@ public class SmsMarketingFrontApplicationTests {
 //        QContacts qContacts = QContacts.contacts;
 //        BooleanBuilder builder = new BooleanBuilder();
 //        builder.and(qContacts.customerId.eq(2L));
-        PreSendMsg preSendMsg = new PreSendMsg();
         MessageRecord record = new MessageRecord();
         record.setContactsNumber("+12144051403");
         record.setCustomerNumber("+16782758458");
         record.setContent("From twilio -- test message");
-        preSendMsg.setRecord(record);
+        PreSendMsg preSendMsg = new PreSendMsg(record);
         Message message = twilioUtil.sendMessage(preSendMsg);
         System.out.println(message);
     }
@@ -69,57 +71,53 @@ public class SmsMarketingFrontApplicationTests {
     }
     
     @Test
-    public void testAuthorizeNet(){
+    public void testAuthorizeNet() {
         //Common code to set for all requests
         ApiOperationBase.setEnvironment(Environment.SANDBOX);
-    
-        MerchantAuthenticationType merchantAuthenticationType  = new MerchantAuthenticationType() ;
+        
+        MerchantAuthenticationType merchantAuthenticationType = new MerchantAuthenticationType();
         merchantAuthenticationType.setName("");
         merchantAuthenticationType.setTransactionKey("");
         ApiOperationBase.setMerchantAuthentication(merchantAuthenticationType);
-    
+        
         // Populate the payment data
         PaymentType paymentType = new PaymentType();
         CreditCardType creditCard = new CreditCardType();
         creditCard.setCardNumber("4242424242424242");
         creditCard.setExpirationDate("0822");
         paymentType.setCreditCard(creditCard);
-    
+        
         // Create the payment transaction request
         TransactionRequestType txnRequest = new TransactionRequestType();
         txnRequest.setTransactionType(TransactionTypeEnum.AUTH_CAPTURE_TRANSACTION.value());
         txnRequest.setPayment(paymentType);
         txnRequest.setAmount(new BigDecimal(500.00));
-    
+        
         // Make the API Request
         CreateTransactionRequest apiRequest = new CreateTransactionRequest();
         apiRequest.setTransactionRequest(txnRequest);
         CreateTransactionController controller = new CreateTransactionController(apiRequest);
         controller.execute();
-    
-    
-        CreateTransactionResponse response = controller.getApiResponse();
-    
-        if (response!=null) {
         
+        
+        CreateTransactionResponse response = controller.getApiResponse();
+        
+        if (response != null) {
+            
             // If API Response is ok, go ahead and check the transaction response
             if (response.getMessages().getResultCode() == MessageTypeEnum.OK) {
-            
+                
                 TransactionResponse result = response.getTransactionResponse();
                 if (result.getResponseCode().equals("1")) {
                     System.out.println(result.getResponseCode());
                     System.out.println("Successful Credit Card Transaction");
                     System.out.println(result.getAuthCode());
                     System.out.println(result.getTransId());
+                } else {
+                    System.out.println("Failed Transaction" + result.getResponseCode());
                 }
-                else
-                {
-                    System.out.println("Failed Transaction"+result.getResponseCode());
-                }
-            }
-            else
-            {
-                System.out.println("Failed Transaction:  "+response.getMessages().getResultCode());
+            } else {
+                System.out.println("Failed Transaction:  " + response.getMessages().getResultCode());
             }
         }
     }

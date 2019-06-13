@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
+import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
@@ -22,6 +23,7 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.util.StringUtils;
 
 import java.sql.Timestamp;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -41,13 +43,13 @@ public class InboxApplicationTests {
     
     @Autowired
     private ContactsGroupService contactsGroupService;
-
+    
     @Autowired
     private RedisTemplate redisTemplate;
-
+    
     @Autowired
     private TwilioUtil twilioUtil;
-
+    
     @Test
     public void test() {
 //        InboundMsg inboundMsg = new InboundMsg();
@@ -67,9 +69,8 @@ public class InboxApplicationTests {
         send.setSendTime(timestamp);
         send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
-        PreSendMsg preSendMsg = new PreSendMsg();
-        preSendMsg.setRecord(send);
-        twilioUtil.sendMessage(preSendMsg);
+        PreSendMsg preSendMsg = new PreSendMsg(send);
+//        twilioUtil.sendMessage(preSendMsg);
     }
-
+    
 }
