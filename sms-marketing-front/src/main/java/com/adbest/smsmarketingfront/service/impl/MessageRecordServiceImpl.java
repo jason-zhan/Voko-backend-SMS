@@ -12,6 +12,7 @@ import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
+import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
@@ -22,6 +23,7 @@ import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
@@ -75,6 +77,10 @@ public class MessageRecordServiceImpl implements MessageRecordService {
 
     @Autowired
     private CustomerService customerService;
+    
+    @Value("${twilio.viewFileUrl}")
+    private String viewFileUrl;
+    
     
     @Override
     public int delete(List<Long> idList) {
@@ -282,8 +288,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         smsBill.setCustomerId(messageRecord.getCustomerId());
         smsBill.setInfoDescribe("keyword automatic recovery");
         smsBillComponent.save(smsBill);
-        PreSendMsg preSendMsg = new PreSendMsg();
-        preSendMsg.setRecord(messageRecord);
+        PreSendMsg preSendMsg = new PreSendMsg(messageRecord, UrlTools.getUriList(viewFileUrl,messageRecord.getMediaList()));
 //        twilioUtil.sendMessage(preSendMsg);
     }
 }

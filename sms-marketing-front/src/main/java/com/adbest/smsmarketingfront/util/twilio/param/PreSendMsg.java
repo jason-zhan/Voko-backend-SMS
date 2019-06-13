@@ -13,12 +13,17 @@ import java.util.List;
 public class PreSendMsg {
     private MessageRecord record;
     private List<URI> mediaUriList;  // 完整媒体文件路径
-    
-    public PreSendMsg() {
-    }
-    
+
+    /**
+     * 实例化 预发送消息实体 的唯一方法
+     * 在此处统一某些数据格式
+     * @param record 各项参数已检测完毕的消息实体
+     * @param mediaUriList 媒体完整路径列表
+     */
     public PreSendMsg(MessageRecord record, List<URI> mediaUriList) {
-        record.setContactsNumber("+1" + record.getContactsNumber());
+        if (!record.getContactsNumber().startsWith("+")) {
+            record.setContactsNumber("+1" + record.getContactsNumber());
+        }
         this.record = record;
         this.mediaUriList = mediaUriList;
     }
