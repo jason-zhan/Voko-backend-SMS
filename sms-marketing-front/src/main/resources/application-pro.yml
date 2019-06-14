@@ -36,6 +36,7 @@ twilio:
   viewFileUrl: http://text.vokophone.com/file/view
 
 marketing:
+  payidCredit: 10  # 付费用户信用($)
   singleSmsPrice: 0.05 # 套餐外短信单价
   singleMmsPrice: 0.5  # 套餐外彩信单价
   singleKeywordPrice: 1.5  # 套餐外关键字单价
