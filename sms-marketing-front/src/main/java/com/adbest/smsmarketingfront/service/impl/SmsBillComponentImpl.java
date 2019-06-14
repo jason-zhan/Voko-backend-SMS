@@ -31,21 +31,20 @@ public class SmsBillComponentImpl implements SmsBillComponent {
     JPAQueryFactory jpaQueryFactory;
     
     @Override
-    public synchronized int saveSmsBill(String describe, Integer amount) {
-        log.info("enter saveSmsBill, describe=" + describe + ", amount=" + amount);
+    public synchronized int saveSmsBill(Long customerId, String describe, Integer amount) {
+        log.info("enter saveSmsBill, customerId={} describe={} amount={}", customerId, describe, amount);
+        Assert.notNull(customerId, "customerId can't be null");
         Assert.hasText(describe, "describe can't be empty!");
-        Assert.notNull(amount, "amount can't be empty!");
+        Assert.notNull(amount, "amount can't be null!");
         if (amount == 0) {
             return 0;
         }
-        Long curId = Current.get().getId();
-//        Long curId = 1L;
         if (amount < 0) {
-            Long sum = smsBillDao.sumByCustomerId(curId);
+            Long sum = smsBillDao.sumByCustomerId(customerId);
             ServiceException.isTrue(sum + amount >= 0, bundle.getString("sms-balance-not-enough"));
         }
         SmsBill smsBill = new SmsBill();
-        smsBill.setCustomerId(curId);
+        smsBill.setCustomerId(customerId);
         smsBill.setInfoDescribe(describe);
         smsBill.setAmount(amount);
         smsBillDao.save(smsBill);
@@ -66,7 +65,7 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         log.info("leave findByConditionsToExcel");
         return null;
     }
-
+    
     @Override
     @Transactional
     public void saveAll(List<SmsBill> smsBills) {

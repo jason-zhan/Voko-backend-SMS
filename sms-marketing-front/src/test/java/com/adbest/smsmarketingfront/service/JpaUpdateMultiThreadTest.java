@@ -49,7 +49,7 @@ public class JpaUpdateMultiThreadTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            int result = customerDao.updateCreditByCustomerIdAndCredit(BigDecimal.valueOf(symbol ? 5 : -6), 1L);
+            int result = customerDao.updateCreditByCustomerId(BigDecimal.valueOf(symbol ? 5 : -6), 1L);
             System.out.printf("%s x %s%n", num, result);
             printStatus();
             long end = EasyTime.nowMillis();

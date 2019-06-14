@@ -11,7 +11,7 @@ import java.util.List;
 public interface MmsBillComponent {
     
     // 产生一条彩信账单
-    int saveMmsBill(String describe, Integer amount);
+    int saveMmsBill(Long customerId, String describe, Integer amount);
 
     MmsBill save(MmsBill mmsBill);
 

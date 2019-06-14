@@ -149,9 +149,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         // 产生消息账单
         if (update.getMediaIdlList() == null || update.getMediaIdlList().size() == 0) {
-            smsBillComponent.saveSmsBill("scheduled send: " + found.getTitle(), -msgTotal);
+            smsBillComponent.saveSmsBill(cur.getId(), "scheduled send: " + found.getTitle(), -msgTotal);
         } else {
-            mmsBillComponent.saveMmsBill("scheduled send: " + found.getTitle(), -msgTotal);
+            mmsBillComponent.saveMmsBill(cur.getId(), "scheduled send: " + found.getTitle(), -msgTotal);
         }
         log.info("leave update");
         return 1;
@@ -177,9 +177,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 返还消息条数
         List<String> urlList = UrlTools.getUrlList(found.getMediaIdList());
         if (urlList.size() > 0) {
-            mmsBillComponent.saveMmsBill("cancel scheduled send: " + found.getTitle(), msgTotal);
+            mmsBillComponent.saveMmsBill(cur.getId(), "cancel scheduled send: " + found.getTitle(), msgTotal);
         } else {
-            smsBillComponent.saveSmsBill("cancel scheduled send: " + found.getTitle(), msgTotal);
+            smsBillComponent.saveSmsBill(cur.getId(), "cancel scheduled send: " + found.getTitle(), msgTotal);
         }
         log.info("leave cancel");
         return 1;
@@ -205,9 +205,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         int msgTotal = messageRecordDao.sumMsgNumByPlanId(found.getId());
         // 扣除消息条数
         if (StringUtils.hasText(found.getMediaIdList())) {
-            mmsBillComponent.saveMmsBill("restart scheduled send: " + found.getTitle(), -msgTotal);
+            mmsBillComponent.saveMmsBill(cur.getId(), "restart scheduled send: " + found.getTitle(), -msgTotal);
         } else {
-            smsBillComponent.saveSmsBill("restart scheduled send: " + found.getTitle(), -msgTotal);
+            smsBillComponent.saveSmsBill(cur.getId(), "restart scheduled send: " + found.getTitle(), -msgTotal);
         }
         log.info("leave restart");
         return 1;
@@ -262,7 +262,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.hasText(create.getTitle(), bundle.getString("msg-plan-title"));
         
         ServiceException.notNull(create.getExecTime(), bundle.getString("msg-plan-execute-time"));
-
+        
         // TODO valid execTime
         
         ServiceException.hasText(create.getText(), bundle.getString("msg-plan-content"));
@@ -425,8 +425,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 消息定时任务入库，为下文提供id
         MessagePlan plan = new MessagePlan();
         createPlan.copy(plan);
-//        plan.setCustomerId(1L);
-        plan.setCustomerId(Current.get().getId());
+        CustomerVo cur = Current.get();
+        plan.setCustomerId(cur.getId());
         plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
         plan.setDisable(false);
         messagePlanDao.save(plan);
@@ -443,9 +443,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.isTrue(msgTotal > 0, bundle.getString("msg-plan-contacts"));
         // 产生消息账单
         if (createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0) {
-            smsBillComponent.saveSmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
+            smsBillComponent.saveSmsBill(cur.getId(), "scheduled send: " + plan.getTitle(), -msgTotal);
         } else {
-            mmsBillComponent.saveMmsBill("scheduled send: " + plan.getTitle(), -msgTotal);
+            mmsBillComponent.saveMmsBill(cur.getId(), "scheduled send: " + plan.getTitle(), -msgTotal);
         }
         return plan;
     }

@@ -1,8 +1,6 @@
 package com.adbest.smsmarketingfront.web;
 
-import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingentity.MessageReturnCode;
-import com.adbest.smsmarketingfront.service.MessageRecordComponent;
+import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
@@ -21,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 public class TwilioCallbackController {
     
     @Autowired
-    MessageRecordComponent messageRecordComponent;
+    MessageComponent messageRecordComponent;
 
     @Autowired
     private MessageRecordService messageRecordService;
@@ -52,7 +50,7 @@ public class TwilioCallbackController {
      */
     @RequestMapping("/message-status-callback")
     public void messageStatusCallback(HttpServletRequest request, HttpServletResponse response) {
-        messageRecordComponent.updateMessageStatus(StatusCallbackParam.parse(request));
+        messageRecordComponent. updateMessageStatus(StatusCallbackParam.parse(request));
     }
     
     
