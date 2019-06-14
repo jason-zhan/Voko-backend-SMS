@@ -102,6 +102,9 @@ public class CustomerServiceImpl implements  CustomerService {
     @Autowired
     private VkCustomersService vkCustomersService;
 
+    @Autowired
+    private CustomerMarketSettingService customerMarketSettingService;
+
     @Override
     public Customer save(Customer customer) {
         return customerDao.save(customer);
@@ -207,6 +210,15 @@ public class CustomerServiceImpl implements  CustomerService {
 //            }
 //            keywordService.saveAll(keywords);
 //        }
+        //初始化套餐
+        CustomerMarketSetting customerMarketSetting = new CustomerMarketSetting(marketSetting);
+        customerMarketSetting.setOrderTime(TimeTools.now());
+        customerMarketSetting.setInvalidTime(TimeTools.addDay(TimeTools.now(),marketSetting.getDaysNumber()));
+        customerMarketSetting.setCustomerId(customer.getId());
+        customerMarketSetting.setAutomaticRenewal(false);
+        customerMarketSetting.setInvalidStatus(false);
+        customerMarketSettingService.save(customerMarketSetting);
+
         String infoDescribe ="experience gift";
         //初始化短信条数
         if (marketSetting.getSmsTotal()>0){

@@ -17,6 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.transaction.Transactional;
+import java.util.List;
+
 @Service
 @Slf4j
 public class MmsBillServiceImpl implements MmsBillService {
@@ -53,5 +56,16 @@ public class MmsBillServiceImpl implements MmsBillService {
         Page<MmsBill> billPage = PageBase.toPageEntity(queryResults, getBillPage);
         log.info("leave findByConditions");
         return billPage;
+    }
+
+    @Override
+    public Long sumByCustomerId(Long customerId) {
+        return mmsBillDao.sumByCustomerId(customerId);
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<MmsBill> mmsBills) {
+        mmsBillDao.saveAll(mmsBills);
     }
 }

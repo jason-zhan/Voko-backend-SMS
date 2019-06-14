@@ -17,6 +17,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 
+import javax.transaction.Transactional;
+import java.util.List;
+
 @Service
 @Slf4j
 public class SmsBillServiceImpl implements SmsBillService {
@@ -57,5 +60,11 @@ public class SmsBillServiceImpl implements SmsBillService {
     @Override
     public Long sumByCustomerId(Long customerId) {
         return smsBillDao.sumByCustomerId(customerId);
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<SmsBill> smsBills) {
+        smsBillDao.saveAll(smsBills);
     }
 }

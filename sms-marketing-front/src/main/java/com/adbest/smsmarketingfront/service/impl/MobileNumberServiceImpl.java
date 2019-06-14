@@ -100,6 +100,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
         mobileNumber.setMms(incomingPhoneNumber.getCapabilities().getMms());
         mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
+        mobileNumber.setGiftNumber(true);
         mobileNumberDao.save(mobileNumber);
         customerSettings.setNumberReceivingStatus(true);
         customerSettingsService.save(customerSettings);
@@ -187,6 +188,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
 //        mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
 //        mobileNumber.setMms(incomingPhoneNumber.getCapabilities().getMms());
 //        mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
+//        mobileNumber.setGiftNumber(false);
 //        mobileNumberDao.save(mobileNumber);
         return true;
     }
