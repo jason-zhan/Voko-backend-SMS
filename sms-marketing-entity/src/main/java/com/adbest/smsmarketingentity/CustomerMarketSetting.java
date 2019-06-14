@@ -24,7 +24,11 @@ public class CustomerMarketSetting implements Serializable {
     private Integer mmsTotal;  // 彩信条数
     @Column(nullable = false)
     private Integer keywordTotal;  // 赠送关键字个数
-
+    /**
+     * @see Customer#id
+     */
+    @Column(nullable = false)
+    private Long customerId;
     /**
      * 套餐id
      */
@@ -39,4 +43,24 @@ public class CustomerMarketSetting implements Serializable {
      */
     private Timestamp invalidTime;
 
+    /**
+     * 是否开启自动续费
+     */
+    private Boolean automaticRenewal;
+
+    /**
+     * 是否已过期
+     */
+    private Boolean invalidStatus;
+
+    public CustomerMarketSetting(MarketSetting marketSetting) {
+        this.title = marketSetting.getTitle();
+        this.smsTotal = marketSetting.getSmsTotal();
+        this.mmsTotal = marketSetting.getMmsTotal();
+        this.keywordTotal = marketSetting.getKeywordTotal();
+        this.marketSettingId = marketSetting.getId();
+    }
+
+    public CustomerMarketSetting() {
+    }
 }
