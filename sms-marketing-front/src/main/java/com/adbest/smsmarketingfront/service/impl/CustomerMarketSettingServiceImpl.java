@@ -1,0 +1,157 @@
+package com.adbest.smsmarketingfront.service.impl;
+
+import com.adbest.smsmarketingentity.CustomerMarketSetting;
+import com.adbest.smsmarketingentity.MarketSetting;
+import com.adbest.smsmarketingentity.MmsBill;
+import com.adbest.smsmarketingentity.SmsBill;
+import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
+import com.adbest.smsmarketingfront.entity.vo.CustomerMarketSettingVo;
+import com.adbest.smsmarketingfront.handler.ServiceException;
+import com.adbest.smsmarketingfront.service.*;
+import com.adbest.smsmarketingfront.util.Current;
+import com.adbest.smsmarketingfront.util.TimeTools;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import javax.transaction.Transactional;
+import java.math.BigDecimal;
+import java.sql.Timestamp;
+import java.util.List;
+import java.util.ResourceBundle;
+
+@Service
+public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingService {
+
+    @Autowired
+    private CustomerMarketSettingDao customerMarketSettingDao;
+
+    @Autowired
+    private MarketSettingService marketSettingService;
+
+    @Autowired
+    private SmsBillService smsBillService;
+
+    @Autowired
+    private MmsBillService mmsBillService;
+
+    @Autowired
+    private ResourceBundle resourceBundle;
+
+    @Autowired
+    private MmsBillComponent mmsBillComponent;
+
+    @Autowired
+    private SmsBillComponentImpl smsBillComponent;
+
+    @Override
+    @Transactional
+    public CustomerMarketSetting save(CustomerMarketSetting customerMarketSetting) {
+        return customerMarketSettingDao.save(customerMarketSetting);
+    }
+
+    @Override
+    public CustomerMarketSettingVo details() {
+        Long customerId = Current.get().getId();
+        CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
+        CustomerMarketSettingVo customerMarketSettingVo = new CustomerMarketSettingVo(customerMarketSetting);
+        Long smsNum = smsBillService.sumByCustomerId(customerId);
+        Long mmsNum = mmsBillService.sumByCustomerId(customerId);
+        customerMarketSettingVo.setSmsTotal(smsNum.intValue());
+        customerMarketSettingVo.setMmsTotal(mmsNum.intValue());
+        return customerMarketSettingVo;
+    }
+
+    @Override
+    public CustomerMarketSettingVo introduce() {
+        Long customerId = Current.get().getId();
+        CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
+        return new CustomerMarketSettingVo(customerMarketSetting);
+    }
+
+    @Override
+    public CustomerMarketSetting findByCustomerId(Long customerId) {
+        List<CustomerMarketSetting> list = customerMarketSettingDao.findByCustomerId(customerId);
+        if (list.size()>0){return list.get(0);}
+        return null;
+    }
+
+    @Override
+    @Transactional
+    public CustomerMarketSettingVo buy(Long id, Boolean automaticRenewal) {
+        Long customerId = Current.get().getId();
+        ServiceException.notNull(id, resourceBundle.getString("NO_Market_Setting_SELECTED"));
+        MarketSetting marketSetting  = marketSettingService.findById(id);
+        ServiceException.notNull(marketSetting, resourceBundle.getString("MARKET_SETTING_NOT_EXISTS"));
+        CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
+        MarketSetting ms  = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+        int diffDays = TimeTools.getDiffDays(customerMarketSetting.getInvalidTime(), TimeTools.now());
+        BigDecimal price = null;
+        Integer smsTotal = 0;
+        Integer mmsTotal = 0;
+        if (ms!=null && diffDays>0){
+            ServiceException.isTrue(ms.getSmsTotal()<marketSetting.getSmsTotal(), resourceBundle.getString("UNABLE_UPGRADE_MARKET_SETTING"));
+            smsTotal = marketSetting.getSmsTotal()-ms.getSmsTotal();
+            mmsTotal = marketSetting.getMmsTotal()-ms.getMmsTotal();
+            price = marketSetting.getPrice().subtract(ms.getPrice());
+            price = price.doubleValue()>=0?price:new BigDecimal("0");
+        }else {
+            smsTotal = marketSetting.getSmsTotal();
+            mmsTotal = marketSetting.getMmsTotal();
+            price = marketSetting.getPrice();
+            customerMarketSetting.setOrderTime(TimeTools.now());
+            customerMarketSetting.setInvalidTime(TimeTools.addDay(TimeTools.now(), marketSetting.getDaysNumber()));
+        }
+        customerMarketSetting.setSmsTotal(smsTotal+customerMarketSetting.getSmsTotal());
+        customerMarketSetting.setMmsTotal(mmsTotal+customerMarketSetting.getMmsTotal());
+        customerMarketSetting.setKeywordTotal(marketSetting.getKeywordTotal());
+        customerMarketSetting.setMarketSettingId(marketSetting.getId());
+        customerMarketSetting.setTitle(marketSetting.getTitle());
+        customerMarketSetting.setAutomaticRenewal(automaticRenewal==null?false:true);
+        customerMarketSetting.setInvalidStatus(false);
+        customerMarketSettingDao.save(customerMarketSetting);
+        String infoDescribe = "Package Presentation";
+        if (smsTotal>0){
+            SmsBill smsBill = new SmsBill(customerId,infoDescribe,smsTotal);
+            smsBillComponent.save(smsBill);
+        }
+        if (mmsTotal>0){
+            MmsBill mmsBill = new MmsBill(customerId,infoDescribe,mmsTotal);
+            mmsBillComponent.save(mmsBill);
+        }
+
+        /**
+         * 扣费，账单
+         */
+
+        return new CustomerMarketSettingVo(customerMarketSetting);
+    }
+
+    @Override
+    public List<CustomerMarketSetting> findByInvalidStatusAndInvalidTimeBeforeAndAutomaticRenewal(Boolean invalidStatus, Timestamp now, Boolean automaticRenewal) {
+        return customerMarketSettingDao.findByInvalidStatusAndInvalidTimeBeforeAndAutomaticRenewal(invalidStatus, now, automaticRenewal);
+    }
+
+    @Override
+    public List<CustomerMarketSetting> findByInvalidStatusAndInvalidTimeBefore(Boolean invalidStatus, Timestamp now) {
+        return customerMarketSettingDao.findByInvalidStatusAndInvalidTimeBefore(invalidStatus, now);
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<CustomerMarketSetting> list) {
+        customerMarketSettingDao.saveAll(list);
+    }
+
+    @Override
+    @Transactional
+    public CustomerMarketSettingVo automaticRenewal(Boolean automaticRenewal) {
+        Long customerId = Current.get().getId();
+        ServiceException.notNull(automaticRenewal, resourceBundle.getString("Renewal_status_NOT_EMPTY"));
+        CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
+        if (customerMarketSetting.getAutomaticRenewal()!=automaticRenewal){
+            customerMarketSetting.setAutomaticRenewal(automaticRenewal);
+            customerMarketSettingDao.save(customerMarketSetting);
+        }
+        return new CustomerMarketSettingVo(customerMarketSetting);
+    }
+}

@@ -175,4 +175,20 @@ public class TimeTools {
         simpleDateFormat = new SimpleDateFormat(pattern);
         return simpleDateFormat.format(new Date(time.getTime()));
     }
+
+    /**
+     * 两个日期相减得到的天数
+     * @param beginDate
+     * @param endDate
+     * @return
+     */
+    public static int getDiffDays(Timestamp beginDate, Timestamp endDate) {
+        if (beginDate == null || endDate == null) {
+            throw new IllegalArgumentException("getDiffDays param is null!");
+        }
+        long diff = (endDate.getTime() - beginDate.getTime())
+                / (1000 * 60 * 60 * 24);
+        int days = new Long(diff).intValue();
+        return days;
+    }
 }
