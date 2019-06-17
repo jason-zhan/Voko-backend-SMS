@@ -4,7 +4,7 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
-import com.adbest.smsmarketingfront.entity.vo.MessageVo;
+import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
@@ -12,7 +12,6 @@ import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.UrlTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
@@ -136,15 +135,15 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     }
     
     @Override
-    public Page<MessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage) {
+    public Page<OutboxMessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage) {
         log.info("enter findInboxByConditions, param={}", getInboxPage);
         Assert.notNull(getInboxPage, CommonMessage.PARAM_IS_NULL);
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
         BooleanBuilder builder = new BooleanBuilder();
         getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
-        QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
-                Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
+        QueryResults<OutboxMessageVo> queryResults = jpaQueryFactory.select(
+                Projections.constructor(OutboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
                 .where(builder)
@@ -152,13 +151,13 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 .offset(getInboxPage.getPage() * getInboxPage.getSize())
                 .limit(getInboxPage.getSize())
                 .fetchResults();
-        Page<MessageVo> messagePage = PageBase.toPageEntity(queryResults, getInboxPage);
+        Page<OutboxMessageVo> messagePage = PageBase.toPageEntity(queryResults, getInboxPage);
         log.info("leave findInboxByConditions");
         return messagePage;
     }
     
     @Override
-    public Page<MessageVo> findOutboxByConditions(GetOutboxMessagePage getOutboxPage) {
+    public Page<OutboxMessageVo> findOutboxByConditions(GetOutboxMessagePage getOutboxPage) {
         log.info("enter findOutboxByConditions, param={}", getOutboxPage);
         Assert.notNull(getOutboxPage, CommonMessage.PARAM_IS_NULL);
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
@@ -169,8 +168,8 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         builder.and(qMessageRecord.disable.isFalse());
         builder.and(qMessageRecord.inbox.isFalse());
         getOutboxPage.fillConditions(builder, qMessageRecord, qContacts);
-        QueryResults<MessageVo> queryResults = jpaQueryFactory.select(
-                Projections.constructor(MessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, qCGroup.title))
+        QueryResults<OutboxMessageVo> queryResults = jpaQueryFactory.select(
+                Projections.constructor(OutboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, qCGroup.title))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
                 .leftJoin(qCGroup).on(qMessageRecord.contactsGroupId.eq(qCGroup.id))
@@ -179,7 +178,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 .offset(getOutboxPage.getPage() * getOutboxPage.getSize())
                 .limit(getOutboxPage.getSize())
                 .fetchResults();
-        Page<MessageVo> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
+        Page<OutboxMessageVo> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
         log.info("leave findOutboxByConditions");
         return messagePage;
     }
@@ -238,7 +237,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         messageRecord.setSendTime(new Timestamp(System.currentTimeMillis()));
         messageRecord.setStatus(InboxStatus.UNREAD.getValue());
         messageRecord.setSid(inboundMsg.getMessageSid());
-        messageRecord.setExpectedSendTime(new Timestamp(System.currentTimeMillis()));
+//        messageRecord.setExpectedSendTime(new Timestamp(System.currentTimeMillis()));
         messageRecordDao.save(messageRecord);
         if (inboundMsg.getBody().trim().indexOf(" ")!=-1){return;}
         List<Keyword> keywords = keywordService.findByCustomerIdAndTitle(mobileNumber.getCustomerId(), inboundMsg.getBody().trim());
@@ -261,7 +260,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setDisable(false);
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         send.setSendTime(timestamp);
-        send.setExpectedSendTime(timestamp);
+//        send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
         messageRecordService.sendSms(send,"keyword automatic recovery");
     }

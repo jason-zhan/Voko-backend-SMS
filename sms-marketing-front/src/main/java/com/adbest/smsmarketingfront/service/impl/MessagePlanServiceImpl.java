@@ -29,7 +29,7 @@ import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.PageBase;
-import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.StrSegTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
@@ -91,7 +91,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Override
     public int create(CreateMessagePlan createPlan) {
         log.info("enter create, param={}", createPlan);
-        createMessagePlan(createPlan);
+        
+//        createMessagePlan(createPlan);
         log.info("leave create");
         return 1;
     }
@@ -175,7 +176,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         messagePlanDao.save(found);
         int msgTotal = messageRecordDao.sumMsgNumByPlanId(found.getId());
         // 返还消息条数
-        List<String> urlList = UrlTools.getUrlList(found.getMediaIdList());
+        List<String> urlList = StrSegTools.getStrList(found.getMediaIdList());
         if (urlList.size() > 0) {
             mmsBillComponent.saveMmsBill(cur.getId(), "cancel scheduled send: " + found.getTitle(), msgTotal);
         } else {
@@ -317,11 +318,11 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         messageRecord.setCustomerId(cur.getId());
 //        messageRecord.setCustomerId(1L);
         messageRecord.setContent(content);
-        messageRecord.setMediaList(UrlTools.getUrlsStr(plan.getMediaIdlList()));
+        messageRecord.setMediaList(StrSegTools.getListStr(plan.getMediaIdlList()));
         messageRecord.setContactsId(contacts.getId());
         messageRecord.setContactsNumber(contacts.getPhone());
         messageRecord.setInbox(false);
-        messageRecord.setExpectedSendTime(plan.getExecTime());
+//        messageRecord.setExpectedSendTime(plan.getExecTime());
         messageRecord.setStatus(OutboxStatus.PLANNING.getValue());
         messageRecord.setDisable(false);
         return messageRecord;
@@ -373,7 +374,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 MessageRecord messageRecord = generateMessage(createPlan, contacts);
                 messageRecord.setPlanId(planId);
                 messageRecord.setCustomerNumber(createPlan.getFromNumList().get(i % createPlan.getFromNumList().size()));
-                messageRecord.setContactsGroupId(contactsGroupId);
+//                messageRecord.setContactsGroupId(contactsGroupId);
                 msgTempList.add(messageRecord);
                 msgNum += messageRecord.getSegments();
             }

@@ -156,6 +156,7 @@ public class MessageComponentImpl implements MessageComponent {
             if (availableNum < 1) {  // 可支付数量不足，跳出循环
                 return 0;
             }
+            availableNum = availableNum > amount ? amount : availableNum;
             int result;
             if (isSms) {
                 result = customerMarketSettingDao.updateSmsByCustomerId(customerId, -availableNum);
@@ -178,6 +179,9 @@ public class MessageComponentImpl implements MessageComponent {
      * @param amount
      */
     private void purchaseWithCredit(Long customerId, boolean isSms, int amount) {
+        if (amount == 0) {
+            return;
+        }
         int retried = 0;
         BigDecimal cost = isSms ? singleSmsPrice.multiply(new BigDecimal(amount)) : singleMmsPrice.multiply(new BigDecimal(amount));
         while (retried < PAYMENT_RETRY) {

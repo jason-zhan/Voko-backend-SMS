@@ -5,6 +5,7 @@ import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
@@ -36,6 +37,7 @@ public class MessageRecord implements Serializable {
     private String content;
     @Column(nullable = false)
     private Integer segments;  // 被分割为多少条消息
+    private BigDecimal cost;  // 花费(套餐内：0 暂用单位：$)
     @Lob
     private String mediaList;  // 资源列表 [资源url,多个以','分隔]
     private Boolean sms;  // 是否短信(true:是)
@@ -46,14 +48,14 @@ public class MessageRecord implements Serializable {
     private Long contactsId;
     @Column(nullable = false)
     private String contactsNumber;  // 联系人号码
-    private Long contactsGroupId;  // 联系人分组id
+//    private Long contactsGroupId;  // 联系人分组id
     @Column(nullable = false)
     private Boolean inbox; // 是否收件（true:是）
     @Column(nullable = false)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间
     private Timestamp sendTime;  // 发送时间
-    private Timestamp expectedSendTime;  // 预期发送时间
+//    private Timestamp expectedSendTime;  // 预期发送时间
     private Timestamp arrivedTime;  // 送达时间
     /**
      * @see InboxStatus

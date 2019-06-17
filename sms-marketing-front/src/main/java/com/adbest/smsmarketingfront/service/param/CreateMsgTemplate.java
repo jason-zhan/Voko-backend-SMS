@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.param;
 
 import com.adbest.smsmarketingentity.MessageTemplate;
 import com.adbest.smsmarketingfront.service.MessageTemplateService;
-import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.StrSegTools;
 import lombok.Data;
 
 import java.util.List;
@@ -25,7 +25,7 @@ public class CreateMsgTemplate {
         target.setTitle(this.title);
         target.setSubject(this.subject);
         target.setContent(this.getContent());
-        target.setMediaList(UrlTools.getUrlsStr(this.getMediaIdList()));
+        target.setMediaList(StrSegTools.getListStr(this.getMediaIdList()));
         target.setSms(this.getMediaIdList() == null || this.getMediaIdList().size() == 0);
         target.setRemark(this.remark);
     }

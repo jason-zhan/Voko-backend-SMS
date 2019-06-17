@@ -1,7 +1,7 @@
 package com.adbest.smsmarketingfront.util.twilio;
 
 import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.StrSegTools;
 import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import com.twilio.Twilio;
 import com.twilio.base.ResourceSet;
@@ -9,7 +9,6 @@ import com.twilio.rest.api.v2010.account.IncomingPhoneNumber;
 import com.twilio.rest.api.v2010.account.Message;
 import com.twilio.rest.api.v2010.account.MessageCreator;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.Local;
-import com.twilio.rest.api.v2010.account.availablephonenumbercountry.LocalReader;
 import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFree;
 import com.twilio.security.RequestValidator;
 import com.twilio.twiml.MessagingResponse;
@@ -141,7 +140,7 @@ public class TwilioUtil {
                 new Body.Builder(record.getContent()).build()
         );
         if (StringUtils.hasText(record.getMediaList())) {
-            UrlTools.getUrlList(record.getMediaList()).forEach(url -> msgBuilder.media(new Media.Builder(url).build()));
+            StrSegTools.getStrList(record.getMediaList()).forEach(url -> msgBuilder.media(new Media.Builder(url).build()));
         }
         MessagingResponse msgRes = new MessagingResponse.Builder().message(msgBuilder.build()).build();
         response.setContentType("application/xml");

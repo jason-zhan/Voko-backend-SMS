@@ -9,19 +9,19 @@ import java.util.Arrays;
 import java.util.List;
 
 /**
- * url 处理工具
+ * 字符串分割工具
  */
-public class UrlTools {
+public class StrSegTools {
     
     /**
-     * 获取url列表
+     * 获取分割后的字符串列表
      *
-     * @param urls 以','分隔的url路径字符串
+     * @param strings 以','分隔的多个字符串组成的字符串
      * @return
      */
-    public static @NotNull List<String> getUrlList(String urls) {
-        if (StringUtils.hasText(urls)) {
-            return Arrays.asList(urls.split(","));
+    public static @NotNull List<String> getStrList(String strings) {
+        if (StringUtils.hasText(strings)) {
+            return Arrays.asList(strings.split(","));
         } else {
             return new ArrayList<>();
         }
@@ -30,14 +30,14 @@ public class UrlTools {
     /**
      * 获取uri列表
      *
-     * @param urls 以','分隔的url路径字符串
+     * @param strings 以','分隔的多个字符串组成的字符串
      * @return
      */
-    public static @NotNull List<URI> getUriList(String urls) {
-        if (StringUtils.hasText(urls)) {
+    public static @NotNull List<URI> getUriList(String strings) {
+        if (StringUtils.hasText(strings)) {
             List<URI> uriList = new ArrayList<>();
-            String[] strings = urls.split(",");
-            for (String s : strings) {
+            String[] stringArray = strings.split(",");
+            for (String s : stringArray) {
                 uriList.add(URI.create(s));
             }
             return uriList;
@@ -50,14 +50,14 @@ public class UrlTools {
      * 获取uri列表
      *
      * @param prefix 路径前缀 如 https://scan.abc.com/view?fn=
-     * @param urls 以','分隔的url路径字符串
+     * @param strings 以','分隔的多个字符串组成的字符串
      * @return
      */
-    public static @NotNull List<URI> getUriList(String prefix, String urls) {
-        if (StringUtils.hasText(urls)) {
+    public static @NotNull List<URI> getUriList(String prefix, String strings) {
+        if (StringUtils.hasText(strings)) {
             List<URI> uriList = new ArrayList<>();
-            String[] strings = urls.split(",");
-            for (String s : strings) {
+            String[] stringArray = strings.split(",");
+            for (String s : stringArray) {
                 uriList.add(URI.create(prefix + s));
             }
             return uriList;
@@ -67,18 +67,17 @@ public class UrlTools {
     }
     
     /**
-     * 获取url列表字符串
-     * 【注意】url间以','分隔
+     * 获取列表字符串
      *
-     * @param urlList
-     * @return
+     * @param stringList
+     * @return 以','分隔的字符串
      */
-    public static @NotNull String getUrlsStr(List<String> urlList) {
-        if (urlList == null || urlList.size() == 0) {
+    public static @NotNull String getListStr(List<String> stringList) {
+        if (stringList == null || stringList.size() == 0) {
             return "";
         } else {
             StringBuilder sb = new StringBuilder();
-            for (String url : urlList) {
+            for (String url : stringList) {
                 sb.append(",").append(url);
             }
             return sb.substring(1);

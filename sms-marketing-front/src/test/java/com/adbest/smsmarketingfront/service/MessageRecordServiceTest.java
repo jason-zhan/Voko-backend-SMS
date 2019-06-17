@@ -1,6 +1,6 @@
 package com.adbest.smsmarketingfront.service;
 
-import com.adbest.smsmarketingfront.entity.vo.MessageVo;
+import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.TimeTools;
@@ -12,8 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.Map;
-
-import static org.junit.Assert.*;
 
 
 @RunWith(SpringRunner.class)
@@ -30,7 +28,7 @@ public class MessageRecordServiceTest {
         getOutbox.setHasSent(false);
         getOutbox.setStart(TimeTools.now());
         getOutbox.setEnd(TimeTools.now());
-        Page<MessageVo> messagePage = messageRecordService.findOutboxByConditions(getOutbox);
+        Page<OutboxMessageVo> messagePage = messageRecordService.findOutboxByConditions(getOutbox);
         System.out.println(messagePage);
     }
     
@@ -38,7 +36,7 @@ public class MessageRecordServiceTest {
     public void testInbox(){
         GetInboxMessagePage getInbox = new GetInboxMessagePage();
         getInbox.setKeyword("54321");
-        Page<MessageVo> messagePage = messageRecordService.findInboxByConditions(getInbox);
+        Page<OutboxMessageVo> messagePage = messageRecordService.findInboxByConditions(getInbox);
         System.out.println(messagePage);
     }
     

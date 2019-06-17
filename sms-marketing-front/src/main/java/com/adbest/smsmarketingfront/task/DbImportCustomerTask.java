@@ -158,7 +158,7 @@ public class DbImportCustomerTask {
                     send.setDisable(false);
                     Timestamp timestamp = new Timestamp(System.currentTimeMillis());
                     send.setSendTime(timestamp);
-                    send.setExpectedSendTime(timestamp);
+//                    send.setExpectedSendTime(timestamp);
                     send.setStatus(OutboxStatus.SENT.getValue());
                     messageRecords.add(send);
                 }

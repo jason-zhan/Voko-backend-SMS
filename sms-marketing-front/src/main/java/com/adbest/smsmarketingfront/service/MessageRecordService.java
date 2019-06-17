@@ -1,13 +1,12 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingfront.entity.vo.MessageVo;
+import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import org.springframework.data.domain.Page;
 
-import javax.servlet.http.HttpServletResponse;
 import java.util.List;
 import java.util.Map;
 
@@ -27,10 +26,10 @@ public interface MessageRecordService {
     MessageRecord findById(Long id);
     
     // 根据条件查询收件
-    Page<MessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage);
+    Page<OutboxMessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage);
     
     // 根据条件查询发件
-    Page<MessageVo> findOutboxByConditions(GetOutboxMessagePage getOutboxPage);
+    Page<OutboxMessageVo> findOutboxByConditions(GetOutboxMessagePage getOutboxPage);
     
     // 收件箱消息状态
     Map<Integer, String> inboxStatusMap();

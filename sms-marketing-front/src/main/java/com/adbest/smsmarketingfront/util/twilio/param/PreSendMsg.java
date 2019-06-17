@@ -1,8 +1,7 @@
 package com.adbest.smsmarketingfront.util.twilio.param;
 
 import com.adbest.smsmarketingentity.MessageRecord;
-import com.adbest.smsmarketingfront.task.plan.SendMessageJob;
-import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.StrSegTools;
 import lombok.Data;
 import org.springframework.beans.factory.annotation.Value;
 
@@ -31,7 +30,7 @@ public class PreSendMsg {
             record.setContactsNumber("+1" + record.getContactsNumber());
         }
         this.record = record;
-        this.mediaUriList = UrlTools.getUriList(viewFileUrl, record.getMediaList());
+        this.mediaUriList = StrSegTools.getUriList(viewFileUrl, record.getMediaList());
     }
     
     @Value("${twilio.viewFileUrl}")

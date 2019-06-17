@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.param;
 
 import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
-import com.adbest.smsmarketingfront.util.UrlTools;
+import com.adbest.smsmarketingfront.util.StrSegTools;
 import lombok.Data;
 
 import java.sql.Timestamp;
@@ -29,7 +29,7 @@ public class CreateMessagePlan {
     public void copy(MessagePlan target){
         target.setTitle(this.getTitle());
         target.setText(this.getText());
-        target.setMediaIdList(UrlTools.getUrlsStr(this.getMediaIdlList()));
+        target.setMediaIdList(StrSegTools.getListStr(this.getMediaIdlList()));
         target.setRemark(this.getRemark());
         target.setExecTime(this.getExecTime());
     }
