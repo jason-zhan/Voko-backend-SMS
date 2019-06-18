@@ -172,7 +172,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 Projections.constructor(OutboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, qCGroup.title))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
-                .leftJoin(qCGroup).on(qMessageRecord.contactsGroupId.eq(qCGroup.id))
+//                .leftJoin(qCGroup).on(qMessageRecord.contactsGroupId.eq(qCGroup.id))
                 .where(builder)
                 .orderBy(qMessageRecord.createTime.desc())
                 .offset(getOutboxPage.getPage() * getOutboxPage.getSize())

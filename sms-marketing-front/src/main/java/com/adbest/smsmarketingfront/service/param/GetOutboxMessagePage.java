@@ -45,8 +45,8 @@ public class GetOutboxMessagePage extends PageBase {
 //                dslTools.betweenNotNull(qMessageRecord.expectedSendTime, this.start, this.end);
 //            }
 //        }
-        dslTools.betweenNotNull(qMessageRecord.expectedSendTime, this.start, this.end);
-        dslTools.eqNotNull(qMessageRecord.contactsGroupId, this.contactsGroupId);
+//        dslTools.betweenNotNull(qMessageRecord.expectedSendTime, this.start, this.end);
+//        dslTools.eqNotNull(qMessageRecord.contactsGroupId, this.contactsGroupId);
         dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);
     }
     
