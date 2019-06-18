@@ -38,6 +38,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
@@ -91,6 +92,15 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Override
     public int create(CreateMessagePlan createPlan) {
         log.info("enter create, param={}", createPlan);
+        // 参数检查
+        checkMessagePlan(createPlan);
+        // 验证用户号码
+        List<String> validFromList = checkFromNumbers(createPlan.getFromNumList());
+        List<Contacts> contactsList = new ArrayList<>();
+        // 验证输入的接收消息的号码
+        batchSaveContacts(createPlan.getToNumberList());
+        // 验证群组
+        List<Contacts> groupContactsList = checkContactsGroups(createPlan.getGroupList());
         
 //        createMessagePlan(createPlan);
         log.info("leave create");
@@ -262,11 +272,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     private void checkMessagePlan(CreateMessagePlan create) {
         ServiceException.hasText(create.getTitle(), bundle.getString("msg-plan-title"));
         
-        ServiceException.notNull(create.getExecTime(), bundle.getString("msg-plan-execute-time"));
-        
-        // TODO valid execTime
-        
         ServiceException.hasText(create.getText(), bundle.getString("msg-plan-content"));
+        
+        ServiceException.notNull(create.getExecTime(), bundle.getString("msg-plan-execute-time"));
+        ServiceException.isTrue(create.getExecTime().after(EasyTime.init().addMinutes(-5).stamp()), bundle.getString("msg-plan-execute-time-later"));
         
         ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM,
                 bundle.getString("msg-plan-media-list"));
@@ -281,10 +290,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     private List<String> checkFromNumbers(List<String> fromNumList) {
         Set<String> numberSet = new HashSet<>();
-        CustomerVo cur = Current.get();
+        Long curId = Current.get().getId();
         for (String number : fromNumList) {
-            MobileNumber mobileNumber = mbNumberLibDao.findTopByCustomerIdAndNumberAndDisableIsFalse(cur.getId(), number);
-//            MobileNumber mobileNumber = mbNumberLibDao.findByIdAndCustomerIdAndDisableIsFalse(numberId, 1L);
+            MobileNumber mobileNumber = mbNumberLibDao.findTopByCustomerIdAndNumberAndDisableIsFalse(curId, number);
             if (mobileNumber != null) {
                 numberSet.add(mobileNumber.getNumber());
             }
@@ -393,6 +401,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     // 批量创建联系人
     private List<Contacts> batchSaveContacts(List<String> numberList) {
         List<Contacts> contactsList = new ArrayList<>();
+        if(numberList.size()==0){
+        
+        }
         List<Contacts> newContactsList = new ArrayList<>();
         Long curId = Current.get().getId();
 //        Long curId = 1L;
@@ -449,6 +460,20 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             mmsBillComponent.saveMmsBill(cur.getId(), "scheduled send: " + plan.getTitle(), -msgTotal);
         }
         return plan;
+    }
+    
+    // 验证群组并获取有效联系人
+    public List<Contacts> checkContactsGroups(List<Long> groupIdList) {
+        if (groupIdList == null || groupIdList.size() == 0) {
+            return new ArrayList<>();
+        }
+        Long curId = Current.get().getId();
+        List<Contacts> contactsList = new ArrayList<>();
+        for (Long groupId : groupIdList) {
+            // 验证群组并获取该组所有可用联系人
+            contactsList.containsAll(contactsDao.findUsableByCustomerIdAndGroupId(curId, groupId));
+        }
+        return contactsList;
     }
     
 }

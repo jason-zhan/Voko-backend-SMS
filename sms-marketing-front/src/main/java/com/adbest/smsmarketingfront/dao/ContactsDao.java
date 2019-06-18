@@ -33,4 +33,8 @@ public interface ContactsDao extends JpaRepository<Contacts, Long>, JpaSpecifica
     Contacts findByIdAndCustomerIdAndIsDeleteIsFalse(Long id, Long customerId);
     
     List<Contacts> findByPhoneAndCustomerId(String from, Long customerId);
+    
+    @Query("select c from  Contacts c inner join ContactsLinkGroup link on c.id = link.contactsId " +
+            "where c.customerId = ?1 and link.groupId = ?2 and c.inLock = false and c.isDelete = false ")
+    List<Contacts> findUsableByCustomerIdAndGroupId(Long customerId, Long groupId);
 }
