@@ -27,10 +27,13 @@ public class CreateMessagePlan {
     private List<Long> groupList;  // 群组id列表
  
     public void copy(MessagePlan target){
-        target.setTitle(this.getTitle());
-        target.setText(this.getText());
-        target.setMediaIdList(StrSegTools.getListStr(this.getMediaIdlList()));
-        target.setRemark(this.getRemark());
-        target.setExecTime(this.getExecTime());
+        target.setTitle(title);
+        target.setText(text);
+        target.setMediaIdList(StrSegTools.getListStr(mediaIdlList));
+        target.setExecTime(execTime);
+        target.setRemark(remark);
+        target.setFromNumList(StrSegTools.getListStr(toNumberList));
+        target.setToNumList(StrSegTools.getListStr(toNumberList));
+        target.setToGroupList(StrSegTools.getNumberListStr(groupList));
     }
 }

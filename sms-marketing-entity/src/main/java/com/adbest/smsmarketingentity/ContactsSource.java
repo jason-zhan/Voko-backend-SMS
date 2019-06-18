@@ -1,4 +1,4 @@
-package com.adbest.smsmarketingfront.entity.enums;
+package com.adbest.smsmarketingentity;
 
 /**
  * 联系人来源

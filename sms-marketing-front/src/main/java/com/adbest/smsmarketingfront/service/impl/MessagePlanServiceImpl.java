@@ -14,7 +14,7 @@ import com.adbest.smsmarketingfront.dao.ContactsGroupDao;
 import com.adbest.smsmarketingfront.dao.MbNumberLibDao;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.enums.RedisKey;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
@@ -38,14 +38,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -96,13 +97,17 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         checkMessagePlan(createPlan);
         // 验证用户号码
         List<String> validFromList = checkFromNumbers(createPlan.getFromNumList());
-        List<Contacts> contactsList = new ArrayList<>();
-        // 验证输入的接收消息的号码
-        batchSaveContacts(createPlan.getToNumberList());
-        // 验证群组
-        List<Contacts> groupContactsList = checkContactsGroups(createPlan.getGroupList());
+        // 保存任务，为下文提供信息
+        MessagePlan plan = savePlan(createPlan);
+        int msgTotal = 0;  // 消息总数
+        // 检索输入的号码并计算消息量
+        msgTotal += checkToNumbers(plan, createPlan.getToNumberList());
+        // 检索选择的群组并计算消息量
+        msgTotal += checkContactsGroups(plan, createPlan.getGroupList());
+        // 根据消息量结算
         
-//        createMessagePlan(createPlan);
+        // 更新任务信用消费额
+        
         log.info("leave create");
         return 1;
     }
@@ -288,6 +293,18 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 bundle.getString("msg-plan-contacts"));
     }
     
+    // 持久化任务
+    private MessagePlan savePlan(CreateMessagePlan create) {
+        MessagePlan plan = new MessagePlan();
+        create.copy(plan);
+        CustomerVo cur = Current.get();
+        plan.setCustomerId(cur.getId());
+        plan.setConsumeCredit(BigDecimal.ZERO);
+        plan.setDisable(false);
+        plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
+        return messagePlanDao.save(plan);
+    }
+    
     private List<String> checkFromNumbers(List<String> fromNumList) {
         Set<String> numberSet = new HashSet<>();
         Long curId = Current.get().getId();
@@ -312,7 +329,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.getFirstName() == null ? "" : contacts.getFirstName())
                 .replace(MsgTemplateVariable.CON_LASTNAME.getTitle(), contacts.getLastName() == null ? "" : contacts.getLastName());
         ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
-                bundle.getString("msg-plan-content-over-length-gsm7") : bundle.getString("msg-plan-content-over-length-ucs2"));
+                bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
         MessageRecord messageRecord = new MessageRecord();
         // 根据消息类型判断是否需要分段发送
         if (plan.getMediaIdlList() == null || plan.getMediaIdlList().size() == 0) {
@@ -343,7 +360,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         List<MessageRecord> msgTempList = new ArrayList<>();
         for (int i = 0; i < contactsList.size(); i++) {
             Contacts contacts = contactsList.get(i);
-            if (!uniqueValidForRecipient(planId, contacts.getId())) {
+            if (isRepeatRecipient(planId, contacts.getId())) {
                 continue;
             }
             // 联系人验证
@@ -376,7 +393,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             List<MessageRecord> msgTempList = new ArrayList<>();
             for (int i = 0; i < contactsList.size(); i++) {
                 Contacts contacts = contactsList.get(i);
-                if (!uniqueValidForRecipient(planId, contacts.getId())) {
+                if (isRepeatRecipient(planId, contacts.getId())) {
                     continue;
                 }
                 MessageRecord messageRecord = generateMessage(createPlan, contacts);
@@ -392,21 +409,26 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return msgNum;
     }
     
-    // 接收消息号码去重
-    private boolean uniqueValidForRecipient(Long planId, Long contactsId) {
+    /**
+     * 验证接收消息号码是否重复
+     *
+     * @param planId
+     * @param contactsId
+     * @return true:repeat | false:absent
+     */
+    private boolean isRepeatRecipient(Long planId, Long contactsId) {
         String key = new StringBuilder(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey()).append(planId).append(":").append(contactsId).toString();
-        return redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getTimeUnit());
+        return !redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getTimeUnit());
     }
     
     // 批量创建联系人
     private List<Contacts> batchSaveContacts(List<String> numberList) {
         List<Contacts> contactsList = new ArrayList<>();
-        if(numberList.size()==0){
-        
+        if (numberList == null || numberList.size() == 0) {
+            return contactsList;
         }
         List<Contacts> newContactsList = new ArrayList<>();
         Long curId = Current.get().getId();
-//        Long curId = 1L;
         for (String number : numberList) {
             List<Contacts> foundList = contactsDao.findByPhoneAndCustomerId(number, curId);
             if (foundList.size() > 0) {
@@ -421,7 +443,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             contacts.setIsDelete(false);
             newContactsList.add(contacts);
         }
-        contactsList.addAll(contactsDao.saveAll(newContactsList));
+        if (newContactsList.size() > 0) {
+            contactsList.addAll(contactsDao.saveAll(newContactsList));
+        }
         return contactsList;
     }
     
@@ -462,18 +486,93 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return plan;
     }
     
-    // 验证群组并获取有效联系人
-    public List<Contacts> checkContactsGroups(List<Long> groupIdList) {
-        if (groupIdList == null || groupIdList.size() == 0) {
-            return new ArrayList<>();
+    // 验证输入的手机号并计算生成的消息数
+    private int checkToNumbers(MessagePlan plan, List<String> toNumList) {
+        if (toNumList == null || toNumList.size() == 0) {
+            return 0;
         }
-        Long curId = Current.get().getId();
-        List<Contacts> contactsList = new ArrayList<>();
-        for (Long groupId : groupIdList) {
-            // 验证群组并获取该组所有可用联系人
-            contactsList.containsAll(contactsDao.findUsableByCustomerIdAndGroupId(curId, groupId));
+        int nTotal = 0;  // 号码列表消息总数
+        CustomerVo cur = Current.get();
+        List<Contacts> checkedContactsList = new ArrayList<>();
+        List<Contacts> newContactsList = new ArrayList<>();
+        for (String number : toNumList) {
+            Contacts contacts = contactsDao.findFirstByPhoneAndCustomerId(number, cur.getId());
+            if (contacts == null) {
+                contacts = new Contacts();
+                contacts.setCustomerId(cur.getId());
+                contacts.setPhone(number);
+                contacts.setInLock(false);
+                contacts.setIsDelete(false);
+                contacts.setSource(ContactsSource.API_Added.getValue());
+                newContactsList.add(contacts);
+            }
+            checkedContactsList.add(contacts);
         }
-        return contactsList;
+        if (newContactsList.size() > 0) {
+            contactsDao.saveAll(newContactsList);
+        }
+        nTotal = calcMsgNum(plan, checkedContactsList, cur);
+        return nTotal;
     }
+    
+    // 验证所有群组并计算生成的消息数
+    private int checkContactsGroups(MessagePlan plan, List<Long> groupIdList) {
+        if (groupIdList == null || groupIdList.size() == 0) {
+            return 0;
+        }
+        int gTotal = 0; // 群组列表消息总数
+        for (Long groupId : groupIdList) {
+            gTotal += checkGroup(plan, groupId);
+        }
+        return gTotal;
+    }
+    
+    // 验证该组并计算产生的消息数
+    private int checkGroup(MessagePlan plan, Long groupId) {
+        int total = 0;
+        // 验证群组并计算生成的消息数
+        Page<Contacts> contactsPage = null;
+        Pageable pageable = PageRequest.of(0, 1000);
+        do {
+            CustomerVo cur = Current.get();
+            contactsPage = contactsDao.findUsableByCustomerIdAndGroupId(cur.getId(), groupId, pageable);
+            if (contactsPage.isEmpty()) {
+                break;
+            }
+            total += calcMsgNum(plan, contactsPage.getContent(), cur);
+            pageable = pageable.next();
+        } while (contactsPage.hasNext());
+        return total;
+    }
+    
+    // 给出联系人列表，计算产生的消息数
+    private int calcMsgNum(MessagePlan plan, List<Contacts> contactsList, CustomerVo cur) {
+        int msgNum = 0;
+        boolean isSms = StrSegTools.getStrList(plan.getMediaIdList()).size() == 0;
+        for (Contacts contacts : contactsList) {
+            // 验证是否重复号码
+            if (isRepeatRecipient(plan.getId(), contacts.getId())) {
+                continue;
+            }
+            // 计算内容
+            String content = plan.getText()
+                    .replace(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), cur.getFirstName() == null ? "" : cur.getFirstName())
+                    .replace(MsgTemplateVariable.CUS_LASTNAME.getTitle(), cur.getLastName() == null ? "" : cur.getLastName())
+                    .replace(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contacts.getFirstName() == null ? "" : contacts.getFirstName())
+                    .replace(MsgTemplateVariable.CON_LASTNAME.getTitle(), contacts.getLastName() == null ? "" : contacts.getLastName());
+            ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
+                    bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
+            // 根据短信或彩信计算消息条数
+            if (isSms) {
+                msgNum += MessageTools.calcMsgSegments(content);
+            } else {
+                msgNum++;
+            }
+        }
+        return msgNum;
+    }
+    
+    // 消息结算
+    
     
 }

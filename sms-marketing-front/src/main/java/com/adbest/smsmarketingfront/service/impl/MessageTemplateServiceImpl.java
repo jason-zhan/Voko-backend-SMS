@@ -124,6 +124,6 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         ServiceException.hasText(template.getTitle(), bundle.getString("msg-template-title"));
         ServiceException.hasText(template.getContent(), bundle.getString("msg-template-content"));
         ServiceException.isTrue(MessageTools.isOverLength(template.getContent()), MessageTools.isGsm7(template.getContent()) ?
-                bundle.getString("msg-plan-content-over-length-gsm7") : bundle.getString("msg-plan-content-over-length-ucs2"));
+                bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
     }
 }

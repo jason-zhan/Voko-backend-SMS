@@ -6,6 +6,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
@@ -34,6 +35,8 @@ public class MessagePlan implements Serializable {
     private String fromNumList;  // 发送消息的号码列表，多个以','分隔
     private String toNumList; // 接收消息的联系人号码列表，多个以','分隔
     private String toGroupList;  // 接收消息的群组id列表，多个以','分隔
+    @Column(nullable = false)
+    private BigDecimal consumeCredit;  // 消费信用(>=0，单位：$)
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
     /**

@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.ContactsDao;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.form.AddContactsToGroupsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsProcessForm;
@@ -33,7 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.io.InputStream;
-import java.sql.Array;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.regex.Matcher;

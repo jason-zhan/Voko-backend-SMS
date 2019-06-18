@@ -77,8 +77,26 @@ public class StrSegTools {
             return "";
         } else {
             StringBuilder sb = new StringBuilder();
-            for (String url : stringList) {
-                sb.append(",").append(url);
+            for (String s : stringList) {
+                sb.append(",").append(s);
+            }
+            return sb.substring(1);
+        }
+    }
+    
+    /**
+     * 获取列表字符串
+     *
+     * @param numberList
+     * @return 以','分隔的字符串
+     */
+    public static @NotNull <T extends Number>String getNumberListStr(List<T> numberList) {
+        if (numberList == null || numberList.size() == 0) {
+            return "";
+        } else {
+            StringBuilder sb = new StringBuilder();
+            for (Number num : numberList) {
+                sb.append(",").append(num.toString());
             }
             return sb.substring(1);
         }

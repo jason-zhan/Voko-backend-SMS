@@ -36,5 +36,5 @@ public interface ContactsDao extends JpaRepository<Contacts, Long>, JpaSpecifica
     
     @Query("select c from  Contacts c inner join ContactsLinkGroup link on c.id = link.contactsId " +
             "where c.customerId = ?1 and link.groupId = ?2 and c.inLock = false and c.isDelete = false ")
-    List<Contacts> findUsableByCustomerIdAndGroupId(Long customerId, Long groupId);
+    Page<Contacts> findUsableByCustomerIdAndGroupId(Long customerId, Long groupId, Pageable pageable);
 }

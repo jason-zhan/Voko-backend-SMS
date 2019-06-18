@@ -1,15 +1,13 @@
 package com.adbest.smsmarketingfront.task;
 
 import com.adbest.smsmarketingentity.*;
-import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.enums.CustomerSource;
 import com.adbest.smsmarketingfront.entity.enums.VkCDRCustomersSendStatus;
 import com.adbest.smsmarketingfront.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.EnableAsync;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
@@ -17,8 +15,6 @@ import javax.transaction.Transactional;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.stream.Collectors;
-
-import static com.adbest.smsmarketingentity.QContactsTemp.contactsTemp;
 
 @Component
 @EnableAsync
