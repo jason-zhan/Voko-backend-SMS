@@ -57,9 +57,9 @@ public class JpaUpdateMultiThreadTest {
         }
         
         private void printStatus() {
-            BigDecimal credit = customerDao.findById(1L).get().getCredit();
-            Assert.isTrue(credit.compareTo(BigDecimal.ZERO) >= 0, "credit < 0");
-            System.out.printf("%s = %s%n", num, credit.toPlainString());
+//            BigDecimal credit = customerDao.findById(1L).get().getCredit();
+//            Assert.isTrue(credit.compareTo(BigDecimal.ZERO) >= 0, "credit < 0");
+//            System.out.printf("%s = %s%n", num, credit.toPlainString());
         }
     }
 }

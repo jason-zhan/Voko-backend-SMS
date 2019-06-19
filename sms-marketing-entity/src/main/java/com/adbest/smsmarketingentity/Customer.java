@@ -38,7 +38,9 @@ public class Customer implements Serializable {
     
     private Integer source;  // 来源
     @Column(nullable = false)
-    private BigDecimal credit; // 信用额度(暂用单位：$)
+    private BigDecimal availableCredit; // 可用信用额度(暂用单位：$)
+    @Column(nullable = false)
+    private BigDecimal maxCredit;  // 最大信用额度(暂用单位：$)
     
     public static boolean checkEmail(String email) {
 //        Pattern pattern = Pattern.compile("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$", Pattern.CASE_INSENSITIVE);

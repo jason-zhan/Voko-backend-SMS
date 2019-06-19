@@ -192,7 +192,7 @@ public class MessageComponentImpl implements MessageComponent {
             Optional<Customer> optional = customerDao.findById(customerId);
             Assert.isTrue(optional.isPresent(), "customer is not exists");
             // 若信用额度不足，则无法购买，给出提示
-            ServiceException.isTrue(cost.compareTo(optional.get().getCredit()) <= 0, bundle.getString("credit-not-enough"));
+//            ServiceException.isTrue(cost.compareTo(optional.get().getCredit()) <= 0, bundle.getString("credit-not-enough"));
             retried++;
         }
         throw new RuntimeException("purchaseWithCredit failed, please check it manually");
