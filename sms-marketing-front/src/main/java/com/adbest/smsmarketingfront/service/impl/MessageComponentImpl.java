@@ -7,7 +7,6 @@ import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
-import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
@@ -185,7 +184,7 @@ public class MessageComponentImpl implements MessageComponent {
         int retried = 0;
         BigDecimal cost = isSms ? singleSmsPrice.multiply(new BigDecimal(amount)) : singleMmsPrice.multiply(new BigDecimal(amount));
         while (retried < PAYMENT_RETRY) {
-            int result = customerDao.updateCreditByCustomerId(cost.negate(), customerId);
+            int result = customerDao.updateCredit(customerId, cost.negate());
             if (result > 0) {  // 信用额度购买成功，跳出循环
                 return;
             }

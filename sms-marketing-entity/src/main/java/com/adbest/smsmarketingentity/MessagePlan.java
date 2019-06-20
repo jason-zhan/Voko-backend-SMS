@@ -18,7 +18,7 @@ import java.sql.Timestamp;
 public class MessagePlan implements Serializable {
     
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     @Column(nullable = false)
     private Long customerId;  // 用户id
@@ -30,13 +30,14 @@ public class MessagePlan implements Serializable {
     @Lob
     private String mediaIdList;  // 媒体id列表，多个以','分隔
     @Column(nullable = false)
+    private Boolean isSms;  // 是否短信(true:是)
+    @Column(nullable = false)
     private Timestamp execTime;  // 执行时间
     private String remark;  // 备注
     private String fromNumList;  // 发送消息的号码列表，多个以','分隔
     private String toNumList; // 接收消息的联系人号码列表，多个以','分隔
     private String toGroupList;  // 接收消息的群组id列表，多个以','分隔
-    @Column(nullable = false)
-    private BigDecimal consumeCredit;  // 消费信用(>=0，单位：$)
+    private Integer recipientsCount;  // 收件人数量
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
     /**

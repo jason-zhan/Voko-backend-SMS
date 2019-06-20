@@ -1,5 +1,6 @@
 package com.adbest.smsmarketingfront.util.twilio;
 
+import com.adbest.smsmarketingentity.MsgTemplateVariable;
 import org.springframework.util.StringUtils;
 
 /**
@@ -17,14 +18,15 @@ public class MessageTools {
     
     /**
      * 检测内容是否超长
+     *
      * @param text
-     * @return
+     * @return true:是
      */
     public static boolean isOverLength(String text) {
         if (StringUtils.isEmpty(text)) {
             return false;
         }
-        return isGsm7(text) ? text.length() <= MAX_MSG_TEXT_GSM7 : text.length() <= MAX_MSG_TEXT_UCS2;
+        return isGsm7(text) ? text.length() > MAX_MSG_TEXT_GSM7 : text.length() > MAX_MSG_TEXT_UCS2;
     }
     
     /**
@@ -53,6 +55,70 @@ public class MessageTools {
     }
     
     /**
+     * 文本中是否含有联系人变量
+     *
+     * @param text
+     * @return true:是
+     */
+    public static boolean containsContactsVariables(String text) {
+        if (StringUtils.hasText(text)) {
+            return text.contains(MsgTemplateVariable.CON_FIRSTNAME.getTitle()) || text.contains(MsgTemplateVariable.CON_LASTNAME.getTitle());
+        }
+        return false;
+    }
+    
+    /**
+     * 替换用户变量， 返回替换后的文本内容
+     * @param text
+     * @param customerFirstName
+     * @param customerLastName
+     * @return
+     */
+    public static String replaceCustomerVariables(String text, String customerFirstName, String customerLastName) {
+        if (StringUtils.hasText(text)) {
+            return text
+                    .replaceAll(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), customerFirstName == null ? "" : customerFirstName)
+                    .replaceAll(MsgTemplateVariable.CUS_LASTNAME.getTitle(), customerLastName == null ? "" : customerLastName);
+        }
+        return "";
+    }
+    /**
+     * 替换联系人变量， 返回替换后的文本内容
+     * @param text
+     * @param contactsFirstName
+     * @param contactsLastName
+     * @return
+     */
+    public static String replaceContactsVariables(String text, String contactsFirstName, String contactsLastName) {
+        if (StringUtils.hasText(text)) {
+            return text
+                    .replaceAll(MsgTemplateVariable.CON_FIRSTNAME.getTitle(), contactsFirstName == null ? "" : contactsFirstName)
+                    .replaceAll(MsgTemplateVariable.CON_LASTNAME.getTitle(), contactsLastName == null ? "" : contactsLastName);
+        }
+        return "";
+    }
+    
+    
+    /**
+     * 去除模板变量，返回去除后的文本内容
+     *
+     * @param text
+     * @return
+     */
+    public static String trimTemplateVariables(String text) {
+        if (StringUtils.hasText(text)) {
+            StringBuilder sb = new StringBuilder();
+            sb
+                    .append("(").append(MsgTemplateVariable.CUS_FIRSTNAME.getTitle()).append(")|")
+                    .append("(").append(MsgTemplateVariable.CUS_LASTNAME.getTitle()).append(")|")
+                    .append("(").append(MsgTemplateVariable.CON_FIRSTNAME.getTitle()).append(")|")
+                    .append("(").append(MsgTemplateVariable.CON_LASTNAME.getTitle()).append(")");
+            return text.replaceAll(sb.toString(), "");
+        }
+        return "";
+    }
+    
+    /**
      * 计算消息分段数量
      *
      * @param text
@@ -66,12 +132,11 @@ public class MessageTools {
         }
         if (text.length() <= singleAllowText) {
             return 1;
+        }
+        if (text.length() % multiAllowText > 0) {
+            return text.length() / multiAllowText + 1;
         } else {
-            if (text.length() % multiAllowText > 0) {
-                return text.length() / multiAllowText + 1;
-            } else {
-                return text.length() / multiAllowText;
-            }
+            return text.length() / multiAllowText;
         }
     }
 }

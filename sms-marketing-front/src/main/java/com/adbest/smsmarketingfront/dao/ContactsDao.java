@@ -19,7 +19,7 @@ public interface ContactsDao extends JpaRepository<Contacts, Long>, JpaSpecifica
     @Query("select c from Contacts c left join ContactsLinkGroup link on c.id = link.contactsId where link.groupId = ?1 and c.inLock = false and c.isDelete = false ")
     Page<Contacts> findUsableByGroupId(Long groupId, Pageable pageable);
     
-    Contacts findFirstByPhoneAndCustomerId(String phone, Long customerId);
+    Contacts findFirstByCustomerIdAndPhone(Long customerId, String phone);
     
     @Modifying
     @Transactional

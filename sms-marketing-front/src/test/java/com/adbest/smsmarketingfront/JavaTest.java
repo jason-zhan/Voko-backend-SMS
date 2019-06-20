@@ -39,4 +39,13 @@ public class JavaTest {
         String listStr = StrSegTools.getNumberListStr(Arrays.asList(0, 2.5, 300L));
         System.out.println(listStr);
     }
+    
+    @Test
+    public void regexpTest(){
+        String pattern = "(aa)|(bb)|(cc)";
+        String target = "There are some strings: aaa bbbaa ccbbb cccaa";
+        String result = "There are some strings: a b b c";
+        String execed = target.replaceAll(pattern, "");
+        System.out.println("result: "+ result.equals(execed));
+    }
 }

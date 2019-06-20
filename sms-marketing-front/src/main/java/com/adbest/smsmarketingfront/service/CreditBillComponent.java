@@ -16,7 +16,7 @@ public interface CreditBillComponent {
      * @param amount  调整金额(+/-)
      * @return
      */
-    int adjustCustomerMaxCredit(Long customerId, BigDecimal amount);
+    boolean adjustCustomerMaxCredit(Long customerId, BigDecimal amount);
     
     /**
      * 保存任务信用消费账单
@@ -26,6 +26,6 @@ public interface CreditBillComponent {
      * @param remark  备注/描述
      * @return
      */
-    int savePlanConsume(Long customerId, Long planId, BigDecimal amount, String remark);
+    boolean savePlanConsume(Long customerId, Long planId, BigDecimal amount, String remark);
     
 }

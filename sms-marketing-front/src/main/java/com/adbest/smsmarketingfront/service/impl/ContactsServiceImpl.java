@@ -81,7 +81,7 @@ public class ContactsServiceImpl implements ContactsService {
         ServiceException.isTrue(checkPhone(contactsForm.getPhone()), returnMsgUtil.msg("PHONE_INCORRECT_FORMAT"));
         Long customerId = Current.get().getId();
         Contacts contacts = contactsForm.getContacts();
-        Contacts ct = contactsDao.findFirstByPhoneAndCustomerId(contactsForm.getPhone(), customerId);
+        Contacts ct = contactsDao.findFirstByCustomerIdAndPhone(customerId, contactsForm.getPhone());
         if (ct==null){
             contacts.setIsDelete(false);
             contacts.setInLock(false);

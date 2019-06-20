@@ -1,7 +1,6 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingfront.dao.CustomerDao;
-import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.PaymentComponent;
 import lombok.extern.slf4j.Slf4j;
@@ -34,7 +33,7 @@ public class PaymentComponentImpl implements PaymentComponent {
     public void updateCredit(Long customerId, BigDecimal cost) {
         log.info("enter updateCredit, customerId={}, cost={}", customerId, cost);
         Assert.isTrue(cost != null && cost.compareTo(BigDecimal.ZERO) != 0, "cost must not be zero.");
-        int result = customerDao.updateCreditByCustomerId(cost, customerId);
+        int result = customerDao.updateCredit(customerId, cost);
         ServiceException.isTrue(result > 0, bundle.getString("credit-not-enough"));
         log.info("leave updateCredit");
     }

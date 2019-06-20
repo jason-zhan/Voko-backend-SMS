@@ -7,7 +7,6 @@ import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
 
@@ -49,7 +48,7 @@ public class JpaUpdateMultiThreadTest {
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-            int result = customerDao.updateCreditByCustomerId(BigDecimal.valueOf(symbol ? 5 : -6), 1L);
+            int result = customerDao.updateCredit(1L, BigDecimal.valueOf(symbol ? 5 : -6));
             System.out.printf("%s x %s%n", num, result);
             printStatus();
             long end = EasyTime.nowMillis();
