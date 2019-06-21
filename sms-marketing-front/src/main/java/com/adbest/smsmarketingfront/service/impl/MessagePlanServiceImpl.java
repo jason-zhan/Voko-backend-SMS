@@ -542,7 +542,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         List<MessageRecord> messageList = new ArrayList<>();
         List<Contacts> newContactsList = new ArrayList<>();
         for (String number : createPlan.getToNumberList()) {
-            // 1. 存在性验证
+            // 存在性验证
             Contacts contacts = contactsDao.findFirstByCustomerIdAndPhone(planState.cur.getId(), number);
             if (contacts == null) {
                 // 不存在，生成联系人并加入新建联系人列表
@@ -565,17 +565,18 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             // 计算分段数
             int segments = planState.isSms ? (planState.contactsVars ? MessageTools.calcSmsSegments(content) : planState.preSegments) : 1;
             planState.msgTotal += segments * newContactsList.size();
-            // 不保存消息则返回消息数
-            for (Contacts contacts : newContactsList) {
-                // 新增的号码，跳过各项验证
-                messageList.add(generateMessage(
-                        planState,
-                        contacts,
-                        createPlan.getFromNumList().get(planState.counter % fromListSize),
-                        content,
-                        segments
-                ));
-                planState.counter++;
+            if (planState.saveMsg) {
+                for (Contacts contacts : newContactsList) {
+                    // 新增的号码，跳过各项验证
+                    messageList.add(generateMessage(
+                            planState,
+                            contacts,
+                            createPlan.getFromNumList().get(planState.counter % fromListSize),
+                            content,
+                            segments
+                    ));
+                    planState.counter++;
+                }
             }
         }
         // 批量保存消息
