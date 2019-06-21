@@ -40,13 +40,13 @@ public class MessageTools {
     }
     
     /**
-     * 计算消息分段数量
+     * 计算短信分段数量
      * 将使用预设参数进行计算
      *
      * @param text
      * @return
      */
-    public static int calcMsgSegments(String text) {
+    public static int calcSmsSegments(String text) {
         if (isGsm7(text)) {
             return calcSegments(text, SINGLE_ALLOW_TEXT_GSM7, MULTI_ALLOW_TEXT_GSM7);
         } else {

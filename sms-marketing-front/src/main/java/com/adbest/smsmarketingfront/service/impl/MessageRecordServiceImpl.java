@@ -275,7 +275,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
 
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
-        messageRecord.setSegments(MessageTools.calcMsgSegments(messageRecord.getContent()));
+        messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
         Long sum = smsBillService.sumByCustomerId(messageRecord.getCustomerId());
 //        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
         if ((sum == null ? 0l : sum) - messageRecord.getSegments() < 0){

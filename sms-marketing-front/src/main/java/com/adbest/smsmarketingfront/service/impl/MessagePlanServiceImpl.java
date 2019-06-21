@@ -20,6 +20,7 @@ import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.enums.RedisKey;
+import com.adbest.smsmarketingfront.entity.middleware.MsgPlanState;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
@@ -30,6 +31,7 @@ import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.task.plan.MessagePlanTask;
 import com.adbest.smsmarketingfront.util.CommonMessage;
+import com.adbest.smsmarketingfront.util.Counter;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.PageBase;
@@ -100,6 +102,11 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Value("${marketing.singleMmsPrice}")
     private BigDecimal singleMmsPrice;
     
+    @Value("${message.contacts.defaultFirstName}")
+    private String contactsFirstName;
+    @Value("${message.contacts.defaultLastName}")
+    private String contactsLastName;
+    
     @Autowired
     private Map<Integer, String> messagePlanStatusMap;
     
@@ -110,20 +117,21 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 参数检查
         checkMessagePlan(createPlan);
         // 校验用户消息余量
-        CustomerVo cur = Current.get();
-        validCustomerBalance(cur.getId(), CollectionUtils.isEmpty(createPlan.getMediaIdlList()));
+        validCustomerBalance(Current.get().getId(), createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0);
         // 验证用户号码
-        checkFromNumbers(createPlan.getFromNumList());
+        List<String> fromNumbers = checkFromNumbers(createPlan.getFromNumList());
+        createPlan.setFromNumList(fromNumbers);
         // 保存任务，为下文提供信息
         MessagePlan plan = savePlan(createPlan);
-        // 内容中是否含有联系人变量
-        boolean contactsVars = MessageTools.containsContactsVariables(plan.getText());
-        // 统计收件人总数
-        int recipientsCount = 0;
-        recipientsCount += toNumbersTraversal(plan, createPlan.getToNumberList(), contactsVars, plan.getIsSms(), false);
-        recipientsCount += contactsGroupsTraversal(plan, createPlan.getGroupList());
+        // 初始化中间参数实例
+        MsgPlanState planState = MsgPlanState.init(plan.getId(), plan.getText(), createPlan.getMediaIdlList(), false);
+        if (!planState.contactsVars) {
+            // 如果不包含联系人变量，此时已经可以判定内容是否超长
+            overLengthValid(planState.preContent);
+        }
+        toNumbersTraversal(createPlan, planState);
+        contactsGroupsTraversal(createPlan, planState);
         // 计算消息总量并结算
-        
         
         // 根据消息量结算
         
@@ -308,6 +316,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         
         ServiceException.isTrue(create.getMediaIdlList() == null || create.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM,
                 bundle.getString("msg-plan-media-list"));
+        // todo 验证资源
         
         ServiceException.isTrue(create.getFromNumList() != null && create.getFromNumList().size() > 0,
                 bundle.getString("msg-plan-from"));
@@ -318,14 +327,14 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     // 检查用户状态
-    private void validCustomerBalance(Long customerId, boolean isSms) {
-        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customerId);
+    private void validCustomerBalance(Long curId, boolean isSms) {
+        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(curId);
         if (marketSetting != null) {
             if ((isSms && marketSetting.getSmsTotal() > 0) || (!isSms && marketSetting.getMmsTotal() > 0)) {
                 return;
             }
         }
-        Optional<Customer> optional = customerDao.findById(customerId);
+        Optional<Customer> optional = customerDao.findById(curId);
         Assert.isTrue(optional.isPresent(), "customer not exists");
         Customer customer = optional.get();
         ServiceException.isTrue(customer.getAvailableCredit().compareTo(isSms ? singleSmsPrice : singleMmsPrice) >= 0,
@@ -371,7 +380,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         MessageRecord messageRecord = new MessageRecord();
         // 根据消息类型判断是否需要分段发送
         if (plan.getMediaIdlList() == null || plan.getMediaIdlList().size() == 0) {
-            messageRecord.setSegments(MessageTools.calcMsgSegments(content));
+            messageRecord.setSegments(MessageTools.calcSmsSegments(content));
             messageRecord.setSms(true);
         } else {
             messageRecord.setSegments(1);
@@ -525,51 +534,54 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     // 遍历输入的手机号并计算消息量
-    private int toNumbersTraversal(MessagePlan plan, List<String> toNumList, boolean contactsVars, boolean isSms, boolean saveMsg) {
-        if (toNumList == null || toNumList.size() == 0) {
-            return 0;
+    private void toNumbersTraversal(CreateMessagePlan createPlan, MsgPlanState planState) {
+        if (createPlan.getToNumberList() == null || createPlan.getToNumberList().size() == 0) {
+            return;
         }
-        int nCount = 0;
-        CustomerVo cur = Current.get();
-        String content = MessageTools.replaceCustomerVariables(plan.getText(), cur.getFirstName(), cur.getLastName());
-        if (!contactsVars) {
-            overLengthValid(content);
-        }
-        int segments = MessageTools.calcMsgSegments(content);
-        List<Contacts> checkedContactsList = new ArrayList<>();
+        int fromListSize = createPlan.getFromNumList().size();
+        List<MessageRecord> messageList = new ArrayList<>();
         List<Contacts> newContactsList = new ArrayList<>();
-        for (String number : toNumList) {
+        for (String number : createPlan.getToNumberList()) {
             // 1. 存在性验证
-            Contacts contacts = contactsDao.findFirstByCustomerIdAndPhone(cur.getId(), number);
+            Contacts contacts = contactsDao.findFirstByCustomerIdAndPhone(planState.cur.getId(), number);
             if (contacts == null) {
                 // 不存在，生成联系人并加入新建联系人列表
-                contacts = generateContacts(cur.getId(), number);
+                contacts = generateContacts(planState.cur.getId(), number);
                 newContactsList.add(contacts);
                 continue;
             }
-            // 2. 合法性验证
-            if (contacts.getIsDelete() || contacts.getInLock()) {
-                continue;
-            }
-            // 3. 唯一性验证
-            if (isRepeatRecipient(plan.getId(), contacts.getId())) {
-                continue;
-            }
-            // 4. 计算内容
-            if (contactsVars) {
-                content = MessageTools.replaceContactsVariables(content, contacts.getFirstName(), contacts.getLastName());
-                overLengthValid(content);
-            }
-            // 5. 计算分段数
-            if (isSms) {
-            
-            }
+            calcMsg(messageList, createPlan, planState, contacts, fromListSize);
         }
+        // 批量持久化增加的联系人并计算消息数
         if (newContactsList.size() > 0) {
             contactsDao.saveAll(newContactsList);
-//            calcMsgNum(, , )
+            String content = "";
+            if (planState.contactsVars) {
+                // 默认联系人名称和姓氏
+                // TODO 内容优化
+                content = MessageTools.replaceContactsVariables(planState.preContent, contactsFirstName, contactsLastName);
+                overLengthValid(content);
+            }
+            // 计算分段数
+            int segments = planState.isSms ? (planState.contactsVars ? MessageTools.calcSmsSegments(content) : planState.preSegments) : 1;
+            planState.msgTotal += segments * newContactsList.size();
+            // 不保存消息则返回消息数
+            for (Contacts contacts : newContactsList) {
+                // 新增的号码，跳过各项验证
+                messageList.add(generateMessage(
+                        planState,
+                        contacts,
+                        createPlan.getFromNumList().get(planState.counter % fromListSize),
+                        content,
+                        segments
+                ));
+                planState.counter++;
+            }
         }
-        return checkedContactsList.size();
+        // 批量保存消息
+        if (messageList.size() > 0) {
+            messageRecordDao.saveAll(messageList);
+        }
     }
     
     // 生成联系人实例
@@ -583,34 +595,87 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         return contacts;
     }
     
-    // 验证所有群组并统计收件人数
-    private int contactsGroupsTraversal(MessagePlan plan, List<Long> groupIdList) {
-        int gCount = 0;
-        if (groupIdList == null || groupIdList.size() == 0) {
-            return 0;
-        }
-        for (Long groupId : groupIdList) {
-            gCount += checkGroup(plan, groupId);
-        }
-        return gCount;
+    // 生成消息实例
+    private MessageRecord generateMessage(MsgPlanState planState, Contacts contacts, String fromNumber, String content, int segments) {
+        MessageRecord message = new MessageRecord();
+        message.setPlanId(planState.planId);
+        message.setCustomerId(planState.cur.getId());
+        message.setSms(planState.isSms);
+        message.setInbox(false);
+        message.setStatus(OutboxStatus.PLANNING.getValue());
+        message.setDisable(false);
+        message.setCustomerNumber(fromNumber);
+        message.setContent(content);
+        message.setSegments(segments);
+        message.setMediaList(planState.mediaListStr);
+        message.setContactsId(contacts.getId());
+        message.setContactsNumber(contacts.getPhone());
+        return message;
     }
     
-    // 验证该组并统计收件人数
-    private int checkGroup(MessagePlan plan, Long groupId) {
-        int count = 0;
-        // 验证群组并计算生成的消息数
+    
+    // 遍历所有群组并计算消息量
+    private void contactsGroupsTraversal(CreateMessagePlan createPlan, MsgPlanState planState) {
+        if (createPlan.getGroupList() == null || createPlan.getGroupList().size() == 0) {
+            return;
+        }
+        for (Long groupId : createPlan.getGroupList()) {
+            groupTraversal(groupId, createPlan, planState);
+        }
+    }
+    
+    // 遍历群组所有联系人并计算生成的消息数
+    private void groupTraversal(Long groupId, CreateMessagePlan createPlan, MsgPlanState planState) {
         Page<Contacts> contactsPage = null;
         Pageable pageable = PageRequest.of(0, 1000);
+        int fromListSize = createPlan.getFromNumList().size();
         do {
-            CustomerVo cur = Current.get();
-            contactsPage = contactsDao.findUsableByCustomerIdAndGroupId(cur.getId(), groupId, pageable);
+            contactsPage = contactsDao.findUsableByCustomerIdAndGroupId(planState.cur.getId(), groupId, pageable);
+            // 群组验证
             if (contactsPage.isEmpty()) {
                 break;
             }
-            count += contactsPage.getContent().size();
+            List<MessageRecord> messageList = new ArrayList<>();
+            for (Contacts contacts : contactsPage.getContent()) {
+                calcMsg(messageList, createPlan, planState, contacts, fromListSize);
+            }
+            // 批量保存消息
+            if (messageList.size() > 0) {
+                messageRecordDao.saveAll(messageList);
+            }
             pageable = pageable.next();
         } while (contactsPage.hasNext());
-        return count;
+    }
+    
+    private void calcMsg(List<MessageRecord> messageList, CreateMessagePlan createPlan, MsgPlanState planState, Contacts contacts, int fromListSize) {
+        //  合法性验证
+        if (contacts.getIsDelete() || contacts.getInLock()) {
+            return;
+        }
+        //  唯一性验证
+        if (isRepeatRecipient(planState.planId, contacts.getId())) {
+            return;
+        }
+        //  计算内容
+        String content = "";
+        if (planState.contactsVars) {
+            content = MessageTools.replaceContactsVariables(planState.preContent, contacts.getFirstName(), contacts.getLastName());
+            overLengthValid(content);
+        }
+        //  计算分段数
+        int segments = planState.isSms ? (planState.contactsVars ? MessageTools.calcSmsSegments(content) : planState.preSegments) : 1;
+        planState.msgTotal += segments;
+        //  持久化消息
+        if (planState.saveMsg) {
+            messageList.add(generateMessage(
+                    planState,
+                    contacts,
+                    createPlan.getFromNumList().get(planState.counter % fromListSize),
+                    content,
+                    segments
+            ));
+            planState.counter++;
+        }
     }
     
     // 计算消息数：内容不包含模板变量
@@ -628,7 +693,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         boolean isSms = StrSegTools.getStrList(plan.getMediaIdList()).size() == 0;
         if (isSms) {
-            return MessageTools.calcMsgSegments(plan.getText()) * contactsNum;
+            return MessageTools.calcSmsSegments(plan.getText()) * contactsNum;
         } else {
             return contactsNum;
         }
@@ -653,7 +718,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                     bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
             // 根据短信或彩信计算消息条数
             if (isSms) {
-                msgNum += MessageTools.calcMsgSegments(content);
+                msgNum += MessageTools.calcSmsSegments(content);
             } else {
                 msgNum++;
             }

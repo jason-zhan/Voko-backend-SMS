@@ -4,6 +4,7 @@ import lombok.Data;
 import org.hibernate.annotations.CreationTimestamp;
 
 import javax.persistence.Column;
+import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
 import javax.persistence.GenerationType;
 import javax.persistence.Id;
@@ -15,6 +16,7 @@ import java.sql.Timestamp;
  * 信用消费账单
  * 每个用户维持其 信用值 >= 0
  */
+@Entity
 @Data
 public class CreditBill implements Serializable {
     

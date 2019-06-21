@@ -70,7 +70,7 @@ public class MessagePlanServiceImplTest {
 //                "We greet each other " +
 //                "But nobody " +
 //                "Can understand our words ";
-//        int segments = MessageTools.calcMsgSegments(str);
+//        int segments = MessageTools.calcSmsSegments(str);
 //        System.out.println("segments: "+segments);
     }
     

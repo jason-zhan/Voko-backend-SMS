@@ -13,10 +13,11 @@ import java.util.List;
  */
 @Entity
 @Data
+@Table(uniqueConstraints = {@UniqueConstraint(columnNames = {"customerId", "phone"})})
 public class Contacts implements Serializable {
     
     @Id
-    @GeneratedValue(strategy= GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;  // 主键
     /**
      * 客户id
@@ -34,12 +35,12 @@ public class Contacts implements Serializable {
     private Boolean inLock;  // 锁定(true:是)
     private Timestamp inLockTime;  // 锁定时间
     @Column(nullable = false)
-    private  Boolean isDelete;  // 是否删除(true:已删除)
+    private Boolean isDelete;  // 是否删除(true:已删除)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间
     /**
      * @see ContactsSource
      */
     private Integer source;  // 来源
-
+    
 }

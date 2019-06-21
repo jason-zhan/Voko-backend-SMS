@@ -49,7 +49,7 @@ public class StrSegTools {
     /**
      * 获取uri列表
      *
-     * @param prefix 路径前缀 如 https://scan.abc.com/view?fn=
+     * @param prefix  路径前缀 如 https://scan.abc.com/view?fn=
      * @param strings 以','分隔的多个字符串组成的字符串
      * @return
      */
@@ -73,12 +73,22 @@ public class StrSegTools {
      * @return 以','分隔的字符串
      */
     public static @NotNull String getListStr(List<String> stringList) {
+        return getListStr("", stringList);
+    }
+    
+    /**
+     * 获取列表字符串
+     *
+     * @param stringList
+     * @return 以','分隔的字符串
+     */
+    public static @NotNull String getListStr(String prefix, List<String> stringList) {
         if (stringList == null || stringList.size() == 0) {
             return "";
         } else {
             StringBuilder sb = new StringBuilder();
             for (String s : stringList) {
-                sb.append(",").append(s);
+                sb.append(",").append(prefix).append(s);
             }
             return sb.substring(1);
         }
@@ -90,7 +100,7 @@ public class StrSegTools {
      * @param numberList
      * @return 以','分隔的字符串
      */
-    public static @NotNull <T extends Number>String getNumberListStr(List<T> numberList) {
+    public static @NotNull <T extends Number> String getNumberListStr(List<T> numberList) {
         if (numberList == null || numberList.size() == 0) {
             return "";
         } else {
