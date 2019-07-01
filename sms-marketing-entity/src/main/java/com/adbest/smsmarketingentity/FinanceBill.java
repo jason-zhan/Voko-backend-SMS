@@ -31,4 +31,10 @@ public class FinanceBill implements Serializable {
     @Column(nullable = false)
     @CreationTimestamp
     private Timestamp time;  // 产生时间
+    /**
+     * 账单状态
+     * @see FinanceBillStatus
+     */
+    @Column(nullable = false)
+    private Integer status;
 }

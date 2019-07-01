@@ -14,9 +14,6 @@ public interface PaymentComponent {
      */
     void realTimePayment(Long customerId, BigDecimal cost);
     
-    // 更新信用额度
-    void updateCredit(Long customerId, BigDecimal cost);
-    
     // 推送指定用户账单
     void paymentRequest(Long customerId);
 }

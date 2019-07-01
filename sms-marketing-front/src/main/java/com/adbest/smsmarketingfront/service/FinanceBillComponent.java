@@ -12,9 +12,10 @@ public interface FinanceBillComponent {
     
     /**
      * 生成一条金融记录
-     * @param amount  金额
+     * @param customerId 用户id
+     * @param cost  金额
      * @param description  描述
      * @return
      */
-    int saveFinanceBill(BigDecimal amount, String description);
+    int saveFinanceBill(Long customerId, BigDecimal cost, String description);
 }

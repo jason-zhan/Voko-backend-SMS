@@ -23,6 +23,7 @@ import com.adbest.smsmarketingfront.entity.enums.RedisKey;
 import com.adbest.smsmarketingfront.entity.middleware.MsgPlanState;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
+import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
@@ -31,10 +32,8 @@ import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.task.plan.MessagePlanTask;
 import com.adbest.smsmarketingfront.util.CommonMessage;
-import com.adbest.smsmarketingfront.util.Counter;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.EasyTime;
-import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.StrSegTools;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.querydsl.core.BooleanBuilder;
@@ -50,7 +49,6 @@ import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
@@ -85,6 +83,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     private SmsBillComponent smsBillComponent;
     @Autowired
     private MmsBillComponent mmsBillComponent;
+    @Autowired
+    private MessageComponent messageComponent;
     
     @Autowired
     private JPAQueryFactory jpaQueryFactory;
@@ -97,10 +97,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;
-    @Value("${marketing.singleSmsPrice}")
-    private BigDecimal singleSmsPrice;
-    @Value("${marketing.singleMmsPrice}")
-    private BigDecimal singleMmsPrice;
+    @Value("${marketing.smsUnitPrice}")
+    private BigDecimal smsUnitPrice;
+    @Value("${marketing.mmsUnitPrice}")
+    private BigDecimal mmsUnitPrice;
     
     @Value("${message.contacts.defaultFirstName}")
     private String contactsFirstName;
@@ -129,10 +129,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             // 如果不包含联系人变量，此时已经可以判定内容是否超长
             overLengthValid(planState.preContent);
         }
+        // 计算消息总量
         toNumbersTraversal(createPlan, planState);
         contactsGroupsTraversal(createPlan, planState);
-        // 计算消息总量并结算
-        
         // 根据消息量结算
         
         // 更新任务信用消费额
@@ -291,7 +290,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 .offset(getPlanPage.getPage() * getPlanPage.getSize())
                 .limit(getPlanPage.getSize())
                 .fetchResults();
-        Page<MessagePlan> planPage = PageBase.toPageEntity(queryResults, getPlanPage);
+        Page<MessagePlan> planPage = getPlanPage.toPageEntity(queryResults);
         log.info("leave findByConditions");
         return planPage;
     }
@@ -337,7 +336,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Optional<Customer> optional = customerDao.findById(curId);
         Assert.isTrue(optional.isPresent(), "customer not exists");
         Customer customer = optional.get();
-        ServiceException.isTrue(customer.getAvailableCredit().compareTo(isSms ? singleSmsPrice : singleMmsPrice) >= 0,
+        ServiceException.isTrue(customer.getAvailableCredit().compareTo(isSms ? smsUnitPrice : mmsUnitPrice) >= 0,
                 bundle.getString("credit-not-enough"));
     }
     

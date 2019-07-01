@@ -30,15 +30,6 @@ public class PaymentComponentImpl implements PaymentComponent {
     }
     
     @Override
-    public void updateCredit(Long customerId, BigDecimal cost) {
-        log.info("enter updateCredit, customerId={}, cost={}", customerId, cost);
-        Assert.isTrue(cost != null && cost.compareTo(BigDecimal.ZERO) != 0, "cost must not be zero.");
-        int result = customerDao.updateCredit(customerId, cost);
-        ServiceException.isTrue(result > 0, bundle.getString("credit-not-enough"));
-        log.info("leave updateCredit");
-    }
-    
-    @Override
     public void paymentRequest(Long customerId) {
         log.info("enter paymentRequest, customerId={}", customerId);
         
