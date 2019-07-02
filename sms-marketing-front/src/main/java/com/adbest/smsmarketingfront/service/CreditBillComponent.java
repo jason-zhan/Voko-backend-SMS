@@ -22,7 +22,7 @@ public interface CreditBillComponent {
      * 保存任务信用消费账单
      * @param customerId  用户id
      * @param planId  消息发送任务id
-     * @param amount  金额
+     * @param amount  金额(+/-)
      * @param remark  备注/描述
      * @return
      */

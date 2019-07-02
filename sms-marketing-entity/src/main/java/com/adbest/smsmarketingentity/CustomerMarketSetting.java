@@ -49,7 +49,7 @@ public class CustomerMarketSetting implements Serializable {
     private Boolean automaticRenewal;
 
     /**
-     * 是否已过期
+     * 是否已过期（true:已过期）
      */
     private Boolean invalidStatus;
 

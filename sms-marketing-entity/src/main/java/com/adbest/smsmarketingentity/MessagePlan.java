@@ -40,9 +40,9 @@ public class MessagePlan implements Serializable {
     @Column(nullable = false)
     private Integer msgTotal;  // 消息总数
     @Column(nullable = false)
-    private Integer payNum;  // 额外支付数目
+    private Integer creditPayNum;  // 额外支付数目
     @Column(nullable = false)
-    private BigDecimal payCost;  // 额外支付金额
+    private BigDecimal creditPayCost;  // 额外支付金额
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
     /**
@@ -53,6 +53,7 @@ public class MessagePlan implements Serializable {
     @Column(nullable = false)
     @CreationTimestamp
     private Timestamp createTime;  // 创建时间
+    @Column(nullable = false)
     @UpdateTimestamp
     private Timestamp updateTime;  // 更新时间
 }

@@ -4,10 +4,12 @@ import com.adbest.smsmarketingentity.CreditBill;
 import com.adbest.smsmarketingentity.CreditBillType;
 import com.adbest.smsmarketingfront.dao.CreditBillDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
+import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CreditBillComponent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
@@ -42,10 +44,23 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         return true;
     }
     
+    @Transactional
     @Override
     public boolean savePlanConsume(Long customerId, Long planId, BigDecimal amount, String remark) {
         log.info("enter savePlanConsume, customerId={}, planId={}, amount={}, remark={}", customerId, planId, amount, remark);
-        
+        Assert.notNull(customerId, "customerId is null");
+        Assert.notNull(planId, "planId is null");
+        Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) != 0, "amount can't be null or zero.");
+        Assert.hasText(remark, "remark is empty");
+        CreditBill bill = new CreditBill();
+        bill.setCustomerId(customerId);
+        bill.setType(CreditBillType.MESSAGE_PLAN.getValue());
+        bill.setReferId(planId);
+        bill.setAmount(amount);
+        bill.setRemark(remark);
+        creditBillDao.save(bill);
+        int creditResult = customerDao.updateCredit(customerId, amount);
+        ServiceException.isTrue(creditResult > 0, bundle.getString("credit-not-enough"));
         log.info("leave savePlanConsume");
         return true;
     }

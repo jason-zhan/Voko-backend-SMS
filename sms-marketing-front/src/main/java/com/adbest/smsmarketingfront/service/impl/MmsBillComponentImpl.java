@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.MmsBill;
+import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
 import com.adbest.smsmarketingfront.dao.MmsBillDao;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
@@ -22,6 +23,9 @@ public class MmsBillComponentImpl implements MmsBillComponent {
     @Autowired
     MmsBillDao mmsBillDao;
     @Autowired
+    CustomerMarketSettingDao customerMarketSettingDao;
+    
+    @Autowired
     ResourceBundle bundle;
     
     @Override
@@ -30,13 +34,9 @@ public class MmsBillComponentImpl implements MmsBillComponent {
         Assert.notNull(customerId, "customerId can't be null");
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
-        if (amount == 0) {
-            return 0;
-        }
-        if (amount < 0) {
-            Long sum = mmsBillDao.sumByCustomerId(customerId);
-            ServiceException.isTrue(sum + amount >= 0, bundle.getString("mms-balance-not-enough"));
-        }
+        Assert.isTrue(amount != null && amount != 0, "amount can't be null!");
+        int result = customerMarketSettingDao.updateMmsByCustomerId(customerId, amount);
+        Assert.isTrue(result > 0, bundle.getString("sms-balance-not-enough"));
         MmsBill mmsBill = new MmsBill();
         mmsBill.setCustomerId(customerId);
         mmsBill.setInfoDescribe(describe);
