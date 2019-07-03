@@ -32,6 +32,11 @@ public class Keyword implements Serializable {
     @UpdateTimestamp
     private Timestamp updateTime;  // 最近修改时间
 
+    /**
+     * 是否为赠送关键字
+     */
+    private Boolean giftKeyword;
+
     public Keyword() {
     }
 

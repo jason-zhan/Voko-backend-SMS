@@ -169,4 +169,14 @@ public class TwilioUtil {
         String twilioSignature = request.getHeader("X-Twilio-Signature");
         return validator.validate(url, params, twilioSignature);
     }
+
+    /**
+     * 删除号码
+     *
+     * @param SID
+     * @return
+     */
+    public boolean deletePhoneNumber(String SID){
+        return IncomingPhoneNumber.deleter(SID).delete();
+    }
 }

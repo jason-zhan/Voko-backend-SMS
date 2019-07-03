@@ -17,4 +17,13 @@ public interface FinanceBillComponent {
      * @return
      */
     int saveFinanceBill(BigDecimal amount, String description);
+
+    /**
+     * 实时推送扣费,并产生账单
+     * @param amount
+     * @param description
+     * @param customerId
+     * @return
+     */
+    Boolean realTimeDeduction(BigDecimal amount, String description, Long customerId);
 }

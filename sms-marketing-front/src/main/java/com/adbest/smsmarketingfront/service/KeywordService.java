@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.Keyword;
 import com.adbest.smsmarketingfront.entity.form.KeywordForm;
+import com.adbest.smsmarketingfront.entity.vo.KeywordInfo;
 import com.adbest.smsmarketingfront.entity.vo.KeywordVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.util.PageBase;
@@ -22,4 +23,7 @@ public interface KeywordService {
 
     List<Keyword> findByCustomerIdAndTitle(Long customerId, String title);
 
+    KeywordInfo info();
+
+    KeywordVo buy(KeywordForm keywordForm);
 }

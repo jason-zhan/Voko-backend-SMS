@@ -1,9 +1,6 @@
 package com.adbest.smsmarketingfront.service.impl;
 
-import com.adbest.smsmarketingentity.CustomerMarketSetting;
-import com.adbest.smsmarketingentity.MarketSetting;
-import com.adbest.smsmarketingentity.MmsBill;
-import com.adbest.smsmarketingentity.SmsBill;
+import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
 import com.adbest.smsmarketingfront.entity.vo.CustomerMarketSettingVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
@@ -43,6 +40,15 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     @Autowired
     private SmsBillComponentImpl smsBillComponent;
 
+    @Autowired
+    private FinanceBillComponent financeBillComponent;
+
+    @Autowired
+    private MobileNumberService mobileNumberService;
+
+    @Autowired
+    private CustomerSettingsService customerSettingsService;
+
     @Override
     @Transactional
     public CustomerMarketSetting save(CustomerMarketSetting customerMarketSetting) {
@@ -54,10 +60,10 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         Long customerId = Current.get().getId();
         CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
         CustomerMarketSettingVo customerMarketSettingVo = new CustomerMarketSettingVo(customerMarketSetting);
-        Long smsNum = smsBillService.sumByCustomerId(customerId);
-        Long mmsNum = mmsBillService.sumByCustomerId(customerId);
-        customerMarketSettingVo.setSmsTotal(smsNum.intValue());
-        customerMarketSettingVo.setMmsTotal(mmsNum.intValue());
+//        Long smsNum = smsBillService.sumByCustomerId(customerId);
+//        Long mmsNum = mmsBillService.sumByCustomerId(customerId);
+//        customerMarketSettingVo.setSmsTotal(smsNum.intValue());
+//        customerMarketSettingVo.setMmsTotal(mmsNum.intValue());
         return customerMarketSettingVo;
     }
 
@@ -82,9 +88,10 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         ServiceException.notNull(id, resourceBundle.getString("NO_Market_Setting_SELECTED"));
         MarketSetting marketSetting  = marketSettingService.findById(id);
         ServiceException.notNull(marketSetting, resourceBundle.getString("MARKET_SETTING_NOT_EXISTS"));
+        ServiceException.isTrue(marketSetting.getPrice().doubleValue()!=0, resourceBundle.getString("FREE_PLANS_NOT_BUY"));
         CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
         MarketSetting ms  = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
-        int diffDays = TimeTools.getDiffDays(customerMarketSetting.getInvalidTime(), TimeTools.now());
+        int diffDays = TimeTools.getDiffDays(TimeTools.now(), customerMarketSetting.getInvalidTime());
         BigDecimal price = null;
         Integer smsTotal = 0;
         Integer mmsTotal = 0;
@@ -122,7 +129,16 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         /**
          * 扣费，账单
          */
+        financeBillComponent.realTimeDeduction(price.negate(),"Package Purchase", customerId);
 
+        Long num = mobileNumberService.countByDisableAndCustomerIdAndGiftNumber(false, customerId, true);
+        if(num<=0){
+            CustomerSettings customerSettings = customerSettingsService.findByCustomerId(customerId);
+            if(customerSettings.getNumberReceivingStatus()){
+                customerSettings.setNumberReceivingStatus(false);
+                customerSettingsService.save(customerSettings);
+            }
+        }
         return new CustomerMarketSettingVo(customerMarketSetting);
     }
 

@@ -45,4 +45,16 @@ public class MobileNumber implements Serializable {
      * 是否为赠送号码
      */
     private Boolean giftNumber;
+
+    /**
+     * 过期时间
+     */
+    private Timestamp invalidTime;
+
+    /**
+     * 是否开启自动续费
+     */
+    private Boolean automaticRenewal;
+
+    private String sid;
 }

@@ -41,6 +41,7 @@ import javax.servlet.http.HttpServletResponse;
 import javax.transaction.Transactional;
 import java.awt.*;
 import java.awt.image.BufferedImage;
+import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.List;
@@ -154,6 +155,7 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setIndustry(createSysUser.getIndustry());
         customer.setOrganization(createSysUser.getOrganization());
         customer.setSource(CustomerSource.REGISTER.getValue());
+        customer.setCredit(new BigDecimal("0"));
         String realIp = getRealIp(request);
         String key = "register:" + realIp;
         Boolean is = redisTemplate.opsForValue().setIfAbsent(key, "1", 60*60, TimeUnit.SECONDS);

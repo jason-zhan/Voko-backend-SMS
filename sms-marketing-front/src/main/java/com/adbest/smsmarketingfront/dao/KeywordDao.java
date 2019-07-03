@@ -23,4 +23,6 @@ public interface KeywordDao extends JpaRepository<Keyword, Long> {
     Integer deleteByCustomerIdAndIdIn(Long customerId, List<Long> ids);
 
     List<Keyword> findByCustomerIdAndTitle(Long customerId, String title);
+
+    Long countByCustomerIdAndGiftKeyword(Long customerId, Boolean giftKeyword);
 }

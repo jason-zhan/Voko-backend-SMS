@@ -58,3 +58,5 @@ logging:
 mobilePrice:
   free: 2
   ordinary: 1
+MobileNumberRecyclingDays: 30
+keywordPrice: 1

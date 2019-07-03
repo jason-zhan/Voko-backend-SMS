@@ -82,6 +82,7 @@ public class DbImportCustomerTask {
             customer.setFirstName(vkCustomers.getFirstname());
             customer.setLastName(vkCustomers.getLastname());
             customer.setSource(CustomerSource.API_Added.getValue());
+            customer.setCustomerLogin(vkCustomers.getLogin());
             customerList.add(customer);
         }
         customerService.saveImportCustomer(customerList);
