@@ -1,31 +1,46 @@
 package com.adbest.smsmarketingfront.service.impl;
 
+import com.adbest.smsmarketingentity.Contacts;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.MessagePlan;
+import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.MessageReturnCode;
 import com.adbest.smsmarketingentity.OutboxStatus;
+import com.adbest.smsmarketingfront.dao.ContactsDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
+import com.adbest.smsmarketingfront.entity.enums.RedisKey;
+import com.adbest.smsmarketingfront.entity.middleware.MsgPlanState;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CreditBillComponent;
 import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
+import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.EasyTime;
+import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 import java.util.ResourceBundle;
 
@@ -39,6 +54,8 @@ public class MessageComponentImpl implements MessageComponent {
     private MessageRecordDao messageRecordDao;
     @Autowired
     private CustomerDao customerDao;
+    @Autowired
+    private ContactsDao contactsDao;
     @Autowired
     private CustomerMarketSettingDao customerMarketSettingDao;
     
@@ -55,9 +72,15 @@ public class MessageComponentImpl implements MessageComponent {
     private BigDecimal smsUnitPrice;
     @Value("${marketing.mmsUnitPrice}")
     private BigDecimal mmsUnitPrice;
+    @Value("${message.contacts.defaultFirstName}")
+    private String contactsFirstName;
+    @Value("${message.contacts.defaultLastName}")
+    private String contactsLastName;
     
     @Autowired
     private ResourceBundle bundle;
+    @Autowired
+    private RedisTemplate redisTemplate;
     
     private static final int PAYMENT_RETRY = 5;  // 支付失败重试次数
     
@@ -92,30 +115,35 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Transactional
     @Override
-    public void createMsgPlanSettlement(Long customerId, Long planId, int amount, boolean isSms) {
-        log.info("enter createMsgPlanSettlement, customerId={}, planId={}, amount={}, isSms={}", customerId, planId, amount, isSms);
-        // 参数检查
-        Assert.notNull(planId, "planId is null");
-        Assert.isTrue(amount > 0, "amount must be greater than zero");
-        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customerId);
+    public void createMsgPlanSettlement(CreateMessagePlan createPlan, MsgPlanState planState) {
+        log.info("enter createMsgPlanSettlement, createPlan={}, planState={}", createPlan, planState);
+        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(planState.cur.getId());
         Assert.notNull(marketSetting, "customer's market-setting is null");
-        if (marketSetting.getInvalidStatus() || (isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
+        // 计算消息总量
+        calcMsgTotal(planState, createPlan.getFromNumList(), createPlan.getToNumberList(), createPlan.getGroupList());
+        Assert.isTrue(planState.msgTotal > 0, "The total number of messages is incorrectly calculated");
+        if (marketSetting.getInvalidStatus() || (planState.isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
             // 使用信用支付
-            BigDecimal creditPay = purchaseWithCredit(customerId, isSms, amount);
-            // 生成信用账单
-            creditBillComponent.savePlanConsume(customerId, planId, creditPay, bundle.getString("bill-create-plan"));
+            BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, planState.msgTotal);
+            
+            planState.setSettledTotal(planState.msgTotal);
+            planState.setCreditPayNum(planState.msgTotal);
+            planState.setCreditPayCost(creditPay.abs());
         } else {
             // 首先使用套餐支付
-            int restAmount = amount - settlePartWithMarketSetting(marketSetting, isSms, amount);
+            int restAmount = planState.msgTotal - settlePartWithMarketSetting(marketSetting, planState.isSms, planState.msgTotal);
             if (restAmount > 0) {
                 // 套餐不足部分，使用信用支付
-                BigDecimal creditPay = purchaseWithCredit(customerId, isSms, restAmount);
+                BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, restAmount);
                 // 生成信用账单
-                creditBillComponent.savePlanConsume(customerId, planId, creditPay.negate(), bundle.getString("bill-create-plan"));
+//                creditBillComponent.savePlanConsume(planState.cur.getId(), planState.planId, creditPay.negate(), bundle.getString("bill-create-plan"));
+                planState.setCreditPayNum(restAmount);
+                planState.setCreditPayCost(creditPay.abs());
             }
+            planState.setSettledTotal(planState.msgTotal);
         }
         // 产生消息账单
-        saveMsgBill(customerId, isSms, -amount, bundle.getString("bill-create-plan"));
+        saveMsgBill(planState.cur.getId(), planState.isSms, -planState.msgTotal, bundle.getString("bill-create-plan"));
         log.info("leave createMsgPlanSettlement");
     }
     
@@ -148,9 +176,207 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Override
     public void validBeforeExec(Long planId) {
-        // TODO
+        log.info("enter validBeforeExec, planId={}", planId);
+        // 参数检查
+        Assert.notNull(planId, "planId is null");
+        Optional<MessagePlan> planOptional = messagePlanDao.findById(planId);
+        Assert.isTrue(planOptional.isPresent(), "message plan does not exists");
+        MessagePlan plan = planOptional.get();
+        Optional<Customer> customerOptional = customerDao.findById(plan.getCustomerId());
+        Assert.isTrue(customerOptional.isPresent(), "customer does not exists");
+        Customer customer = customerOptional.get();
+        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customer.getId());
+        Assert.notNull(marketSetting, "customer's market-setting does not exists");
+        // 判断当前是否跨套餐
+        boolean outerPackage = marketSetting.getInvalidStatus() || plan.getUpdateTime().before(marketSetting.getOrderTime());
+        // 计算当前消息总量
+        MsgPlanState planState = MsgPlanState.init(plan, new CustomerVo(customer), true);
+        
+        if (outerPackage) {  // 跨套餐，则只返还多余的信用额度，不返还套餐量，且超出部分不予执行
+        
+        } else {  // 套餐周期内执行，则根据当前最新数据进行结算修正
+        
+        }
+        log.info("leave validBeforeExec");
     }
     
+    // 计算消息总数
+    private void calcMsgTotal(MsgPlanState planState, List<String> fromNumList, List<String> toNumList, List<Long> groupIdList) {
+        toNumbersTraversal(planState, fromNumList, toNumList);
+        contactsGroupsTraversal(planState, fromNumList, groupIdList);
+    }
+    
+    // 遍历输入的手机号并计算消息量
+    private void toNumbersTraversal(MsgPlanState planState, List<String> fromNumList, List<String> toNumList) {
+        if (toNumList == null || toNumList.size() == 0) {
+            return;
+        }
+        int fromListSize = fromNumList.size();
+        List<MessageRecord> messageList = new ArrayList<>();
+        List<Contacts> newContactsList = new ArrayList<>();
+        for (String number : toNumList) {
+            // 存在性验证
+            Contacts contacts = contactsDao.findFirstByCustomerIdAndPhone(planState.cur.getId(), number);
+            if (contacts == null) {
+                // 不存在，生成联系人并加入新建联系人列表
+                contacts = generateContacts(planState.cur.getId(), number);
+                newContactsList.add(contacts);
+                continue;
+            }
+            calcMsg(messageList, fromNumList, planState, contacts);
+        }
+        // 批量持久化增加的联系人并计算消息数
+        if (newContactsList.size() > 0) {
+            contactsDao.saveAll(newContactsList);
+            String content = "";
+            if (planState.contactsVars) {
+                // 默认联系人名称和姓氏
+                // TODO 内容优化
+                content = MessageTools.replaceContactsVariables(planState.preContent, contactsFirstName, contactsLastName);
+                overLengthValid(content);
+            }
+            // 计算分段数
+            int segments = planState.isSms ? (planState.contactsVars ? MessageTools.calcSmsSegments(content) : planState.preSegments) : 1;
+            planState.msgTotal += segments * newContactsList.size();
+            if (planState.saveMsg) {
+                for (Contacts contacts : newContactsList) {
+                    // 新增的号码，跳过各项验证
+                    messageList.add(generateMessage(
+                            planState,
+                            contacts,
+                            fromNumList.get(planState.counter % fromListSize),
+                            content,
+                            segments
+                    ));
+                    planState.counter++;
+                }
+            }
+        }
+        // 批量保存消息
+        if (messageList.size() > 0) {
+            messageRecordDao.saveAll(messageList);
+        }
+    }
+    
+    // 遍历所有群组并计算消息量
+    private void contactsGroupsTraversal(MsgPlanState planState, List<String> fromNumList, List<Long> groupIdList) {
+        if (groupIdList == null || groupIdList.size() == 0) {
+            return;
+        }
+        for (Long groupId : groupIdList) {
+            groupTraversal(groupId, fromNumList, planState);
+        }
+    }
+    
+    // 遍历群组所有联系人并计算生成的消息数
+    private void groupTraversal(Long groupId, List<String> fromNumList, MsgPlanState planState) {
+        Page<Contacts> contactsPage = null;
+        Pageable pageable = PageRequest.of(0, 1000);
+        do {
+            contactsPage = contactsDao.findUsableByCustomerIdAndGroupId(planState.cur.getId(), groupId, pageable);
+            // 群组验证
+            if (contactsPage.isEmpty()) {
+                break;
+            }
+            List<MessageRecord> messageList = new ArrayList<>();
+            for (Contacts contacts : contactsPage.getContent()) {
+                calcMsg(messageList, fromNumList, planState, contacts);
+            }
+            // 批量保存消息
+            if (messageList.size() > 0) {
+                messageRecordDao.saveAll(messageList);
+            }
+            pageable = pageable.next();
+        } while (contactsPage.hasNext());
+    }
+    
+    // 生成联系人实例
+    private Contacts generateContacts(Long customerId, String phone) {
+        Contacts contacts = new Contacts();
+        contacts.setCustomerId(customerId);
+        contacts.setPhone(phone);
+        contacts.setInLock(false);
+        contacts.setIsDelete(false);
+        contacts.setSource(ContactsSource.API_Added.getValue());
+        return contacts;
+    }
+    
+    // 生成消息实例
+    private MessageRecord generateMessage(MsgPlanState planState, Contacts contacts, String fromNumber, String content, int segments) {
+        MessageRecord message = new MessageRecord();
+        message.setPlanId(planState.planId);
+        message.setCustomerId(planState.cur.getId());
+        message.setSms(planState.isSms);
+        message.setInbox(false);
+        message.setStatus(OutboxStatus.PLANNING.getValue());
+        message.setDisable(false);
+        message.setCustomerNumber(fromNumber);
+        message.setContent(content);
+        message.setSegments(segments);
+        message.setMediaList(planState.mediaListStr);
+        message.setContactsId(contacts.getId());
+        message.setContactsNumber(contacts.getPhone());
+        return message;
+    }
+    
+    private void calcMsg(List<MessageRecord> messageList, List<String> fromNumList, MsgPlanState planState, Contacts contacts) {
+        //  合法性验证
+        if (contacts.getIsDelete() || contacts.getInLock()) {
+            return;
+        }
+        //  唯一性验证
+        if (isRepeatRecipient(planState.planId, contacts.getId())) {
+            return;
+        }
+        //  计算内容
+        String content = "";
+        if (planState.contactsVars) {
+            content = MessageTools.replaceContactsVariables(planState.preContent, contacts.getFirstName(), contacts.getLastName());
+            overLengthValid(content);
+        }
+        //  计算分段数
+        int segments = planState.isSms ? (planState.contactsVars ? MessageTools.calcSmsSegments(content) : planState.preSegments) : 1;
+        planState.msgTotal += segments;
+        //  持久化消息
+        if (planState.saveMsg) {
+            messageList.add(generateMessage(
+                    planState,
+                    contacts,
+                    fromNumList.get(planState.counter % fromNumList.size()),
+                    content,
+                    segments
+            ));
+            planState.counter++;
+        }
+    }
+    
+    /**
+     * 验证接收消息号码是否重复
+     *
+     * @param planId
+     * @param contactsId
+     * @return true:repeat | false:absent
+     */
+    private boolean isRepeatRecipient(Long planId, Long contactsId) {
+        String key = new StringBuilder(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey()).append(planId).append(":").append(contactsId).toString();
+        return !redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getTimeUnit());
+    }
+    
+    // 内容超长验证提示
+    private void overLengthValid(String content) {
+        ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
+                bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
+    }
+    
+    /**
+     * 计算各项变化并结算
+     *
+     * @param method
+     * @param plan
+     * @param marketSetting
+     * @param amount
+     * @param isSms
+     */
     private void calcChangeAndPay(int method, MessagePlan plan, CustomerMarketSetting marketSetting, int amount, boolean isSms) {
         int smsChange = 0;  // 套餐短信量变化
         int mmsChange = 0;  // 套餐彩信量变化

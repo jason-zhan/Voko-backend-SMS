@@ -1,7 +1,6 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingfront.dao.CustomerDao;
-import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.PaymentComponent;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -25,7 +24,7 @@ public class PaymentComponentImpl implements PaymentComponent {
     public void realTimePayment(Long customerId, BigDecimal cost) {
         log.info("enter realTimePayment, customerId={}, cost={}", customerId, cost);
         Assert.isTrue(cost != null && cost.compareTo(BigDecimal.ZERO) > 0, "cost must be greater than zero.");
-        
+        // TODO 持久化金融账单
         log.info("leave realTimePayment");
     }
     
