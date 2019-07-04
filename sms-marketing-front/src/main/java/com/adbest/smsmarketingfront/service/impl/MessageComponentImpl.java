@@ -125,7 +125,6 @@ public class MessageComponentImpl implements MessageComponent {
         if (marketSetting.getInvalidStatus() || (planState.isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
             // 使用信用支付
             BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, planState.msgTotal);
-            
             planState.setSettledTotal(planState.msgTotal);
             planState.setCreditPayNum(planState.msgTotal);
             planState.setCreditPayCost(creditPay.abs());
@@ -135,8 +134,6 @@ public class MessageComponentImpl implements MessageComponent {
             if (restAmount > 0) {
                 // 套餐不足部分，使用信用支付
                 BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, restAmount);
-                // 生成信用账单
-//                creditBillComponent.savePlanConsume(planState.cur.getId(), planState.planId, creditPay.negate(), bundle.getString("bill-create-plan"));
                 planState.setCreditPayNum(restAmount);
                 planState.setCreditPayCost(creditPay.abs());
             }

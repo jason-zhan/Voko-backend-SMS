@@ -33,7 +33,7 @@ public class CreateMessagePlan {
         target.setIsSms(mediaIdlList == null || mediaIdlList.size() == 0);
         target.setExecTime(execTime);
         target.setRemark(remark);
-        target.setFromNumList(StrSegTools.getListStr(toNumberList));
+        target.setFromNumList(StrSegTools.getListStr(fromNumList));
         target.setToNumList(StrSegTools.getListStr(toNumberList));
         target.setToGroupList(StrSegTools.getNumberListStr(groupList));
     }

@@ -22,6 +22,11 @@ public interface MessagePlanDao extends JpaRepository<MessagePlan, Long>, JpaSpe
     @Modifying
     @Query("update MessagePlan set disable = ?3 where id = ?1 and customerId = ?2")
     int disableByIdAndCustomerId(Long id, Long customerId, boolean disable);
+    
+    @Transactional
+    @Modifying
+    @Query("update MessagePlan set msgTotal = 0, creditPayNum = 0, creditPayCost = 0, status = ?2 where id = ?1 and status = ?3")
+    int cancelMessagePlan(Long id, int targetStatus, int currentStatus);
 
     MessagePlan findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     

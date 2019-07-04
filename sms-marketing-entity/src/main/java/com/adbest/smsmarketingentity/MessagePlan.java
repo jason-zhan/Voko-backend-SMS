@@ -38,11 +38,11 @@ public class MessagePlan implements Serializable {
     private String toNumList; // 接收消息的联系人号码列表，多个以','分隔
     private String toGroupList;  // 接收消息的群组id列表，多个以','分隔
     @Column(nullable = false)
-    private Integer msgTotal;  // 消息总数
+    private Integer msgTotal;  // 消息总数 (+)
     @Column(nullable = false)
-    private Integer creditPayNum;  // 额外支付数目
+    private Integer creditPayNum;  // 信用支付消息数 (+)
     @Column(nullable = false)
-    private BigDecimal creditPayCost;  // 额外支付金额
+    private BigDecimal creditPayCost;  // 额外支付金额 (+)
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)
     /**

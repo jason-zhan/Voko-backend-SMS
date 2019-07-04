@@ -8,7 +8,8 @@ import java.util.Calendar;
 import java.util.Date;
 
 /**
- * A time tools class.
+ * A simple and easy-to-use time tools class.
+ * It's not thread-safe. So don't share it in multi threads.
  * Depend on {@link Calendar}
  */
 public class EasyTime {
@@ -61,10 +62,18 @@ public class EasyTime {
         instance = new Calendar.Builder().setInstant(time).build();
     }
     
+    /**
+     * get the {@link Timestamp} of this time.
+     * @return
+     */
     public Timestamp stamp() {
         return new Timestamp(instance.getTimeInMillis());
     }
     
+    /**
+     * get the milliseconds of this time.
+     * @return
+     */
     public long millis() {
         return instance.getTimeInMillis();
     }
@@ -105,31 +114,61 @@ public class EasyTime {
         return this;
     }
     
+    /**
+     * add some milliseconds
+     * @param millis (+/-)
+     * @return
+     */
     public EasyTime addMillis(int millis) {
         instance.add(Calendar.MILLISECOND, millis);
         return this;
     }
     
+    /**
+     * add some seconds
+     * @param seconds (+/-)
+     * @return
+     */
     public EasyTime addSeconds(int seconds) {
         instance.add(Calendar.SECOND, seconds);
         return this;
     }
     
+    /**
+     * add some minutes
+     * @param minutes (+/-)
+     * @return
+     */
     public EasyTime addMinutes(int minutes) {
         instance.add(Calendar.MINUTE, minutes);
         return this;
     }
     
+    /**
+     * add some hours
+     * @param hours (+/-)
+     * @return
+     */
     public EasyTime addHours(int hours) {
         instance.add(Calendar.HOUR_OF_DAY, hours);
         return this;
     }
     
+    /**
+     * add some days
+     * @param days (+/-)
+     * @return
+     */
     public EasyTime addDays(int days) {
         instance.add(Calendar.DATE, days);
         return this;
     }
     
+    /**
+     * add some months
+     * @param months (+/-)
+     * @return
+     */
     public EasyTime addMonths(int months) {
         instance.add(Calendar.MONTH, months);
         return this;
