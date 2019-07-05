@@ -17,14 +17,13 @@ import com.adbest.smsmarketingfront.entity.enums.RedisKey;
 import com.adbest.smsmarketingfront.entity.middleware.MsgPlanState;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
+import com.adbest.smsmarketingfront.handler.plan.OverBudgetException;
 import com.adbest.smsmarketingfront.service.CreditBillComponent;
 import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
-import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.util.CommonMessage;
-import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
 import lombok.extern.slf4j.Slf4j;
@@ -115,12 +114,12 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Transactional
     @Override
-    public void createMsgPlanSettlement(CreateMessagePlan createPlan, MsgPlanState planState) {
-        log.info("enter createMsgPlanSettlement, createPlan={}, planState={}", createPlan, planState);
+    public void msgPlanSettlement(MsgPlanState planState) {
+        log.info("enter msgPlanSettlement, planState={}", planState);
         CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(planState.cur.getId());
         Assert.notNull(marketSetting, "customer's market-setting is null");
         // 计算消息总量
-        calcMsgTotal(planState, createPlan.getFromNumList(), createPlan.getToNumberList(), createPlan.getGroupList());
+        calcMsgTotal(planState);
         Assert.isTrue(planState.msgTotal > 0, "The total number of messages is incorrectly calculated");
         if (marketSetting.getInvalidStatus() || (planState.isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
             // 使用信用支付
@@ -141,7 +140,7 @@ public class MessageComponentImpl implements MessageComponent {
         }
         // 产生消息账单
         saveMsgBill(planState.cur.getId(), planState.isSms, -planState.msgTotal, bundle.getString("bill-create-plan"));
-        log.info("leave createMsgPlanSettlement");
+        log.info("leave msgPlanSettlement");
     }
     
     @Transactional
@@ -171,6 +170,7 @@ public class MessageComponentImpl implements MessageComponent {
         log.info("leave updateMsgPlanSettlement");
     }
     
+    @Transactional
     @Override
     public void validBeforeExec(Long planId) {
         log.info("enter validBeforeExec, planId={}", planId);
@@ -184,34 +184,70 @@ public class MessageComponentImpl implements MessageComponent {
         Customer customer = customerOptional.get();
         CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customer.getId());
         Assert.notNull(marketSetting, "customer's market-setting does not exists");
-        // 判断当前是否跨套餐
-        boolean outerPackage = marketSetting.getInvalidStatus() || plan.getUpdateTime().before(marketSetting.getOrderTime());
-        // 计算当前消息总量
+        // 初始化中间参数实例
         MsgPlanState planState = MsgPlanState.init(plan, new CustomerVo(customer), true);
-        
-        if (outerPackage) {  // 跨套餐，则只返还多余的信用额度，不返还套餐量，且超出部分不予执行
-        
-        } else {  // 套餐周期内执行，则根据当前最新数据进行结算修正
-        
+        // 计算当前消息总量
+        try {
+            calcMsgTotal(planState);
+        } catch (OverBudgetException e) {
+            log.info("Current message volume reaches or exceeds previous budget.");
+        }
+        if (planState.msgTotal < plan.getMsgTotal()) {
+            // 返还结算
+            rebateBeforeExec(plan, marketSetting, planState);
+            // 更新任务
+            messagePlanDao.save(plan);
         }
         log.info("leave validBeforeExec");
     }
     
+    private void rebateBeforeExec(MessagePlan plan, CustomerMarketSetting marketSetting, MsgPlanState planState) {
+        int creditLine = plan.getMsgTotal() - plan.getCreditPayNum(); // 信用支付基线
+        int msgDiff = creditLine - planState.msgTotal;  // 信用支付基线 与 总消息数 之差
+        int smsChange = 0;
+        int mmsChange = 0;
+        BigDecimal creditChange;
+        // 判断当前是否跨套餐
+        boolean outerPackage = marketSetting.getInvalidStatus() || plan.getUpdateTime().before(marketSetting.getOrderTime());
+        if (msgDiff < 0) {
+            BigDecimal creditPay = BigDecimal.valueOf(-msgDiff).multiply(planState.isSms ? smsUnitPrice : mmsUnitPrice);
+            creditChange = plan.getCreditPayCost().subtract(creditPay);
+            plan.setCreditPayNum(-msgDiff);
+            plan.setCreditPayCost(creditPay);
+        } else {
+            creditChange = plan.getCreditPayCost().abs();
+            plan.setCreditPayNum(0);
+            plan.setCreditPayCost(BigDecimal.ZERO);
+            smsChange = planState.isSms ? msgDiff : 0;
+            mmsChange = planState.isSms ? 0 : msgDiff;
+        }
+        plan.setMsgTotal(planState.msgTotal);
+        // 结算
+        if (smsChange > 0 && !outerPackage) {
+            smsBillComponent.saveSmsBill(plan.getCustomerId(), bundle.getString("bill-verify-exec-plan"), smsChange);
+        }
+        if (mmsChange > 0 && !outerPackage) {
+            mmsBillComponent.saveMmsBill(plan.getCustomerId(), bundle.getString("bill-verify-exec-plan"), mmsChange);
+        }
+        if (creditChange != null && creditChange.compareTo(BigDecimal.ZERO) > 0) {
+            creditBillComponent.savePlanConsume(plan.getCustomerId(), plan.getId(), creditChange, bundle.getString("bill-verify-exec-plan"));
+        }
+    }
+    
     // 计算消息总数
-    private void calcMsgTotal(MsgPlanState planState, List<String> fromNumList, List<String> toNumList, List<Long> groupIdList) {
-        toNumbersTraversal(planState, fromNumList, toNumList);
-        contactsGroupsTraversal(planState, fromNumList, groupIdList);
+    private void calcMsgTotal(MsgPlanState planState) {
+        toNumbersTraversal(planState);
+        contactsGroupsTraversal(planState);
     }
     
     // 遍历输入的手机号并计算消息量
-    private void toNumbersTraversal(MsgPlanState planState, List<String> fromNumList, List<String> toNumList) {
-        if (toNumList == null || toNumList.size() == 0) {
+    private void toNumbersTraversal(MsgPlanState planState) {
+        if (planState.toNumList == null || planState.toNumList.size() == 0) {
             return;
         }
-        int fromListSize = fromNumList.size();
         List<MessageRecord> messageList = new ArrayList<>();
         List<Contacts> newContactsList = new ArrayList<>();
-        for (String number : toNumList) {
+        for (String number : planState.toNumList) {
             // 存在性验证
             Contacts contacts = contactsDao.findFirstByCustomerIdAndPhone(planState.cur.getId(), number);
             if (contacts == null) {
@@ -220,7 +256,7 @@ public class MessageComponentImpl implements MessageComponent {
                 newContactsList.add(contacts);
                 continue;
             }
-            calcMsg(messageList, fromNumList, planState, contacts);
+            calcMsg(messageList, planState, contacts);
         }
         // 批量持久化增加的联系人并计算消息数
         if (newContactsList.size() > 0) {
@@ -232,20 +268,13 @@ public class MessageComponentImpl implements MessageComponent {
                 content = MessageTools.replaceContactsVariables(planState.preContent, contactsFirstName, contactsLastName);
                 overLengthValid(content);
             }
-            // 计算分段数
+            // 计算分段数 (新增的联系人使用默认名称和姓氏，使得所有消息长度相同)
             int segments = planState.isSms ? (planState.contactsVars ? MessageTools.calcSmsSegments(content) : planState.preSegments) : 1;
             planState.msgTotal += segments * newContactsList.size();
             if (planState.saveMsg) {
                 for (Contacts contacts : newContactsList) {
                     // 新增的号码，跳过各项验证
-                    messageList.add(generateMessage(
-                            planState,
-                            contacts,
-                            fromNumList.get(planState.counter % fromListSize),
-                            content,
-                            segments
-                    ));
-                    planState.counter++;
+                    counterCore(planState, messageList, content, segments, contacts);
                 }
             }
         }
@@ -255,18 +284,34 @@ public class MessageComponentImpl implements MessageComponent {
         }
     }
     
+    // 计数核心
+    private void counterCore(MsgPlanState planState, List<MessageRecord> messageList, String content, int segments, Contacts contacts) {
+        messageList.add(generateMessage(
+                planState,
+                contacts,
+                planState.fromNumList.get(planState.counter % planState.fromNumList.size()),
+                content,
+                segments
+        ));
+        planState.counter++;
+        if (planState.settledTotal > 0 && planState.msgTotal >= planState.settledTotal) {
+            messageRecordDao.saveAll(messageList);
+            throw new OverBudgetException();
+        }
+    }
+    
     // 遍历所有群组并计算消息量
-    private void contactsGroupsTraversal(MsgPlanState planState, List<String> fromNumList, List<Long> groupIdList) {
-        if (groupIdList == null || groupIdList.size() == 0) {
+    private void contactsGroupsTraversal(MsgPlanState planState) {
+        if (planState.toGroupList == null || planState.toGroupList.size() == 0) {
             return;
         }
-        for (Long groupId : groupIdList) {
-            groupTraversal(groupId, fromNumList, planState);
+        for (Long groupId : planState.toGroupList) {
+            groupTraversal(groupId, planState);
         }
     }
     
     // 遍历群组所有联系人并计算生成的消息数
-    private void groupTraversal(Long groupId, List<String> fromNumList, MsgPlanState planState) {
+    private void groupTraversal(Long groupId, MsgPlanState planState) {
         Page<Contacts> contactsPage = null;
         Pageable pageable = PageRequest.of(0, 1000);
         do {
@@ -277,7 +322,7 @@ public class MessageComponentImpl implements MessageComponent {
             }
             List<MessageRecord> messageList = new ArrayList<>();
             for (Contacts contacts : contactsPage.getContent()) {
-                calcMsg(messageList, fromNumList, planState, contacts);
+                calcMsg(messageList, planState, contacts);
             }
             // 批量保存消息
             if (messageList.size() > 0) {
@@ -316,7 +361,7 @@ public class MessageComponentImpl implements MessageComponent {
         return message;
     }
     
-    private void calcMsg(List<MessageRecord> messageList, List<String> fromNumList, MsgPlanState planState, Contacts contacts) {
+    private void calcMsg(List<MessageRecord> messageList, MsgPlanState planState, Contacts contacts) {
         //  合法性验证
         if (contacts.getIsDelete() || contacts.getInLock()) {
             return;
@@ -336,14 +381,7 @@ public class MessageComponentImpl implements MessageComponent {
         planState.msgTotal += segments;
         //  持久化消息
         if (planState.saveMsg) {
-            messageList.add(generateMessage(
-                    planState,
-                    contacts,
-                    fromNumList.get(planState.counter % fromNumList.size()),
-                    content,
-                    segments
-            ));
-            planState.counter++;
+            counterCore(planState, messageList, content, segments, contacts);
         }
     }
     

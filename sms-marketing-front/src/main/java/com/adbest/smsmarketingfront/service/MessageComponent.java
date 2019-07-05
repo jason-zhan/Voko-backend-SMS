@@ -26,16 +26,15 @@ public interface MessageComponent {
     int updateMessageStatus(StatusCallbackParam param);
     
     /**
-     * 创建任务结算
-     * @param createPlan
+     * 任务结算
      * @param planState
      * @return 创建任务信用额度消费
      */
-    void createMsgPlanSettlement(CreateMessagePlan createPlan,  MsgPlanState planState);
+    void msgPlanSettlement(MsgPlanState planState);
     
     /**
      * 更新任务结算
-     *
+     * @deprecated
      * @param planId
      * @param amount
      * @param isSms

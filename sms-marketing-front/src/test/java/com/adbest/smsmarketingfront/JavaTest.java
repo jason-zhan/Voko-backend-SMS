@@ -1,9 +1,7 @@
 package com.adbest.smsmarketingfront;
 
 import com.adbest.smsmarketingentity.Customer;
-import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.util.EasyTime;
-import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.StrSegTools;
 import org.junit.Test;
 
@@ -42,7 +40,7 @@ public class JavaTest {
     
     @Test
     public void testNumberToString() {
-        String listStr = StrSegTools.getNumberListStr(Arrays.asList(0, 2.5, 300L));
+        String listStr = StrSegTools.getListStr(Arrays.asList(0, 2.5, 300L));
         System.out.println(listStr);
     }
     

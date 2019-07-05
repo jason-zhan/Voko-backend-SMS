@@ -36,7 +36,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -102,9 +101,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         MessagePlan plan = generatePlan(createPlan);
         messagePlanDao.save(plan);
         // 初始化中间参数实例
-        MsgPlanState planState = MsgPlanState.init(plan, false);
+        MsgPlanState planState = MsgPlanState.init(plan, createPlan, Current.get(), false);
         // 消息结算
-        messageComponent.createMsgPlanSettlement(createPlan, planState);
+        messageComponent.msgPlanSettlement(planState);
         // 修改任务结算信息
         plan.setMsgTotal(planState.msgTotal);
         plan.setCreditPayNum(planState.creditPayNum);
@@ -135,9 +134,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 持久化任务(消息结算需要任务id)
         messagePlanDao.save(plan);
         // 初始化中间参数实例
-        MsgPlanState planState = MsgPlanState.init(plan, true);
+        MsgPlanState planState = MsgPlanState.init(plan, create, Current.get(), true);
         // 消息结算
-        messageComponent.createMsgPlanSettlement(create, planState);
+        messageComponent.msgPlanSettlement(planState);
         // 修改任务结算信息
         plan.setMsgTotal(planState.msgTotal);
         plan.setCreditPayNum(planState.creditPayNum);
@@ -220,7 +219,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         // 更新任务 - 变更为编辑中
         int cancelResult = messagePlanDao.cancelMessagePlan(found.getId(), MessagePlanStatus.EDITING.getValue(), MessagePlanStatus.SCHEDULING.getValue());
-        ServiceException.isTrue(cancelResult>0, bundle.getString("msg-plan-cancel-failed"));
+        ServiceException.isTrue(cancelResult > 0, bundle.getString("msg-plan-cancel-failed"));
         log.info("leave cancel");
         return 1;
     }
@@ -230,6 +229,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     public int restart(Long id) {
         log.info("enter restart, id=" + id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
+        // 检查任务
         CustomerVo cur = Current.get();
         MessagePlan found = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(id, cur.getId());
         ServiceException.notNull(found, "msg-plan-not-exists");
@@ -239,16 +239,20 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         );
         ServiceException.isTrue(found.getExecTime().after(EasyTime.now()),
                 bundle.getString("msg-plan-execute-time-later"));
-        // 更新
-//        found.setStatus(MessagePlanStatus.SCHEDULING.getValue());
-//        messagePlanDao.save(found);
-//        int msgTotal = messageRecordDao.sumMsgNumByPlanId(found.getId());
-//        // 扣除消息条数
-//        if (StringUtils.hasText(found.getMediaIdList())) {
-//            mmsBillComponent.saveMmsBill(cur.getId(), "restart scheduled send: " + found.getTitle(), -msgTotal);
-//        } else {
-//            smsBillComponent.saveSmsBill(cur.getId(), "restart scheduled send: " + found.getTitle(), -msgTotal);
-//        }
+        // 初始化中间参数实例
+        MsgPlanState planState = MsgPlanState.init(found, cur, false);
+        // 消息结算
+        messageComponent.msgPlanSettlement(planState);
+        // 修改任务结算信息
+        found.setMsgTotal(planState.msgTotal);
+        found.setCreditPayNum(planState.creditPayNum);
+        found.setCreditPayCost(planState.creditPayCost);
+        // 更新任务
+        messagePlanDao.save(found);
+        // 生成信用账单
+        if (planState.creditPayCost.compareTo(BigDecimal.ZERO) > 0) {  // 若有信用额度支付，必大于0
+            creditBillComponent.savePlanConsume(cur.getId(), found.getId(), planState.creditPayCost.negate(), bundle.getString("bill-restart-plan"));
+        }
         log.info("leave restart");
         return 1;
     }

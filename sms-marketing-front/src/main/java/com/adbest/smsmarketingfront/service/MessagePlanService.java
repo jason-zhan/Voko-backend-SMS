@@ -29,7 +29,7 @@ public interface MessagePlanService {
     // 取消定时任务(无须对任务细节进行校验)
     int cancel(Long id);
     
-    // 重启定时任务
+    // 重启定时任务(任务细节已通过校验，这里将进行任务结算)
     int restart(Long id);
     
     // 删除发送任务(即禁用, 目标：编辑中的任务)

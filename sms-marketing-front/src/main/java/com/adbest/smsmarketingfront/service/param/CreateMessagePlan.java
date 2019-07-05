@@ -35,6 +35,6 @@ public class CreateMessagePlan {
         target.setRemark(remark);
         target.setFromNumList(StrSegTools.getListStr(fromNumList));
         target.setToNumList(StrSegTools.getListStr(toNumberList));
-        target.setToGroupList(StrSegTools.getNumberListStr(groupList));
+        target.setToGroupList(StrSegTools.getListStr(groupList));
     }
 }

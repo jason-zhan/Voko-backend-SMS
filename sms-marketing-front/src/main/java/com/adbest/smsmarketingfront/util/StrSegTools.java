@@ -1,8 +1,12 @@
 package com.adbest.smsmarketingfront.util;
 
+import com.fasterxml.jackson.core.SerializableString;
+import org.apache.poi.ss.formula.functions.T;
+import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
+import java.io.Serializable;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -12,6 +16,39 @@ import java.util.List;
  * 字符串分割工具
  */
 public class StrSegTools {
+    
+    public static @NotNull <T extends Serializable> String getListStr(List<T> list) {
+        return getListStr(list, "");
+    }
+    
+    public static @NotNull <T extends Serializable> String getListStr(List<T> list, String prefix) {
+        if (list == null || list.size() == 0) {
+            return "";
+        }
+        StringBuilder sb = new StringBuilder();
+        if (StringUtils.hasText(prefix)) {
+            for (T t : list) {
+                sb.append(",").append(prefix).append(t);
+            }
+        } else {
+            for (T t : list) {
+                sb.append(",").append(t);
+            }
+        }
+        return sb.substring(1);
+    }
+    
+    public static @NotNull  <T extends Serializable> List<T> getList(String listStr){
+        if(StringUtils.isEmpty(listStr)){
+            return new ArrayList<>();
+        }
+        String[] strings = listStr.split(",");
+        List<T> list = new ArrayList<>();
+        for (String s : strings) {
+            list.add((T) s);
+        }
+        return list;
+    }
     
     /**
      * 获取分割后的字符串列表
@@ -66,49 +103,4 @@ public class StrSegTools {
         }
     }
     
-    /**
-     * 获取列表字符串
-     *
-     * @param stringList
-     * @return 以','分隔的字符串
-     */
-    public static @NotNull String getListStr(List<String> stringList) {
-        return getListStr("", stringList);
-    }
-    
-    /**
-     * 获取列表字符串
-     *
-     * @param stringList
-     * @return 以','分隔的字符串
-     */
-    public static @NotNull String getListStr(String prefix, List<String> stringList) {
-        if (stringList == null || stringList.size() == 0) {
-            return "";
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (String s : stringList) {
-                sb.append(",").append(prefix).append(s);
-            }
-            return sb.substring(1);
-        }
-    }
-    
-    /**
-     * 获取列表字符串
-     *
-     * @param numberList
-     * @return 以','分隔的字符串
-     */
-    public static @NotNull <T extends Number> String getNumberListStr(List<T> numberList) {
-        if (numberList == null || numberList.size() == 0) {
-            return "";
-        } else {
-            StringBuilder sb = new StringBuilder();
-            for (Number num : numberList) {
-                sb.append(",").append(num.toString());
-            }
-            return sb.substring(1);
-        }
-    }
 }
