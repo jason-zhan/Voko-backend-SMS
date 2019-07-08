@@ -138,8 +138,6 @@ public class MessageComponentImpl implements MessageComponent {
             }
             planState.setSettledTotal(planState.msgTotal);
         }
-        // 产生消息账单
-        saveMsgBill(planState.cur.getId(), planState.isSms, -planState.msgTotal, bundle.getString("bill-create-plan"));
         log.info("leave msgPlanSettlement");
     }
     
@@ -393,13 +391,14 @@ public class MessageComponentImpl implements MessageComponent {
      * @return true:repeat | false:absent
      */
     private boolean isRepeatRecipient(Long planId, Long contactsId) {
+        // TODO 被验证键需要手动过期
         String key = new StringBuilder(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey()).append(planId).append(":").append(contactsId).toString();
         return !redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getTimeUnit());
     }
     
     // 内容超长验证提示
     private void overLengthValid(String content) {
-        ServiceException.isTrue(MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
+        ServiceException.isTrue(!MessageTools.isOverLength(content), MessageTools.isGsm7(content) ?
                 bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
     }
     
@@ -492,24 +491,24 @@ public class MessageComponentImpl implements MessageComponent {
     }
     
     
-    /**
-     * 使用套餐余量结算
-     *
-     * @param customerId
-     * @param isSms
-     * @param amount
-     * @return 是否结算成功
-     */
-    private boolean settleWithMarketSetting(Long customerId, boolean isSms, int amount) {
-        // 使用套餐余量结算
-        int msResult;
-        if (isSms) {
-            msResult = customerMarketSettingDao.updateSmsByCustomerId(customerId, -amount);
-        } else {
-            msResult = customerMarketSettingDao.updateMmsByCustomerId(customerId, -amount);
-        }
-        return msResult > 0;
-    }
+//    /**
+//     * 使用套餐余量结算
+//     *
+//     * @param customerId
+//     * @param isSms
+//     * @param amount
+//     * @return 是否结算成功
+//     */
+//    private boolean settleWithMarketSetting(Long customerId, boolean isSms, int amount) {
+//        // 使用套餐余量结算
+//        int msResult;
+//        if (isSms) {
+//            msResult = customerMarketSettingDao.updateSmsByCustomerId(customerId, -amount);
+//        } else {
+//            msResult = customerMarketSettingDao.updateMmsByCustomerId(customerId, -amount);
+//        }
+//        return msResult > 0;
+//    }
     
     /**
      * 使用套餐余量部分结算
@@ -529,7 +528,7 @@ public class MessageComponentImpl implements MessageComponent {
         }
         if (!isSms && marketSetting.getMmsTotal() > 0) {
             availableAmount = marketSetting.getMmsTotal() > amount ? amount : marketSetting.getMmsTotal();
-            msResult = customerMarketSettingDao.updateSmsByCustomerId(marketSetting.getCustomerId(), -availableAmount);
+            msResult = customerMarketSettingDao.updateMmsByCustomerId(marketSetting.getCustomerId(), -availableAmount);
         }
         if (msResult > 0) {  // 套餐部分结算成功
             return availableAmount;

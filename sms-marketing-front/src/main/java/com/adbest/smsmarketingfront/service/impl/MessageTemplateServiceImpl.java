@@ -123,7 +123,7 @@ public class MessageTemplateServiceImpl implements MessageTemplateService {
         Assert.notNull(template, CommonMessage.PARAM_IS_NULL);
         ServiceException.hasText(template.getTitle(), bundle.getString("msg-template-title"));
         ServiceException.hasText(template.getContent(), bundle.getString("msg-template-content"));
-        ServiceException.isTrue(MessageTools.isOverLength(template.getContent()), MessageTools.isGsm7(template.getContent()) ?
+        ServiceException.isTrue(!MessageTools.isOverLength(template.getContent()), MessageTools.isGsm7(template.getContent()) ?
                 bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
     }
 }

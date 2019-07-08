@@ -37,9 +37,6 @@ public class SmsBillComponentImpl implements SmsBillComponent {
         log.info("enter saveSmsBill, customerId={} describe={} amount={}", customerId, describe, amount);
         Assert.notNull(customerId, "customerId can't be null");
         Assert.hasText(describe, "describe can't be empty!");
-        Assert.isTrue(amount != null && amount != 0, "amount can't be null!");
-        int result = customerMarketSettingDao.updateSmsByCustomerId(customerId, amount);
-        Assert.isTrue(result > 0, bundle.getString("sms-balance-not-enough"));
         SmsBill smsBill = new SmsBill();
         smsBill.setCustomerId(customerId);
         smsBill.setInfoDescribe(describe);

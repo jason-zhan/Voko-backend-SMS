@@ -107,29 +107,29 @@ public class MessagePlanServiceImplTest {
         Long idStart = 1L;
         List<Contacts> contactsList = new ArrayList<>();
         List<ContactsLinkGroup> linkList = new ArrayList<>();
-        for (int i = 0; i < addAmount; i++) {
-            Contacts newly = new Contacts();
-            newly.setId(idStart + i);
-            newly.setCustomerId(1L);
-            newly.setPhone(getFormatPhone(i));
-            newly.setFirstName(i + "");
-            newly.setLastName("group" + groupId);
-            newly.setInLock(false);
-            newly.setIsDelete(false);
-            newly.setSource(2);
-            contactsList.add(newly);
-            linkList.add(new ContactsLinkGroup(newly.getId(), groupId));
-            if (contactsList.size() > 999) {
-                System.out.println("now rate " + i + "/" + addAmount);
-                batchSaveContacts(contactsList, linkList);
-                contactsList.clear();
-                linkList.clear();
-                continue;
-            }
-        }
-        if (contactsList.size() > 0) {
-            batchSaveContacts(contactsList, linkList);
-        }
+//        for (int i = 0; i < addAmount; i++) {
+//            Contacts newly = new Contacts();
+//            newly.setId(idStart + i);
+//            newly.setCustomerId(1L);
+//            newly.setPhone(getFormatPhone(i));
+//            newly.setFirstName(i + "");
+//            newly.setLastName("group" + groupId);
+//            newly.setInLock(false);
+//            newly.setIsDelete(false);
+//            newly.setSource(2);
+//            contactsList.add(newly);
+//            linkList.add(new ContactsLinkGroup(newly.getId(), groupId));
+//            if (contactsList.size() > 999) {
+//                System.out.println("now rate " + i + "/" + addAmount);
+//                batchSaveContacts(contactsList, linkList);
+//                contactsList.clear();
+//                linkList.clear();
+//                continue;
+//            }
+//        }
+//        if (contactsList.size() > 0) {
+//            batchSaveContacts(contactsList, linkList);
+//        }
     }
     
     @Test
@@ -164,15 +164,6 @@ public class MessagePlanServiceImplTest {
         return false;
     }
     
-    private String getFormatPhone(int i) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(i);
-        int bits = 7;
-        for (int j = sb.length(); j < bits; j++) {
-            sb.insert(0, "0");
-        }
-        return sb.toString();
-    }
     
     @Transactional
     public void batchSaveContacts(List<Contacts> contactsList, List<ContactsLinkGroup> linkList) {

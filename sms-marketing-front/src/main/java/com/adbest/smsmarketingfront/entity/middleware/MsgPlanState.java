@@ -64,6 +64,8 @@ public class MsgPlanState {
         planState.mediaListStr = plan.getMediaIdList();
         planState.msgTotal = 0;
         planState.settledTotal = plan.getMsgTotal();
+        planState.creditPayNum = 0;
+        planState.creditPayCost = BigDecimal.ZERO;
         planState.saveMsg = saveMsg;
         planState.counter = 0;
         return planState;

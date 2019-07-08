@@ -34,9 +34,6 @@ public class MmsBillComponentImpl implements MmsBillComponent {
         Assert.notNull(customerId, "customerId can't be null");
         Assert.hasText(describe, "describe can't be empty!");
         Assert.notNull(amount, "amount can't be empty!");
-        Assert.isTrue(amount != null && amount != 0, "amount can't be null!");
-        int result = customerMarketSettingDao.updateMmsByCustomerId(customerId, amount);
-        Assert.isTrue(result > 0, bundle.getString("sms-balance-not-enough"));
         MmsBill mmsBill = new MmsBill();
         mmsBill.setCustomerId(customerId);
         mmsBill.setInfoDescribe(describe);

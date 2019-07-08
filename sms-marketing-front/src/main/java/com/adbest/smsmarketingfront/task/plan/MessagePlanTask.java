@@ -47,7 +47,7 @@ public class MessagePlanTask {
     /**
      * 执行定时发送
      */
-    @Scheduled(fixedDelay = 60 * 1000)
+//    @Scheduled(fixedDelay = 60 * 1000)
     public synchronized void executePlan() {
         log.info("enter executePlan [task]");
         // 获取所有计划中状态的任务
@@ -67,7 +67,7 @@ public class MessagePlanTask {
     /**
      * 修补发送消息作业异常
      */
-    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
     public synchronized void repairSendMsg() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
@@ -127,6 +127,7 @@ public class MessagePlanTask {
     // 分配任务到quartz容器
     @Async
     public void scheduledPlan(MessagePlan plan) {
+        boolean debug = true;
         // 锁定消息
         messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
         Page<MessageRecord> messagePage = getQueueUsableMessagePage(plan.getId(), 0);
@@ -136,6 +137,10 @@ public class MessagePlanTask {
         }
         // 锁定任务
         messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+        if(debug){
+            log.info("== break for debug ==");
+            return;
+        }
         // 后续任务加入容器
         while (messagePage.hasNext()) {
             messagePage = getQueueUsableMessagePage(plan.getId(), messagePage.nextPageable().getPageNumber());

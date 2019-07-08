@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.MessagePlan;
+import com.adbest.smsmarketingfront.entity.vo.MessagePlanVo;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
@@ -36,10 +37,10 @@ public interface MessagePlanService {
     int delete(Long id);
     
     // 根据id查询发送任务
-    MessagePlan findById(Long id);
+    MessagePlanVo findById(Long id);
     
     // 根据条件查询发送任务
-    Page<MessagePlan> findByConditions(GetMessagePlanPage getPlanPage);
+    Page<MessagePlanVo> findByConditions(GetMessagePlanPage getPlanPage);
     
     // 获取消息发送任务状态
     Map<Integer, String> statusMap();
