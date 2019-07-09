@@ -43,6 +43,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
+import java.sql.Timestamp;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -121,10 +122,6 @@ public class CustomerServiceImpl implements  CustomerService {
         return customerDao.save(customer);
     }
 
-    public Customer findFirstByEmailAndPassword(String username, String encrypt) {
-        return customerDao.findFirstByEmailAndPassword(username,encrypt);
-    }
-
     @Override
     @Transactional
     public CustomerVo register(CustomerForm createSysUser, HttpServletRequest request) {
@@ -137,13 +134,15 @@ public class CustomerServiceImpl implements  CustomerService {
         redisTemplate.delete("code:"+sessionId);
 
         ServiceException.notNull(createSysUser, returnMsgUtil.msg("PARAM_IS_NULL"));
-        ServiceException.hasText(createSysUser.getEmail(), returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
+        ServiceException.hasText(createSysUser.getUsername(), returnMsgUtil.msg("LOGIN_NOT_EMPTY"));
         ServiceException.hasText(createSysUser.getPassword(), returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
         // 用户名、密码正则校验
-        ServiceException.isTrue(Customer.checkEmail(createSysUser.getEmail()), returnMsgUtil.msg("EMAIL_INCORRECT_FORMAT"));
+        if (createSysUser.getEmail()!=null){
+            ServiceException.isTrue(Customer.checkEmail(createSysUser.getEmail()), returnMsgUtil.msg("EMAIL_INCORRECT_FORMAT"));
+        }
         ServiceException.isTrue(Customer.checkPassword(createSysUser.getPassword()), returnMsgUtil.msg("PASSWORD_INCORRECT_FORMAT"));
-        Customer repeat = customerDao.findFirstByEmail(createSysUser.getEmail());
-        ServiceException.isNull(repeat, returnMsgUtil.msg("EMAIL_EXISTS"));
+        Customer repeat = customerDao.findFirstByCustomerLogin(createSysUser.getUsername());
+        ServiceException.isNull(repeat, returnMsgUtil.msg("USERNAME_EXISTS"));
         Customer customer = new Customer();
         customer.setPassword(encryptTools.encrypt(createSysUser.getPassword()));
         customer.setDisable(false);
@@ -155,7 +154,7 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setIndustry(createSysUser.getIndustry());
         customer.setOrganization(createSysUser.getOrganization());
         customer.setSource(CustomerSource.REGISTER.getValue());
-        customer.setCredit(new BigDecimal("0"));
+        customer.setCredit(BigDecimal.valueOf(0));
         String realIp = getRealIp(request);
         String key = "register:" + realIp;
         Boolean is = redisTemplate.opsForValue().setIfAbsent(key, "1", 60*60, TimeUnit.SECONDS);
@@ -173,11 +172,6 @@ public class CustomerServiceImpl implements  CustomerService {
 
         CustomerSettings customerSettings = new CustomerSettings(false, customer.getId(), false);
         customerSettingsService.save(customerSettings);
-//        new Thread(){
-//            public void run() {
-//                initCustomerData(customer);
-//            }
-//        }.start();
         initCustomerData(customer);
         UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getEmail(), createSysUser.getPassword());
         Authentication authenticatedUser = authenticationManager
@@ -188,30 +182,10 @@ public class CustomerServiceImpl implements  CustomerService {
     }
 
     @Override
-    public Customer findFirstByEmail(String email) {
-        return customerDao.findFirstByEmail(email);
-    }
-
-    @Override
-    public List<Customer> findByEmailIn(List<String> emails) {
-        return customerDao.findByEmailIn(emails);
-    }
-
-    @Override
     public void initCustomerData(Customer customer){
-        List<MarketSetting> marketSettings = marketSettingService.findAll();
+        List<MarketSetting> marketSettings = marketSettingService.findByPrice(BigDecimal.valueOf(0));
         if (marketSettings.size()<=0)return;
         MarketSetting marketSetting = marketSettings.get(0);
-        //初始化关键字
-//        List<Keyword> keywords = new ArrayList<>();
-//        Keyword keyword = null;
-//        if (marketSetting.getKeywordTotal()>0){
-//            for (int i = 0;i<marketSetting.getKeywordTotal();i++){
-//                keyword = new Keyword(customer.getId(), UUID.randomUUID().toString().replaceAll("-",""));
-//                keywords.add(keyword);
-//            }
-//            keywordService.saveAll(keywords);
-//        }
         //初始化套餐
         CustomerMarketSetting customerMarketSetting = new CustomerMarketSetting(marketSetting);
         customerMarketSetting.setOrderTime(TimeTools.now());
@@ -262,13 +236,13 @@ public class CustomerServiceImpl implements  CustomerService {
     }
 
     @Override
-    public boolean getCode(String email, HttpServletRequest request) {
-        ServiceException.hasText(email,returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
-        Customer customer = customerDao.findFirstByEmail(email);
+    public String getCode(String username, HttpServletRequest request) {
+        ServiceException.hasText(username,returnMsgUtil.msg("LOGIN_NOT_EMPTY"));
+        Customer customer = customerDao.findFirstByCustomerLogin(username);
         ServiceException.notNull(customer,returnMsgUtil.msg("ACCOUNT_NOT_REGISTERED"));
         String number = getNumber(7);
-        request.getSession().setAttribute("email", email);
-        redisTemplate.opsForValue().set(email, number, 10, TimeUnit.MINUTES);
+        request.getSession().setAttribute("username", username);
+        redisTemplate.opsForValue().set(username, number, 10, TimeUnit.MINUTES);
         Map<String,Object> dataMap = new HashMap<>();
         dataMap.put("code",number);
         if (customer.getFirstName()!=null){
@@ -277,32 +251,49 @@ public class CustomerServiceImpl implements  CustomerService {
         String emailText = createTemplates(dataMap,"email-code-templates");
         MimeMessage message = javaMailSender.createMimeMessage();
         MimeMessageHelper helper = new MimeMessageHelper(message);
+        ServiceException.hasText(customer.getEmail(),returnMsgUtil.msg("UNBOUND_MAILBOX"));
         try {
             helper.setFrom(emailname);
-            helper.setTo(email);
+            helper.setTo(customer.getEmail());
             helper.setSubject("Your Password Reset Request");
             helper.setText(emailText, true);
         } catch (MessagingException e) {
             log.error("发送邮件错误，{}",e);
-            return false;
+            throw new ServiceException(returnMsgUtil.msg("T500"));
         }
         javaMailSender.send(message);
-        return true;
+        return maskEmail(customer.getEmail());
+    }
+
+    /**
+     * 隐藏邮箱信息
+     *
+     * @param email
+     * @return
+     */
+    public static String maskEmail(String email) {
+        if (StringUtils.isEmpty(email)) {
+            return email;
+        }
+        if (email.indexOf("@")<=1){
+            return "**"+email.substring(1,email.length());
+        }
+        return email.replaceAll("(\\w+)\\w{1}@(\\w+)", "$1***@$2");
     }
 
     @Override
     public boolean updatePasswordByCode(String code, String password, HttpServletRequest request) {
-        Object email = request.getSession().getAttribute("email");
-        ServiceException.notNull(email,returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
-        Object c = redisTemplate.opsForValue().get(email.toString());
+        Object username = request.getSession().getAttribute("username");
+        ServiceException.notNull(username,returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
+        Object c = redisTemplate.opsForValue().get(username.toString());
         ServiceException.notNull(c,returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
         ServiceException.isTrue(c.toString().equals(code),returnMsgUtil.msg("VERIFICATION_CODE_ERROR"));
-        redisTemplate.delete(email.toString());
-        Customer customer = customerDao.findFirstByEmail(email.toString());
+        redisTemplate.delete(username.toString());
+        Customer customer = customerDao.findFirstByCustomerLogin(username.toString());
         ServiceException.isTrue(!customer.getPassword().equals(encryptTools.encrypt(password)), returnMsgUtil.msg("PASSWORD_INCORRECT"));
         customer.setPassword(encryptTools.encrypt(password));
         customerDao.save(customer);
-        redisTemplate.delete("login:"+customer.getEmail());
+        redisTemplate.delete("login:"+customer.getCustomerLogin());
         return true;
     }
 
@@ -343,6 +334,7 @@ public class CustomerServiceImpl implements  CustomerService {
     @Override
     @Transactional
     public void saveImportCustomer(List<Customer> customerList) {
+
         customerDao.saveAll(customerList);
         CustomerSettings customerSettings = null;
         List<CustomerSettings> customerSettingsList = new ArrayList<>();
@@ -350,10 +342,23 @@ public class CustomerServiceImpl implements  CustomerService {
         List<MmsBill> mmsBills = new ArrayList<>();
         MmsBill mmsBill = null;
         SmsBill smsBill = null;
-        List<MarketSetting> marketSettings = marketSettingService.findAll();
+        CustomerMarketSetting customerMarketSetting = null;
+        List<CustomerMarketSetting> customerMarketSettings = new ArrayList<>();
+        List<MarketSetting> marketSettings = marketSettingService.findByPrice(BigDecimal.valueOf(0));
         MarketSetting marketSetting = marketSettings.get(0);
+
         String infoDescribe ="experience gift";
+        Timestamp now = TimeTools.now();
+        Timestamp invalidTime = TimeTools.addDay(TimeTools.now(), marketSetting.getDaysNumber());
         for (Customer c:customerList) {
+            customerMarketSetting = new CustomerMarketSetting(marketSetting);
+            customerMarketSetting.setOrderTime(now);
+            customerMarketSetting.setInvalidTime(invalidTime);
+            customerMarketSetting.setCustomerId(c.getId());
+            customerMarketSetting.setAutomaticRenewal(false);
+            customerMarketSetting.setInvalidStatus(false);
+            customerMarketSettings.add(customerMarketSetting);
+
             customerSettings = new CustomerSettings(false, c.getId(), false);
             customerSettingsList.add(customerSettings);
             if (marketSetting.getMmsTotal()>0){
@@ -366,16 +371,27 @@ public class CustomerServiceImpl implements  CustomerService {
             }
         }
         customerSettingsService.saveAll(customerSettingsList);
+        customerMarketSettingService.saveAll(customerMarketSettings);
         if (smsBills.size()>0){smsBillComponent.saveAll(smsBills);}
         if (mmsBills.size()>0){mmsBillComponent.saveAll(mmsBills);}
-        vkCustomersService.updateInLeadinByEmailIn(true, customerList.stream().map(c -> c.getEmail()).collect(Collectors.toList()));
+        vkCustomersService.updateInLeadinByLoginIn(true, customerList.stream().map(c -> c.getCustomerLogin()).collect(Collectors.toList()));
+    }
+
+    @Override
+    public List<Customer> findByCustomerLoginIn(ArrayList<String> customerLogins) {
+        return customerDao.findByCustomerLoginIn(customerLogins);
+    }
+
+    @Override
+    public Customer findFirstByCustomerLoginAndPassword(String username, String password) {
+        return customerDao.findFirstByCustomerLoginAndPassword(username,password);
     }
 
     @Override
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
-        Customer customer = customerDao.findByEmail(s);
+        Customer customer = customerDao.findFirstByCustomerLogin(s);
         if (customer == null) {
-            throw new UsernameNotFoundException("邮箱错误");
+            throw new UsernameNotFoundException("用户不存在");
         }
         return new UserDetailsVo(customer);
     }

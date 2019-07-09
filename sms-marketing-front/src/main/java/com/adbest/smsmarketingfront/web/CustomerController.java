@@ -35,9 +35,9 @@ public class CustomerController {
     }
 
     @RequestMapping("/getCode")
-    public ReturnEntity getCode(String email, HttpServletRequest request){
-        boolean is = customerService.getCode(email, request);
-        return ReturnEntity.success(is);
+    public ReturnEntity getCode(String username, HttpServletRequest request){
+        String mag = customerService.getCode(username, request);
+        return ReturnEntity.success(mag);
     }
 
     @RequestMapping("/password")

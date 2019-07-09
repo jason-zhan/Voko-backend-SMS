@@ -262,12 +262,12 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setSendTime(timestamp);
 //        send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
-        messageRecordService.sendSms(send,"keyword automatic recovery");
+        messageRecordService.sendSms(send,bundle.getString("KEYWORD_REPLY"));
     }
 
     @Override
     public void sendCallReminder(List<MessageRecord> messageRecords) {
-        String msg = "Call response";
+        String msg = bundle.getString("CALL_RESPONSE");
         for (MessageRecord m : messageRecords) {
             messageRecordService.sendSms(m,msg);
         }
@@ -285,7 +285,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
         smsBill.setCustomerId(messageRecord.getCustomerId());
-        smsBill.setInfoDescribe("keyword automatic recovery");
+        smsBill.setInfoDescribe(bundle.getString("KEYWORD_REPLY"));
         smsBillComponent.save(smsBill);
         PreSendMsg preSendMsg = new PreSendMsg(messageRecord);
 //        twilioUtil.sendMessage(preSendMsg);

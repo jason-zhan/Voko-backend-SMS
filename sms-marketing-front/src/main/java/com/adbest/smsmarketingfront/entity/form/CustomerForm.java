@@ -4,7 +4,7 @@ import lombok.Data;
 
 @Data
 public class CustomerForm {
-    private String email;  // 邮箱 (作为用户名)
+    private String email;  // 邮箱
     private String password;  // 密码
     private String firstName;  // 名字
     private String lastName;  // 姓氏
@@ -12,6 +12,7 @@ public class CustomerForm {
     private String city;  // 城市
     private String industry;  // 行业
     private String organization;// 单位（公司/机构）
+    private String username;//用户名
 
     private String code;//验证码
 }

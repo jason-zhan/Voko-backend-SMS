@@ -100,7 +100,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
             smsTotal = marketSetting.getSmsTotal()-ms.getSmsTotal();
             mmsTotal = marketSetting.getMmsTotal()-ms.getMmsTotal();
             price = marketSetting.getPrice().subtract(ms.getPrice());
-            price = price.doubleValue()>=0?price:new BigDecimal("0");
+            price = price.doubleValue()>=0?price:BigDecimal.valueOf(0);
         }else {
             smsTotal = marketSetting.getSmsTotal();
             mmsTotal = marketSetting.getMmsTotal();
@@ -116,7 +116,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         customerMarketSetting.setAutomaticRenewal(automaticRenewal==null?false:true);
         customerMarketSetting.setInvalidStatus(false);
         customerMarketSettingDao.save(customerMarketSetting);
-        String infoDescribe = "Package Presentation";
+        String infoDescribe = resourceBundle.getString("PACKAGE_PRESENTATION");
         if (smsTotal>0){
             SmsBill smsBill = new SmsBill(customerId,infoDescribe,smsTotal);
             smsBillComponent.save(smsBill);
@@ -129,7 +129,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         /**
          * 扣费，账单
          */
-        financeBillComponent.realTimeDeduction(price.negate(),"Package Purchase", customerId);
+        financeBillComponent.realTimeDeduction(price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"), customerId);
 
         Long num = mobileNumberService.countByDisableAndCustomerIdAndGiftNumber(false, customerId, true);
         if(num<=0){

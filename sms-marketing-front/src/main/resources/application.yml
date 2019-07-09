@@ -60,3 +60,9 @@ mobilePrice:
   ordinary: 1
 MobileNumberRecyclingDays: 30
 keywordPrice: 1
+marketSetting:
+  title: Pay & Go
+  smsTotal:  100  #短信条数
+  mmsTotal:  0    #彩信条数
+  keywordTotal: 1 #赠送关键字个数
+  daysNumber: 14  #天数

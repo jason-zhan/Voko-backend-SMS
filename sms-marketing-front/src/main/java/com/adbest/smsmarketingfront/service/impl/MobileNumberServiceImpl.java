@@ -246,7 +246,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         /**
          * 扣钱，账单
          */
-        financeBillComponent.realTimeDeduction(price.negate(),"Mobile phone number purchase", customerId);
+        financeBillComponent.realTimeDeduction(price.negate(),returnMsgUtil.msg("MOBILE_PURCHASE"), customerId);
 
         IncomingPhoneNumber incomingPhoneNumber = null;
         try {

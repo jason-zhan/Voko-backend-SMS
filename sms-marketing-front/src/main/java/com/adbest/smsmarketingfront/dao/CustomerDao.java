@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 
 public interface CustomerDao extends JpaRepository<Customer, Long>, JpaSpecificationExecutor<Customer> {
@@ -16,12 +17,10 @@ public interface CustomerDao extends JpaRepository<Customer, Long>, JpaSpecifica
     @Modifying
     @Query("update Customer set credit = credit+?1 where id = ?2 and credit+?1 >= 0")
     int updateCreditByCustomerId(BigDecimal cost, Long customerId);
-    
-    Customer findFirstByEmailAndPassword(String username, String encrypt);
-    
-    Customer findByEmail(String s);
-    
-    Customer findFirstByEmail(String email);
-    
-    List<Customer> findByEmailIn(List<String> emails);
+
+    Customer findFirstByCustomerLogin(String username);
+
+    List<Customer> findByCustomerLoginIn(ArrayList<String> customerLogins);
+
+    Customer findFirstByCustomerLoginAndPassword(String username, String password);
 }

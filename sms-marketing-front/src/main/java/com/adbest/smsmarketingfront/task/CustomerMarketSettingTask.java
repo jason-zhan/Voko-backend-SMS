@@ -15,6 +15,7 @@ import javax.transaction.Transactional;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 @Component
@@ -36,6 +37,9 @@ public class CustomerMarketSettingTask {
     @Autowired
     private FinanceBillComponent financeBillComponent;
 
+    @Autowired
+    private ResourceBundle resourceBundle;
+
 //    @Scheduled(cron = "45 0/1 * * * ?")
     @Transactional
     public void checkCustomerMarketSetting(){
@@ -45,8 +49,8 @@ public class CustomerMarketSettingTask {
         List<SmsBill> smsBills = new ArrayList<>();
         List<MmsBill> mmsBills = new ArrayList<>();
         List<Long> customerIds = list.stream().map(s -> s.getCustomerId()).collect(Collectors.toList());
-        String infoDescribe ="Package expired deduction";
-        String infoDescribeGift ="experience gift";
+        String infoDescribe = resourceBundle.getString("PACKAGE_EXPIRED_DEDUCTION");
+        String infoDescribeGift = resourceBundle.getString("PACKAGE_PRESENTATION");
         List<MarketSetting> settings = marketSettingService.findAll();
         Map<Long, MarketSetting> settingMap = settings.stream().collect(Collectors.toMap(MarketSetting::getId, s -> s));
         MarketSetting marketSetting = null;
@@ -60,7 +64,7 @@ public class CustomerMarketSettingTask {
                  * 扣费，成功：保存 失败：放入未续费
                  */
                 try {
-                    financeBillComponent.realTimeDeduction(marketSetting.getPrice(),"Package renewal", cms.getCustomerId());
+                    financeBillComponent.realTimeDeduction(marketSetting.getPrice(),resourceBundle.getString("PACKAGE_RENEWAL"), cms.getCustomerId());
                     cms.setSmsTotal(marketSetting.getSmsTotal());
                     cms.setMmsTotal(marketSetting.getMmsTotal());
                     cms.setInvalidTime(TimeTools.addDay(TimeTools.now(),marketSetting.getDaysNumber()));

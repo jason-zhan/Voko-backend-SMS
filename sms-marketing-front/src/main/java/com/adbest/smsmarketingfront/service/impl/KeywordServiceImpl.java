@@ -150,7 +150,7 @@ public class KeywordServiceImpl implements KeywordService {
         if (customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis()))&&customerMarketSetting.getKeywordTotal() - num>0){
             keyword.setGiftKeyword(true);
         }else {
-            financeBillComponent.realTimeDeduction(new BigDecimal(keywordPrice).negate(),"Keyword purchase", customerId);
+            financeBillComponent.realTimeDeduction(new BigDecimal(keywordPrice).negate(),returnMsgUtil.msg("KEYWORD_PURCHASE"), customerId);
             keyword.setGiftKeyword(false);
         }
         keyword = keywordDao.save(keyword);

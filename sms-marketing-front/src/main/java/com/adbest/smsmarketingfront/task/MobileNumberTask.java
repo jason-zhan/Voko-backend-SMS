@@ -16,6 +16,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
 @Component
@@ -35,6 +36,9 @@ public class MobileNumberTask {
 
     @Value("${MobileNumberRecyclingDays}")
     private Integer mobileNumberRecyclingDays;
+
+    @Autowired
+    private ResourceBundle resourceBundle;
 
 //    @Scheduled(cron = "20 1 1 * * ?")
     public void deleteMobileNumber(){
@@ -59,7 +63,7 @@ public class MobileNumberTask {
                 price = ordinaryMobilePrice;
             }
             try {
-                financeBillComponent.realTimeDeduction(price,"Mobile phone number renewal", mobileNumber.getCustomerId());
+                financeBillComponent.realTimeDeduction(price,resourceBundle.getString("MOBILE_RENEWAL"), mobileNumber.getCustomerId());
                 mobileNumber.setInvalidTime(TimeTools.addDay(mobileNumber.getInvalidTime(), 30));
                 renewMobileNumber.add(mobileNumber);
             }catch (Exception e){

@@ -10,6 +10,8 @@ import com.adbest.smsmarketingfront.util.Current;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,5 +47,21 @@ public class MarketSettingServiceImpl implements MarketSettingService {
             return optional.get();
         }
         return null;
+    }
+
+    @Override
+    public Long count() {
+        return marketSettingDao.count();
+    }
+
+    @Override
+    @Transactional
+    public void save(MarketSetting marketSetting) {
+        marketSettingDao.save(marketSetting);
+    }
+
+    @Override
+    public List<MarketSetting> findByPrice(BigDecimal price) {
+        return marketSettingDao.findByPrice(price);
     }
 }
