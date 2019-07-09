@@ -236,6 +236,7 @@ public class MessageComponentImpl implements MessageComponent {
     private void calcMsgTotal(MsgPlanState planState) {
         toNumbersTraversal(planState);
         contactsGroupsTraversal(planState);
+        clearUniqueKeysCache(planState.planId);
     }
     
     // 遍历输入的手机号并计算消息量
@@ -391,10 +392,17 @@ public class MessageComponentImpl implements MessageComponent {
      * @return true:repeat | false:absent
      */
     private boolean isRepeatRecipient(Long planId, Long contactsId) {
-        // TODO 被验证键需要手动过期
         String key = new StringBuilder(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey()).append(planId).append(":").append(contactsId).toString();
         return !redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getTimeUnit());
     }
+    
+    // 手动失效验证号码唯一性redis缓存
+    private void clearUniqueKeysCache(Long planId){
+        Long clearNum = redisTemplate.delete(redisTemplate.keys(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey() + planId + ":*"));
+        log.info("clearUniqueKeysCache(clearNum={})", clearNum);
+    }
+    
+    
     
     // 内容超长验证提示
     private void overLengthValid(String content) {

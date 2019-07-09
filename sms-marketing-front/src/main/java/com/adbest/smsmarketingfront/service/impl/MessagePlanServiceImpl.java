@@ -296,6 +296,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
         Long curId = Current.get().getId();
         MessagePlan plan = messagePlanDao.findByIdAndCustomerIdAndDisableIsFalse(id, curId);
+        if (plan == null) {
+            return null;
+        }
         List<ContactsGroup> groupList = contactsGroupDao.findByCustomerIdAndIdIn(curId, StrSegTools.getList(plan.getToGroupList()));
         MessagePlanVo planVo = new MessagePlanVo(plan, groupList);
         log.info("leave findById");

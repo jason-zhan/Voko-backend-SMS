@@ -2,9 +2,9 @@ package com.adbest.smsmarketingfront.service;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsLinkGroup;
-import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingfront.dao.ContactsDao;
 import com.adbest.smsmarketingfront.dao.ContactsLinkGroupDao;
+import com.adbest.smsmarketingfront.entity.vo.MessagePlanVo;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.util.EasyTime;
@@ -12,11 +12,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.jdbc.datasource.DataSourceTransactionManager;
 import org.springframework.test.context.junit4.SpringRunner;
-import org.springframework.transaction.TransactionDefinition;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.DefaultTransactionDefinition;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -40,8 +36,8 @@ public class MessagePlanServiceTest {
 //        create.setGroupList(Arrays.asList(1L));
         create.setToNumberList(Arrays.asList("0000001", "0000002", "0000003", "0000004", "0000005"));
         create.setRemark("test create plan");
-        create.setTitle("2019-7-8 11:46:33 test");
-        create.setText("Hello! There is twilio agent service center, how do you do?");
+        create.setTitle("2019-7-9 10:15:54 test");
+        create.setText("Hello! There is twilio agent service center, how do you do? (It will be deleted next.)");
         create.setExecTime(EasyTime.init().addDays(1).stamp());
         messagePlanService.create(create);
     }
@@ -71,7 +67,7 @@ public class MessagePlanServiceTest {
         update.setFromNumList(Arrays.asList("6666666", "0100000"));
         update.setText("Hello world! Hello XiaMi!");
         update.setTitle("update a plan");
-        update.setToNumberList(Arrays.asList("0000004","0000006","0000008","6666666"));
+        update.setToNumberList(Arrays.asList("0000003", "0000006", "0000008", "6666666"));
         update.setExecTime(EasyTime.init().addDays(2).stamp());
         update.setRemark("update test");
         messagePlanService.update(update);
@@ -79,8 +75,8 @@ public class MessagePlanServiceTest {
     
     @Test
     public void checkCrossBeforeCancel() {
-    
-        boolean allow = messagePlanService.checkCrossBeforeCancel(9L);
+        
+        boolean allow = messagePlanService.checkCrossBeforeCancel(7L);
         System.out.println(allow);
     }
     
@@ -96,10 +92,13 @@ public class MessagePlanServiceTest {
     
     @Test
     public void delete() {
+        messagePlanService.delete(10L);
     }
     
     @Test
     public void findById() {
+        MessagePlanVo planVo = messagePlanService.findById(7L);
+        System.out.printf("planVo={}", planVo);
     }
     
     @Test

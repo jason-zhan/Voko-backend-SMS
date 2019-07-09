@@ -25,10 +25,10 @@ public interface MessagePlanDao extends JpaRepository<MessagePlan, Long>, JpaSpe
     
     @Transactional
     @Modifying
-    @Query("update MessagePlan set msgTotal = 0, creditPayNum = 0, creditPayCost = 0, status = ?2 where id = ?1 and status = ?3")
+    @Query("update MessagePlan set msgTotal = 0, creditPayNum = 0, creditPayCost = 0, status = ?2, updateTime = current_timestamp where id = ?1 and status = ?3")
     int cancelMessagePlan(Long id, int targetStatus, int currentStatus);
 
     MessagePlan findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     
-    List<MessagePlan> findByStatusAndExecTimeBeforeAndDisableIsFalse(int status, Date execTime);
+    List<MessagePlan> findByStatusInAndExecTimeBeforeAndDisableIsFalse(List<Integer> statusList, Date execTime);
 }
