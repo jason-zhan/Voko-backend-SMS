@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.ContactsDao;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.form.AddContactsToGroupsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsForm;
 import com.adbest.smsmarketingfront.entity.form.ContactsProcessForm;
@@ -33,7 +33,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.persistence.criteria.*;
 import javax.transaction.Transactional;
 import java.io.InputStream;
-import java.sql.Array;
 import java.sql.Timestamp;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -82,7 +81,7 @@ public class ContactsServiceImpl implements ContactsService {
         ServiceException.isTrue(checkPhone(contactsForm.getPhone()), returnMsgUtil.msg("PHONE_INCORRECT_FORMAT"));
         Long customerId = Current.get().getId();
         Contacts contacts = contactsForm.getContacts();
-        Contacts ct = contactsDao.findFirstByPhoneAndCustomerId(contactsForm.getPhone(), customerId);
+        Contacts ct = contactsDao.findFirstByCustomerIdAndPhone(customerId, contactsForm.getPhone());
         if (ct==null){
             contacts.setIsDelete(false);
             contacts.setInLock(false);

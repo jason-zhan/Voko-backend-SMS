@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.MessagePlan;
+import com.adbest.smsmarketingfront.entity.vo.MessagePlanVo;
 import com.adbest.smsmarketingfront.service.MessagePlanService;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
@@ -67,15 +68,15 @@ public class MessagePlanController {
     @RequestMapping("/details")
     @ResponseBody
     public ReturnEntity findById(Long id) {
-        MessagePlan plan = messagePlanService.findById(id);
-        return ReturnEntity.success(plan);
+        MessagePlanVo planVo = messagePlanService.findById(id);
+        return ReturnEntity.success(planVo);
     }
     
     @RequestMapping("/page")
     @ResponseBody
     public ReturnEntity findByConditions(@RequestBody GetMessagePlanPage getPlanPage) {
-        Page<MessagePlan> planPage = messagePlanService.findByConditions(getPlanPage);
-        return ReturnEntity.success(planPage);
+        Page<MessagePlanVo> planVoPage = messagePlanService.findByConditions(getPlanPage);
+        return ReturnEntity.success(planVoPage);
     }
     
     

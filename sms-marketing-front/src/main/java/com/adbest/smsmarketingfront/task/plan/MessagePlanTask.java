@@ -19,6 +19,7 @@ import org.springframework.scheduling.annotation.Async;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -44,34 +45,49 @@ public class MessagePlanTask {
     private QuartzTools quartzTools;
     
     
-    /**
-     * 执行定时发送
-     */
-    @Scheduled(fixedDelay = 60 * 1000)
-    public synchronized void executePlan() {
-        log.info("enter executePlan [task]");
-        // 获取所有计划中状态的任务
-        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
-                EasyTime.init().addMinutes(planExecTimeDelay).stamp());
-        if (planList.isEmpty()) {
-            log.info("leave executePlan for empty list [task]");
-            return;
-        }
-        // 循环分配任务到quartz容器
-        for (MessagePlan plan : planList) {
-            scheduledPlan(plan);
-        }
-        log.info("leave executePlan [task]");
+    // 获取plan-（生成消息-生成发送任务）：每5min触发一次。范围：1-10w数据的生成及加入任务容器；0数据取消任务(追加备注)
+    public void runPlan() {
+        log.info("enter runPlan [TASK]");
+        List<MessagePlan> planList = messagePlanDao.findByStatusInAndExecTimeBeforeAndDisableIsFalse(
+                Arrays.asList(MessagePlanStatus.SCHEDULING.getValue(), MessagePlanStatus.QUEUING.getValue()),
+                EasyTime.init().addHours(1).stamp()
+        );
+        checkPlanByGroup(planList);
+        
+        log.info("leave runPlan [TASK]");
     }
     
+    // 消息发送失败修复
+
+
+//    /**
+//     * 执行定时发送
+//     */
+////    @Scheduled(fixedDelay = 60 * 1000)
+//    public synchronized void executePlan() {
+//        log.info("enter executePlan [task]");
+//        // 获取所有计划中状态的任务
+//        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
+//                EasyTime.init().addMinutes(planExecTimeDelay).stamp());
+//        if (planList.isEmpty()) {
+//            log.info("leave executePlan for empty list [task]");
+//            return;
+//        }
+//        // 循环分配任务到quartz容器
+//        for (MessagePlan plan : planList) {
+//            scheduledPlan(plan);
+//        }
+//        log.info("leave executePlan [task]");
+//    }
+    
     /**
-     * 修补发送消息作业异常
+     * 消息发送重试
      */
-    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
-    public synchronized void repairSendMsg() {
+//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
+    public synchronized void retryMessaging() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
-        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.QUEUING.getValue(),
+        List<MessagePlan> planList = messagePlanDao.findByStatusInAndExecTimeBeforeAndDisableIsFalse(Arrays.asList(MessagePlanStatus.QUEUING.getValue()),
                 EasyTime.init().addMinutes(repairTimeRange).stamp());
         // 排除当前正在运行的任务（避免与正常执行作业重复）
         checkPlanByGroup(planList);
@@ -127,6 +143,7 @@ public class MessagePlanTask {
     // 分配任务到quartz容器
     @Async
     public void scheduledPlan(MessagePlan plan) {
+        boolean debug = true;
         // 锁定消息
         messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
         Page<MessageRecord> messagePage = getQueueUsableMessagePage(plan.getId(), 0);
@@ -136,6 +153,10 @@ public class MessagePlanTask {
         }
         // 锁定任务
         messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+        if (debug) {
+            log.info("== break for debug ==");
+            return;
+        }
         // 后续任务加入容器
         while (messagePage.hasNext()) {
             messagePage = getQueueUsableMessagePage(plan.getId(), messagePage.nextPageable().getPageNumber());

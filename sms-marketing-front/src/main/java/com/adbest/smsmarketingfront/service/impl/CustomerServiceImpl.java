@@ -154,7 +154,8 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setIndustry(createSysUser.getIndustry());
         customer.setOrganization(createSysUser.getOrganization());
         customer.setSource(CustomerSource.REGISTER.getValue());
-        customer.setCredit(BigDecimal.valueOf(0));
+        customer.setAvailableCredit(BigDecimal.valueOf(0));
+        customer.setMaxCredit(BigDecimal.valueOf(0));
         String realIp = getRealIp(request);
         String key = "register:" + realIp;
         Boolean is = redisTemplate.opsForValue().setIfAbsent(key, "1", 60*60, TimeUnit.SECONDS);

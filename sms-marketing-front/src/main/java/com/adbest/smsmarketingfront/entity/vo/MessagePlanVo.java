@@ -38,7 +38,7 @@ public class MessagePlanVo {
         this.id = plan.getId();
         this.customerId = plan.getCustomerId();
         this.title = plan.getTitle();
-        this.text = plan.getTitle();
+        this.text = plan.getText();
         this.execTime = plan.getExecTime();
         this.remark = plan.getRemark();
         this.fromNumList = StrSegTools.getStrList(plan.getFromNumList());

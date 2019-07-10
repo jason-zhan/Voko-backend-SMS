@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.entity.vo;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsGroup;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
+import com.adbest.smsmarketingentity.ContactsSource;
 import lombok.Data;
 
 import javax.persistence.Column;

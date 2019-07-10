@@ -9,7 +9,7 @@ import java.sql.Timestamp;
 /**
  * 服务短号库
  */
-@Entity
+//@Entity
 @Data
 @Table(name = "service_number")
 public class ServiceNumber implements Serializable {

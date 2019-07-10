@@ -1,12 +1,24 @@
 package com.adbest.smsmarketingfront.service;
 
+import com.adbest.smsmarketingentity.FinanceBill;
+import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessageRecord;
+import com.adbest.smsmarketingentity.MmsBill;
+import com.adbest.smsmarketingentity.SmsBill;
+import com.adbest.smsmarketingfront.entity.middleware.MsgPlanState;
+import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
+import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
+
+import java.math.BigDecimal;
 
 /**
  * 消息(SMS/MMS)处理组件
+ *
  * @see MessageRecord
- * @see
+ * @see SmsBill
+ * @see MmsBill
+ * @see FinanceBill
  */
 public interface MessageComponent {
     
@@ -14,10 +26,34 @@ public interface MessageComponent {
     int updateMessageStatus(StatusCallbackParam param);
     
     /**
-     * 消息结算
-     * @param customerId 用户id
-     * @param isSms 是否短信(true:是)
-     * @param amount 消息数量
+     * 任务结算
+     * @param planState
+     * @return 创建任务信用额度消费
      */
-    void messageSettlement(Long customerId, boolean isSms, int amount, String remark);
+    void msgPlanSettlement(MsgPlanState planState);
+    
+    /**
+     * 更新任务结算
+     * @deprecated
+     * @param planId
+     * @param amount
+     * @param isSms
+     */
+    void updateMsgPlanSettlement(Long planId, int amount, boolean isSms);
+    
+    /**
+     * 执行前的最终校验
+     * @param planId
+     * @return 可执行消息量
+     */
+    void validBeforeExec(Long planId);
+    
+    /**
+     * 自动回复消息结算
+     *
+     * @param customerId
+     * @param amount     消息数量
+     * @param isSms      是否短信(true:是)
+     */
+    void autoReplySettlement(Long customerId, int amount, boolean isSms);
 }

@@ -23,4 +23,12 @@ public interface CustomerDao extends JpaRepository<Customer, Long>, JpaSpecifica
     List<Customer> findByCustomerLoginIn(ArrayList<String> customerLogins);
 
     Customer findFirstByCustomerLoginAndPassword(String username, String password);
+    @Query("update Customer set availableCredit = availableCredit+?2 where id = ?1 and availableCredit+?2 >= 0")
+    int updateCredit(Long customerId, BigDecimal cost);
+
+    @Transactional
+    @Modifying
+    @Query("update Customer set availableCredit = availableCredit+?2, maxCredit = maxCredit+?2 where id = ?1 and maxCredit+?2 >= 0")
+    int updateMaxCredit(Long customerId, BigDecimal amount);
+
 }

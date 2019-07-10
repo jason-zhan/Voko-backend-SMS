@@ -2,7 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
 import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
@@ -86,7 +86,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("enter deleteOneMessage, param={}", idList);
         Assert.notNull(idList, CommonMessage.PARAM_IS_NULL);
         ServiceException.isTrue(idList.size() > 0,
-                bundle.getString("msg-record-id-list").replace("$action$", "delete"));
+                bundle.getString("msg-record-id-list").replace("$action$", bundle.getString("delete")));
         CustomerVo cur = Current.get();
         int result = 0;
         String errMsg = "";
@@ -96,7 +96,8 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 MessageRecord message = optional.get();
                 Assert.isTrue(cur.getId().equals(message.getCustomerId()), "can't delete other customer's message.");
                 if (!message.getInbox() && OutboxStatus.QUEUE.getValue() == message.getStatus()) {
-                    errMsg = bundle.getString("msg-record-delete-status").replace("$status$", OutboxStatus.QUEUE.getTitle());
+                    errMsg = bundle.getString("msg-record-delete-status")
+                            .replace("$status$", outboxStatusMap.get(OutboxStatus.QUEUE.getValue()));
                     continue;
                 }
                 result += messageRecordDao.disableById(id, true);
@@ -112,7 +113,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("enter markRead, param={}", idList);
         Assert.notNull(idList, CommonMessage.PARAM_IS_NULL);
         ServiceException.isTrue(idList.size() > 0,
-                bundle.getString("msg-record-id-list").replace("$action$", "mark as read"));
+                bundle.getString("msg-record-id-list").replace("$action$", bundle.getString("mark-as-read")));
         CustomerVo cur = Current.get();
         int result = 0;
         for (Long id : idList) {
@@ -205,7 +206,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         }
         MobileNumber mobileNumber = list.get(0);
         String from = inboundMsg.getFrom();
-        from = from.startsWith("+1")?from.substring(2,from.length()):from;
+        from = from.startsWith("+1") ? from.substring(2, from.length()) : from;
         List<Contacts> contactsList = contactsService.findByPhoneAndCustomerId(from, mobileNumber.getCustomerId());
         Contacts contacts = null;
         if (contactsList.size() <= 0) {
@@ -239,9 +240,13 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         messageRecord.setSid(inboundMsg.getMessageSid());
 //        messageRecord.setExpectedSendTime(new Timestamp(System.currentTimeMillis()));
         messageRecordDao.save(messageRecord);
-        if (inboundMsg.getBody().trim().indexOf(" ")!=-1){return;}
+        if (inboundMsg.getBody().trim().indexOf(" ") != -1) {
+            return;
+        }
         List<Keyword> keywords = keywordService.findByCustomerIdAndTitle(mobileNumber.getCustomerId(), inboundMsg.getBody().trim());
-        if (keywords.size()<=0){return;}
+        if (keywords.size() <= 0) {
+            return;
+        }
 
         MessageRecord send = new MessageRecord();
         send.setCustomerId(mobileNumber.getCustomerId());
@@ -269,16 +274,16 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     public void sendCallReminder(List<MessageRecord> messageRecords) {
         String msg = bundle.getString("CALL_RESPONSE");
         for (MessageRecord m : messageRecords) {
-            messageRecordService.sendSms(m,msg);
+            messageRecordService.sendSms(m, msg);
         }
     }
 
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
-        messageRecord.setSegments(MessageTools.calcMsgSegments(messageRecord.getContent()));
+        messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
         Long sum = smsBillService.sumByCustomerId(messageRecord.getCustomerId());
 //        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
-        if ((sum == null ? 0l : sum) - messageRecord.getSegments() < 0){
+        if ((sum == null ? 0l : sum) - messageRecord.getSegments() < 0) {
             return;
         }
         messageRecordDao.save(messageRecord);

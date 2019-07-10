@@ -12,18 +12,10 @@ public interface FinanceBillComponent {
     
     /**
      * 生成一条金融记录
-     * @param amount  金额
+     * @param customerId 用户id
+     * @param cost  金额
      * @param description  描述
      * @return
      */
-    int saveFinanceBill(BigDecimal amount, String description);
-
-    /**
-     * 实时推送扣费,并产生账单
-     * @param amount
-     * @param description
-     * @param customerId
-     * @return
-     */
-    Boolean realTimeDeduction(BigDecimal amount, String description, Long customerId);
+    int saveFinanceBill(Long customerId, BigDecimal cost, String description);
 }

@@ -63,7 +63,7 @@ public class MobileNumberTask {
                 price = ordinaryMobilePrice;
             }
             try {
-                financeBillComponent.realTimeDeduction(price,resourceBundle.getString("MOBILE_RENEWAL"), mobileNumber.getCustomerId());
+                financeBillComponent.saveFinanceBill(mobileNumber.getCustomerId(), price,resourceBundle.getString("MOBILE_RENEWAL"));
                 mobileNumber.setInvalidTime(TimeTools.addDay(mobileNumber.getInvalidTime(), 30));
                 renewMobileNumber.add(mobileNumber);
             }catch (Exception e){

@@ -129,7 +129,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         /**
          * 扣费，账单
          */
-        financeBillComponent.realTimeDeduction(price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"), customerId);
+        financeBillComponent.saveFinanceBill(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
 
         Long num = mobileNumberService.countByDisableAndCustomerIdAndGiftNumber(false, customerId, true);
         if(num<=0){

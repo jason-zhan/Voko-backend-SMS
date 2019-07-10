@@ -20,17 +20,21 @@ public class CreateMessagePlan {
     private Timestamp execTime;  // 执行时间
     private List<String> mediaIdlList;  // 媒体id列表
     private String remark;  // 备注
-//    private List<Long> fromList;  // 发送消息的号码id列表
+    //    private List<Long> fromList;  // 发送消息的号码id列表
     private List<String> fromNumList;  // 发送消息的用户号码列表
-//    private List<Long> toList; // 联系人id列表
+    //    private List<Long> toList; // 联系人id列表
     private List<String> toNumberList; // 接收消息的联系人号码列表
     private List<Long> groupList;  // 群组id列表
- 
-    public void copy(MessagePlan target){
-        target.setTitle(this.getTitle());
-        target.setText(this.getText());
-        target.setMediaIdList(StrSegTools.getListStr(this.getMediaIdlList()));
-        target.setRemark(this.getRemark());
-        target.setExecTime(this.getExecTime());
+    
+    public void copy(MessagePlan target) {
+        target.setTitle(title);
+        target.setText(text);
+        target.setMediaIdList(StrSegTools.getListStr(mediaIdlList));
+        target.setIsSms(mediaIdlList == null || mediaIdlList.size() == 0);
+        target.setExecTime(execTime);
+        target.setRemark(remark);
+        target.setFromNumList(StrSegTools.getListStr(fromNumList));
+        target.setToNumList(StrSegTools.getListStr(toNumberList));
+        target.setToGroupList(StrSegTools.getListStr(groupList));
     }
 }

@@ -1,9 +1,9 @@
 package com.adbest.smsmarketingfront.task;
 
 import com.adbest.smsmarketingentity.*;
+import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
 import com.adbest.smsmarketingfront.entity.dto.VkCDRAccountsDto;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
 import com.adbest.smsmarketingfront.entity.enums.CustomerSource;
 import com.adbest.smsmarketingfront.entity.enums.VkCDRCustomersSendStatus;
 import com.adbest.smsmarketingfront.service.*;
@@ -23,8 +23,6 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.adbest.smsmarketingentity.QContactsTemp.contactsTemp;
 
 @Component
 @EnableAsync
@@ -92,7 +90,8 @@ public class DbImportCustomerTask {
             customer.setLastName(vkCustomers.getLastname());
             customer.setSource(CustomerSource.API_Added.getValue());
             customer.setCustomerLogin(vkCustomers.getLogin());
-            customer.setCredit(BigDecimal.valueOf(0));
+            customer.setAvailableCredit(BigDecimal.valueOf(0));
+            customer.setMaxCredit(BigDecimal.valueOf(0));
             customer.setCustomerLogin(vkCustomers.getLogin());
             customer.setVkCustomersId(vkCustomers.getI_customer());
             customer.setPassword(encryptTools.encrypt(vkCustomers.getPassword()));

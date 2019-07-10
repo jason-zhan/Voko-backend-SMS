@@ -4,7 +4,6 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.VkCDRAccountsDao;
 import com.adbest.smsmarketingfront.entity.dto.ContactsDto;
 import com.adbest.smsmarketingfront.entity.dto.VkCDRAccountsDto;
-import com.adbest.smsmarketingfront.entity.enums.ContactsSource;
 import com.adbest.smsmarketingfront.entity.enums.VkCDRCustomersSendStatus;
 import com.adbest.smsmarketingfront.service.ContactsService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
