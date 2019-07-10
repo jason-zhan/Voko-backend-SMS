@@ -20,8 +20,7 @@ public class Customer implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;  // 主键
-    @Column(unique = true, nullable = false)
-    private String email;  // 邮箱 (作为用户名)
+    private String email;  // 邮箱
     @Column(nullable = false)
     private String password;  // 密码
     private String firstName;  // 名字
@@ -41,7 +40,17 @@ public class Customer implements Serializable {
     private BigDecimal availableCredit; // 可用信用额度(暂用单位：$)
     @Column(nullable = false)
     private BigDecimal maxCredit;  // 最大信用额度(暂用单位：$)
-    
+
+    /**
+     * 用户名
+     */
+    @Column(unique = true, nullable = false)
+    private String customerLogin;
+    /**
+     * VkCustomers表中id
+     */
+    private Integer vkCustomersId;
+
     public static boolean checkEmail(String email) {
 //        Pattern pattern = Pattern.compile("^([a-z0-9A-Z]+[-|\\.]?)+[a-z0-9A-Z]@([a-z0-9A-Z]+(-[a-z0-9A-Z]+)?\\.)+[a-zA-Z]{2,}$", Pattern.CASE_INSENSITIVE);
         Pattern pattern = Pattern.compile("^[\\w!#$%&'*+/=?^_`{|}~-]+(?:\\.[\\w!#$%&'*+/=?^_`{|}~-]+)*@(?:[\\w](?:[\\w-]*[\\w])?\\.)+[\\w](?:[\\w-]*[\\w])?$",

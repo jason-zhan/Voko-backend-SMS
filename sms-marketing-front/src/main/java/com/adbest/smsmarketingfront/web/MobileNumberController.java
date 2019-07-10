@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingfront.entity.form.SearchTwilioForm;
+import com.adbest.smsmarketingfront.entity.vo.CustomerMarketSettingVo;
 import com.adbest.smsmarketingfront.entity.vo.MobileNumberVo;
 import com.adbest.smsmarketingfront.entity.vo.TwilioPhoneVo;
 import com.adbest.smsmarketingfront.service.MobileNumberService;
@@ -43,8 +44,20 @@ public class MobileNumberController {
     }
 
     @RequestMapping("/buy")
-    public ReturnEntity buyPhone(String phoneNumber){
-        boolean is = mobileNumberService.buyPhone(phoneNumber);
+    public ReturnEntity buyPhone(String phoneNumber, Boolean automaticRenewal){
+        boolean is = mobileNumberService.buyPhone(phoneNumber, automaticRenewal);
+        return ReturnEntity.success(is);
+    }
+
+    @RequestMapping("/delete")
+    public ReturnEntity delete(Long id){
+        boolean is = mobileNumberService.delete(id);
+        return ReturnEntity.success(is);
+    }
+
+    @RequestMapping("/automaticRenewal")
+    public ReturnEntity automaticRenewal(Long id, Boolean automaticRenewal){
+        boolean is = mobileNumberService.automaticRenewal(id, automaticRenewal);
         return ReturnEntity.success(is);
     }
 }

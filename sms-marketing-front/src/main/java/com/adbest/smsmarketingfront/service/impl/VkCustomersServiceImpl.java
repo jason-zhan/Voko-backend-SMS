@@ -16,17 +16,22 @@ public class VkCustomersServiceImpl implements VkCustomersService {
     private VkCustomersDao vkCustomersDao;
 
     @Override
-    public List<VkCustomers> findByInLeadinIsNull() {
-        return vkCustomersDao.findByInLeadinIsNull();
+    public List<VkCustomers> findByInLeadinIsNull(Pageable pageable) {
+        return vkCustomersDao.selectByInLeadinIsNull(pageable);
     }
 
     @Override
     public List<VkCustomers> findByInLeadinIsNullAndEmailNotNull(Pageable pageable) {
-        return vkCustomersDao.findByInLeadinIsNullAndEmailNotNull(pageable);
+        return vkCustomersDao.selectByInLeadinIsNullAndEmailNotNull(pageable);
     }
 
     @Override
     public Integer updateInLeadinByEmailIn(boolean inLeadin, List<String> emails) {
         return vkCustomersDao.updateInLeadinByEmailIn(inLeadin, emails);
+    }
+
+    @Override
+    public Integer updateInLeadinByLoginIn(boolean inLeadin, List<String> loginIns) {
+        return vkCustomersDao.updateInLeadinByLoginIn(inLeadin, loginIns);
     }
 }

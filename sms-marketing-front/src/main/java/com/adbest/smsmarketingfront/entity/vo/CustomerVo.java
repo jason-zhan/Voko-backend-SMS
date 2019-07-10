@@ -16,6 +16,7 @@ public class CustomerVo implements Serializable {
     private String organization;  // 单位（公司/机构）
     private Timestamp registerTime;  // 注册时间
     private Integer source;//来源
+    private String username;//用户名
 
     public CustomerVo() {
     }
@@ -29,6 +30,7 @@ public class CustomerVo implements Serializable {
         this.organization = customer.getOrganization();
         this.registerTime = customer.getRegisterTime();
         this.source = customer.getSource();
+        this.username = customer.getCustomerLogin();
     }
 
     public CustomerVo(UserDetailsVo customer) {
@@ -40,5 +42,7 @@ public class CustomerVo implements Serializable {
         this.organization = customer.getOrganization();
         this.registerTime = customer.getRegisterTime();
         this.source = customer.getSource();
+        this.username = customer.getUsername();
+
     }
 }

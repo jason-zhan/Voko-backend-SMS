@@ -70,13 +70,13 @@ public class CustomAuthenticationProvider implements AuthenticationProvider {
         }
 
         if(StringUtils.isEmpty(username)){
-            throw new BadCredentialsException(returnMsgUtil.msg("EMAIL_NOT_EMPTY"));
+            throw new BadCredentialsException(returnMsgUtil.msg("LOGIN_NOT_EMPTY"));
         }
         String password = authentication.getCredentials().toString();
         if(StringUtils.isEmpty(password)){
             throw new BadCredentialsException(returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
         }
-        Customer sysUser = customerService.findFirstByEmailAndPassword(username, encryptTools.encrypt(password));
+        Customer sysUser = customerService.findFirstByCustomerLoginAndPassword(username, encryptTools.encrypt(password));
         if(sysUser == null){
             Boolean is = redisTemplate.opsForValue().setIfAbsent(key, "1", 10*60, TimeUnit.SECONDS);
             if (!is){

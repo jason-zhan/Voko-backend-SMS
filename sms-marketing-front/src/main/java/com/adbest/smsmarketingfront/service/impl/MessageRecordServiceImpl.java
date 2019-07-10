@@ -52,28 +52,28 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     Map<Integer, String> inboxStatusMap;
     @Autowired
     Map<Integer, String> outboxStatusMap;
-    
+
     @Autowired
     private MobileNumberService mobileNumberService;
-    
+
     @Autowired
     private ContactsService contactsService;
-    
+
     @Autowired
     private KeywordService keywordService;
-    
+
     @Autowired
     private SmsBillComponent smsBillComponent;
-    
+
     @Autowired
     private SmsBillService smsBillService;
-    
+
     @Autowired
     private TwilioUtil twilioUtil;
-    
+
     @Autowired
     private MessageRecordService messageRecordService;
-    
+
     @Autowired
     private CustomerService customerService;
     
@@ -197,7 +197,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("leave outboxStatusMap");
         return outboxStatusMap;
     }
-    
+
     @Override
     public void saveInbox(InboundMsg inboundMsg) {
         List<MobileNumber> list = mobileNumberService.findByNumberAndDisable(inboundMsg.getTo(), false);
@@ -247,7 +247,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         if (keywords.size() <= 0) {
             return;
         }
-        
+
         MessageRecord send = new MessageRecord();
         send.setCustomerId(mobileNumber.getCustomerId());
         send.setCustomerNumber(inboundMsg.getTo());
@@ -267,17 +267,17 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setSendTime(timestamp);
 //        send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
-        messageRecordService.sendSms(send, "keyword automatic recovery");
+        messageRecordService.sendSms(send,bundle.getString("KEYWORD_REPLY"));
     }
-    
+
     @Override
     public void sendCallReminder(List<MessageRecord> messageRecords) {
-        String msg = "Call response";
+        String msg = bundle.getString("CALL_RESPONSE");
         for (MessageRecord m : messageRecords) {
             messageRecordService.sendSms(m, msg);
         }
     }
-    
+
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
@@ -290,7 +290,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
         smsBill.setCustomerId(messageRecord.getCustomerId());
-        smsBill.setInfoDescribe("keyword automatic recovery");
+        smsBill.setInfoDescribe(bundle.getString("KEYWORD_REPLY"));
         smsBillComponent.save(smsBill);
         PreSendMsg preSendMsg = new PreSendMsg(messageRecord);
 //        twilioUtil.sendMessage(preSendMsg);

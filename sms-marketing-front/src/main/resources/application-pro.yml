@@ -37,6 +37,6 @@ twilio:
 
 marketing:
   payidCredit: 10  # 付费用户信用($)
-  smsUnitPrice: 0.05 # 套餐外短信单价
-  mmsUnitPrice: 0.5  # 套餐外彩信单价
-  keywordUnitPrice: 1.5  # 套餐外关键字单价
+  singleSmsPrice: 0.05 # 套餐外短信单价
+  singleMmsPrice: 0.5  # 套餐外彩信单价
+  singleKeywordPrice: 1.5  # 套餐外关键字单价

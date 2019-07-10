@@ -20,13 +20,7 @@ public interface CustomerService extends UserDetailsService {
 
     public Customer update(Customer customer);
 
-    Customer findFirstByEmailAndPassword(String username, String encrypt);
-
     CustomerVo register(CustomerForm vo, HttpServletRequest request);
-
-    Customer findFirstByEmail(String email);
-
-    List<Customer> findByEmailIn(List<String> emails);
 
     void initCustomerData(Customer customer);
 
@@ -34,7 +28,7 @@ public interface CustomerService extends UserDetailsService {
 
     CustomerVo updateInfo(CustomerForm customerForm);
 
-    boolean getCode(String email, HttpServletRequest request);
+    String getCode(String username, HttpServletRequest request);
 
     boolean updatePasswordByCode(String code, String password, HttpServletRequest request);
 
@@ -43,4 +37,8 @@ public interface CustomerService extends UserDetailsService {
     Customer findById(Long customerId);
 
     void saveImportCustomer(List<Customer> customerList);
+
+    List<Customer> findByCustomerLoginIn(ArrayList<String> customerLogins);
+
+    Customer findFirstByCustomerLoginAndPassword(String username, String encrypt);
 }

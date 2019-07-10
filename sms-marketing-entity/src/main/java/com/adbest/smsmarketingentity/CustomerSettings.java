@@ -40,7 +40,7 @@ public class CustomerSettings implements Serializable {
     private Long customerId;
 
     /**
-     * 号码领取状态
+     * 号码是否已领取
      */
     private Boolean numberReceivingStatus;
 

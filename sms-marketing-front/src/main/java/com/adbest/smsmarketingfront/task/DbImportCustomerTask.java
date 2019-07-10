@@ -2,22 +2,31 @@ package com.adbest.smsmarketingfront.task;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingentity.ContactsSource;
+import com.adbest.smsmarketingfront.entity.dto.CustomerDto;
+import com.adbest.smsmarketingfront.entity.dto.VkCDRAccountsDto;
 import com.adbest.smsmarketingfront.entity.enums.CustomerSource;
 import com.adbest.smsmarketingfront.entity.enums.VkCDRCustomersSendStatus;
 import com.adbest.smsmarketingfront.service.*;
+import com.adbest.smsmarketingfront.util.EncryptTools;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.EnableAsync;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Component
 @EnableAsync
+@Slf4j
 public class DbImportCustomerTask {
 
     @Autowired
@@ -25,9 +34,6 @@ public class DbImportCustomerTask {
 
     @Autowired
     private VkCustomersService vkCustomersService;
-
-    @Autowired
-    private VkCDRCustomersService vkCDRCustomersService;
 
     @Autowired
     private ContactsService contactsService;
@@ -41,22 +47,29 @@ public class DbImportCustomerTask {
     @Autowired
     private MessageRecordService messageRecordService;
 
+    @Autowired
+    private EncryptTools encryptTools;
+
+    @Autowired
+    private VkCDRAccountsService vkCDRAccountsService;
+
+    @Scheduled(cron = "30 39 15 * * ?")
     //@Scheduled(cron = "15 0/10 * * * ?")
     public void importCustomerTask(){
         int size = 1000;
         int page = 0;
         do {
             PageRequest pageRequest = PageRequest.of(page,size);
-            List<VkCustomers> list = vkCustomersService.findByInLeadinIsNullAndEmailNotNull(pageRequest);
+            List<VkCustomers> list = vkCustomersService.findByInLeadinIsNull(pageRequest);
             page++;
             if (list.size()<=0){break;}
-            Map<String, VkCustomers> map = list.stream().collect(Collectors.toMap(VkCustomers::getEmail, vkCustomers -> vkCustomers, (vc, newVc) -> vc));
-            List<Customer> customers = customerService.findByEmailIn(new ArrayList<>(map.keySet()));
+            Map<String, VkCustomers> map = list.stream().collect(Collectors.toMap(VkCustomers::getLogin, vkCustomers -> vkCustomers, (vc, newVc) -> vc));
+            List<Customer> customers = customerService.findByCustomerLoginIn(new ArrayList<>(map.keySet()));
             if (customers.size()>0){
                 for (Customer c : customers) {
-                    map.remove(c.getEmail());
+                    map.remove(c.getCustomerLogin());
                 }
-                vkCustomersService.updateInLeadinByEmailIn(false, customers.stream().map(customer -> customer.getEmail()).collect(Collectors.toList()));
+                vkCustomersService.updateInLeadinByLoginIn(false, customers.stream().map(customer -> customer.getCustomerLogin()).collect(Collectors.toList()));
             }
             intoCustomer(map);
             if (list.size()<size){break;}
@@ -66,11 +79,9 @@ public class DbImportCustomerTask {
     public void intoCustomer(Map<String, VkCustomers> map){
         if (map.size()<=0){return;}
         List<Customer> customerList = new ArrayList<>();
-        List<CustomerSettings> customerSettingsList = new ArrayList<>();
         Customer customer = null;
-        CustomerSettings customerSettings = null;
-        for (String email : map.keySet()) {
-            VkCustomers vkCustomers = map.get(email);
+        for (String login : map.keySet()) {
+            VkCustomers vkCustomers = map.get(login);
             customer = new Customer();
             customer.setPassword(UUID.randomUUID().toString());
             customer.setDisable(false);
@@ -78,28 +89,50 @@ public class DbImportCustomerTask {
             customer.setFirstName(vkCustomers.getFirstname());
             customer.setLastName(vkCustomers.getLastname());
             customer.setSource(CustomerSource.API_Added.getValue());
+            customer.setCustomerLogin(vkCustomers.getLogin());
+            customer.setAvailableCredit(BigDecimal.valueOf(0));
+            customer.setMaxCredit(BigDecimal.valueOf(0));
+            customer.setCustomerLogin(vkCustomers.getLogin());
+            customer.setVkCustomersId(vkCustomers.getI_customer());
+            customer.setPassword(encryptTools.encrypt(vkCustomers.getPassword()));
             customerList.add(customer);
         }
         customerService.saveImportCustomer(customerList);
     }
 
-//    @Scheduled(cron = "0/30 * * * * ?")
+    @Scheduled(cron = "0/30 * * * * ?")
     public void importContactsTask(){
+//        int size = 500;
+//        int page = 0;
+//        boolean is = true;
+//        do {
+//            PageRequest pageRequest = PageRequest.of(page,size);
+//            List<?> list = vkCDRCustomersService.selectImportablePhone(pageRequest);
+//            page++;
+//            importContacts(list);
+//            if (list.size()<size){is = false;break;}
+//        }while (is);
+//        vkCDRCustomersService.updateRepeatInLeadin();
+//        sendSms();
+
+
         int size = 500;
         int page = 0;
         boolean is = true;
+        Timestamp timestamp = new Timestamp(System.currentTimeMillis() - 3 * 60 * 1000);
         do {
             PageRequest pageRequest = PageRequest.of(page,size);
-            List<?> list = vkCDRCustomersService.selectImportablePhone(pageRequest);
+            List<?> list = vkCDRAccountsService.selectEffectiveData(timestamp,pageRequest);
             page++;
-            importContacts(list);
-            if (list.size()<size){is = false;break;}
+            if (list.size()==0){break;}else if (list.size()<size){is = false;}
+            SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            vkCDRAccountsService.saveContacts(list);
+            vkCDRAccountsService.sendSms(list);
+            list.clear();
         }while (is);
-        vkCDRCustomersService.updateRepeatInLeadin();
-        sendSms();
     }
 
-    public void sendSms(){
+    /*public void sendSms(){
         int size = 500;
         int page = 0;
         boolean is = true;
@@ -195,5 +228,6 @@ public class DbImportCustomerTask {
             List<Integer> ids = list.stream().map(s -> Integer.valueOf(((Object[]) s)[0].toString())).collect(Collectors.toList());
             vkCDRCustomersService.updateInLeadin(true, ids);
         }
-    }
+    }*/
+
 }

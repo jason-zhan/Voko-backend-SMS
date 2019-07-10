@@ -1,26 +1,20 @@
 package com.adbest.smsmarketingfront;
 
-import com.adbest.smsmarketingentity.InboxStatus;
-import com.adbest.smsmarketingentity.MessagePlanStatus;
-import com.adbest.smsmarketingentity.MsgTemplateVariable;
-import com.adbest.smsmarketingentity.OutboxStatus;
-import com.adbest.smsmarketingentity.SystemMsgTemplateType;
+import com.adbest.smsmarketingentity.*;
+import com.adbest.smsmarketingfront.service.MarketSettingService;
 import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import org.apache.poi.ss.formula.functions.T;
-import org.quartz.Scheduler;
-import org.quartz.SchedulerException;
-import org.quartz.impl.StdSchedulerFactory;
 import org.springframework.beans.factory.InitializingBean;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.boot.web.servlet.ServletComponentScan;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
@@ -28,6 +22,7 @@ import org.springframework.util.Assert;
 
 import javax.persistence.EntityManager;
 import java.lang.reflect.InvocationTargetException;
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -38,8 +33,13 @@ import java.util.Set;
 @EntityScan(basePackages = "com.adbest.smsmarketingentity")
 @ServletComponentScan(basePackages = "com.adbest.smsmarketingfront.handler")
 public class SpringInitializer implements InitializingBean {
-    
-    
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private MarketSettingService marketSettingService;
+
     @Bean
     public JPAQueryFactory jpaQueryFactory(EntityManager entityManager) {
         return new JPAQueryFactory(entityManager);
@@ -101,7 +101,7 @@ public class SpringInitializer implements InitializingBean {
     
     @Override
     public void afterPropertiesSet() throws Exception {
-    
+        initMarketSetting();
     
     }
     
@@ -133,5 +133,19 @@ public class SpringInitializer implements InitializingBean {
             throw new RuntimeException("getValuesMap execute err: ", e);
         }
         return map;
+    }
+
+    private void initMarketSetting(){
+        Long row = marketSettingService.count();
+        if (row==0){
+            MarketSetting marketSetting = new MarketSetting();
+            marketSetting.setDaysNumber(Integer.valueOf(environment.getProperty("marketSetting.daysNumber")));
+            marketSetting.setKeywordTotal(Integer.valueOf(environment.getProperty("marketSetting.keywordTotal")));
+            marketSetting.setTitle(environment.getProperty("marketSetting.title"));
+            marketSetting.setSmsTotal(Integer.valueOf(environment.getProperty("marketSetting.smsTotal")));
+            marketSetting.setPrice(BigDecimal.valueOf(0));
+            marketSetting.setMmsTotal(Integer.valueOf(environment.getProperty("marketSetting.mmsTotal")));
+            marketSettingService.save(marketSetting);
+        }
     }
 }
