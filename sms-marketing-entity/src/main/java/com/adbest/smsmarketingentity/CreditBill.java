@@ -14,7 +14,6 @@ import java.sql.Timestamp;
 
 /**
  * 信用消费账单
- * 每个用户维持其 信用值 >= 0
  */
 @Entity
 @Data

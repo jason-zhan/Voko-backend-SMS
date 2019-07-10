@@ -45,7 +45,10 @@ public class MessagePlanTask {
     private QuartzTools quartzTools;
     
     
-    // 获取plan-（生成消息-生成发送任务）：每5min触发一次。范围：1-10w数据的生成及加入任务容器；0数据取消任务(追加备注)
+    /**
+     * 定时扫描任务 临近执行期的任务将生成消息并加入任务容器
+     */
+//    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void runPlan() {
         log.info("enter runPlan [TASK]");
         List<MessagePlan> planList = messagePlanDao.findByStatusInAndExecTimeBeforeAndDisableIsFalse(
@@ -53,46 +56,41 @@ public class MessagePlanTask {
                 EasyTime.init().addHours(1).stamp()
         );
         checkPlanByGroup(planList);
-        
+        if (planList.isEmpty()) {
+            log.info("leave runPlan for empty plan list [TASK]");
+            return;
+        }
+        for (MessagePlan plan : planList) {
+            // 是否临近执行期
+            if (!PlanTaskCommon.closeToExecTime(plan)) {
+                continue;
+            }
+            JobDetail messageJob = PlanTaskCommon.createMessageJob(plan);
+            // 将任务加入容器
+            if (!quartzTools.addJobIfGroupNone(messageJob)) {
+                return;
+            }
+            // 锁定任务，使得不可被修改
+            messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue(), MessagePlanStatus.SCHEDULING.getValue());
+            // 生成消息的作业加入容器中，异步执行
+            quartzTools.scheduleJob(PlanTaskCommon.createMessageTrigger(messageJob));
+        }
         log.info("leave runPlan [TASK]");
     }
-    
-    // 消息发送失败修复
-
-
-//    /**
-//     * 执行定时发送
-//     */
-////    @Scheduled(fixedDelay = 60 * 1000)
-//    public synchronized void executePlan() {
-//        log.info("enter executePlan [task]");
-//        // 获取所有计划中状态的任务
-//        List<MessagePlan> planList = messagePlanDao.findByStatusAndExecTimeBeforeAndDisableIsFalse(MessagePlanStatus.SCHEDULING.getValue(),
-//                EasyTime.init().addMinutes(planExecTimeDelay).stamp());
-//        if (planList.isEmpty()) {
-//            log.info("leave executePlan for empty list [task]");
-//            return;
-//        }
-//        // 循环分配任务到quartz容器
-//        for (MessagePlan plan : planList) {
-//            scheduledPlan(plan);
-//        }
-//        log.info("leave executePlan [task]");
-//    }
     
     /**
      * 消息发送重试
      */
-//    @Scheduled(initialDelay = 30 * 1000, fixedRate = repairTimeRange * 60 * 1000)
-    public synchronized void retryMessaging() {
+//    @Scheduled(initialDelay = 30 * 1000, fixedDelay = repairTimeRange * 60 * 1000)
+    public void retryMessaging() {
         log.info("enter repairSendMsg [task]");
         // 所有队列中状态的任务
-        List<MessagePlan> planList = messagePlanDao.findByStatusInAndExecTimeBeforeAndDisableIsFalse(Arrays.asList(MessagePlanStatus.QUEUING.getValue()),
+        List<MessagePlan> planList = messagePlanDao.findByStatusInAndExecTimeBeforeAndDisableIsFalse(Arrays.asList(MessagePlanStatus.EXECUTING.getValue()),
                 EasyTime.init().addMinutes(repairTimeRange).stamp());
         // 排除当前正在运行的任务（避免与正常执行作业重复）
         checkPlanByGroup(planList);
         if (planList.size() == 0) {
-            log.info("leave repairSendMsg for empty list [task]");
+            log.info("leave retryMessaging for empty plan list [task]");
             return;
         }
         // 产生任务并加入quartz容器
@@ -105,7 +103,7 @@ public class MessagePlanTask {
                     log.info("break for empty message list");
                     break;
                 }
-                JobDetail jobDetail = PlanTaskCommon.generateJob(plan, messagePage);
+                JobDetail jobDetail = PlanTaskCommon.createSendJob(plan, messagePage);
                 quartzTools.addJob(jobDetail);
                 page++;
             } while (messagePage.hasNext());
@@ -119,7 +117,7 @@ public class MessagePlanTask {
     private void setTriggers(MessagePlan plan) {
         Set<JobKey> jobKeys = quartzTools.getJobKeys(plan.getId().toString());
         for (JobKey jobKey : jobKeys) {
-            quartzTools.scheduleJob(PlanTaskCommon.generateTrigger(quartzTools.getJobDetail(jobKey)));
+            quartzTools.scheduleJob(PlanTaskCommon.createSendTrigger(quartzTools.getJobDetail(jobKey)));
         }
     }
     
@@ -148,11 +146,11 @@ public class MessagePlanTask {
         messageRecordDao.updateStatusByPlanIdAndDisableIsFalse(plan.getId(), OutboxStatus.QUEUE.getValue());
         Page<MessageRecord> messagePage = getQueueUsableMessagePage(plan.getId(), 0);
         // 任务排他性加入容器
-        if (!quartzTools.addJobIfGroupNone(PlanTaskCommon.generateJob(plan, messagePage))) {
+        if (!quartzTools.addJobIfGroupNone(PlanTaskCommon.createSendJob(plan, messagePage))) {
             return;
         }
-        // 锁定任务
-        messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue());
+        // 更新任务状态
+        messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.EXECUTING.getValue(), MessagePlanStatus.QUEUING.getValue());
         if (debug) {
             log.info("== break for debug ==");
             return;
@@ -160,7 +158,7 @@ public class MessagePlanTask {
         // 后续任务加入容器
         while (messagePage.hasNext()) {
             messagePage = getQueueUsableMessagePage(plan.getId(), messagePage.nextPageable().getPageNumber());
-            quartzTools.addJob(PlanTaskCommon.generateJob(plan, messagePage));
+            quartzTools.addJob(PlanTaskCommon.createSendJob(plan, messagePage));
         }
         // 关联触发器
         setTriggers(plan);

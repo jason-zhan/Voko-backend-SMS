@@ -2,7 +2,6 @@ package com.adbest.smsmarketingfront.dao;
 
 import com.adbest.smsmarketingentity.MessageRecord;
 import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
@@ -44,16 +43,19 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     @Query("update MessageRecord set sid = ?2, status = ?3, sendTime = current_timestamp where id = ?1")
     int updateStatusAfterSendMessage(Long id, String sid, int status);
     
+    
+    @Transactional
+    @Modifying
+    @Query("update MessageRecord set status = ?2 where planId = ?1 and disable = false")
+    int updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
+    
     // 根据计划id统计实际发送消息条数
     @Query("select sum(segments) from MessageRecord where planId = ?1")
     int sumMsgNumByPlanId(Long planId);
     
     MessageRecord findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     
-    @Transactional
-    @Modifying
-    @Query("update MessageRecord set status = ?2 where planId = ?1 and disable = false")
-    int updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
+    boolean existsByPlanId(Long planId);
     
     long countByPlanIdAndDisableIsFalse(Long planId);
     

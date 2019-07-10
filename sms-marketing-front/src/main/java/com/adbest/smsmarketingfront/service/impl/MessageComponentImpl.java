@@ -170,33 +170,34 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Transactional
     @Override
-    public void validBeforeExec(Long planId) {
+    public MessagePlan validBeforeExec(Long planId) {
         log.info("enter validBeforeExec, planId={}", planId);
         // 参数检查
         Assert.notNull(planId, "planId is null");
         Optional<MessagePlan> planOptional = messagePlanDao.findById(planId);
         Assert.isTrue(planOptional.isPresent(), "message plan does not exists");
-        MessagePlan plan = planOptional.get();
-        Optional<Customer> customerOptional = customerDao.findById(plan.getCustomerId());
+        MessagePlan found = planOptional.get();
+        Optional<Customer> customerOptional = customerDao.findById(found.getCustomerId());
         Assert.isTrue(customerOptional.isPresent(), "customer does not exists");
         Customer customer = customerOptional.get();
         CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customer.getId());
         Assert.notNull(marketSetting, "customer's market-setting does not exists");
         // 初始化中间参数实例
-        MsgPlanState planState = MsgPlanState.init(plan, new CustomerVo(customer), true);
+        MsgPlanState planState = MsgPlanState.init(found, new CustomerVo(customer), true);
         // 计算当前消息总量
         try {
             calcMsgTotal(planState);
         } catch (OverBudgetException e) {
             log.info("Current message volume reaches or exceeds previous budget.");
         }
-        if (planState.msgTotal < plan.getMsgTotal()) {
+        if (planState.msgTotal < found.getMsgTotal()) {
             // 返还结算
-            rebateBeforeExec(plan, marketSetting, planState);
+            rebateBeforeExec(found, marketSetting, planState);
             // 更新任务
-            messagePlanDao.save(plan);
+            messagePlanDao.save(found);
         }
         log.info("leave validBeforeExec");
+        return found;
     }
     
     private void rebateBeforeExec(MessagePlan plan, CustomerMarketSetting marketSetting, MsgPlanState planState) {
@@ -497,26 +498,6 @@ public class MessageComponentImpl implements MessageComponent {
         saveMsgBill(customerId, isSms, -amount, bundle.getString("bill-reply-msg"));
         log.info("leave autoReplySettlement");
     }
-    
-    
-//    /**
-//     * 使用套餐余量结算
-//     *
-//     * @param customerId
-//     * @param isSms
-//     * @param amount
-//     * @return 是否结算成功
-//     */
-//    private boolean settleWithMarketSetting(Long customerId, boolean isSms, int amount) {
-//        // 使用套餐余量结算
-//        int msResult;
-//        if (isSms) {
-//            msResult = customerMarketSettingDao.updateSmsByCustomerId(customerId, -amount);
-//        } else {
-//            msResult = customerMarketSettingDao.updateMmsByCustomerId(customerId, -amount);
-//        }
-//        return msResult > 0;
-//    }
     
     /**
      * 使用套餐余量部分结算

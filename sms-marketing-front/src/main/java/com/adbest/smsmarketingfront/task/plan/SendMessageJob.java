@@ -53,7 +53,7 @@ public class SendMessageJob implements Job {
         // 统计任务完成度
         long queueCount = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
         if (queueCount == 0) {
-            messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+            messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue(), MessagePlanStatus.EXECUTING.getValue());
             System.out.printf("complete message plan, planId=%s [task] %n", planId);
         } else {
             System.out.printf("executed send message, planId=%s, page=%s, size=%s [task] %n", planId, page, messageList.size());

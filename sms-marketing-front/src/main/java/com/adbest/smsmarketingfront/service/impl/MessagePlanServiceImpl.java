@@ -42,6 +42,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -105,10 +106,11 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 验证用户消息余量
         validCustomerBalance(cur.getId(), createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0);
         // 持久化任务(消息结算需要任务id)
-        MessagePlan plan = generatePlan(createPlan);
+        boolean closeToExecTime = closeToExecTime(createPlan.getExecTime());
+        MessagePlan plan = generatePlan(createPlan, closeToExecTime);
         messagePlanDao.save(plan);
         // 初始化中间参数实例
-        MsgPlanState planState = MsgPlanState.init(plan, createPlan, cur, false);
+        MsgPlanState planState = MsgPlanState.init(plan, createPlan, cur, closeToExecTime);
         // 消息结算
         messageComponent.msgPlanSettlement(planState);
         // 修改任务结算信息
@@ -121,6 +123,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         // 产生消息账单
         saveMsgBill(cur.getId(), plan.getIsSms(), -plan.getMsgTotal(), bundle.getString("bill-create-plan"));
+        // 若临近执行时间，则将任务加入容器
+        if (closeToExecTime) {
+            messagePlanTask.scheduledPlan(plan);
+        }
         log.info("leave create");
         return 1;
     }
@@ -140,7 +146,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 验证用户消息余量
         validCustomerBalance(cur.getId(), create.getMediaIdlList() == null || create.getMediaIdlList().size() == 0);
         // 生成任务实例
-        MessagePlan plan = generatePlan(create);
+        MessagePlan plan = generatePlan(create, true);
         // 持久化任务(消息结算需要任务id)
         messagePlanDao.save(plan);
         // 初始化中间参数实例
@@ -251,14 +257,15 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                 bundle.getString("msg-plan-status").replace("$action$", bundle.getString("restart"))
                         .replace("$status$", messagePlanStatusMap.get(MessagePlanStatus.EDITING.getValue()))
         );
-        ServiceException.isTrue(found.getExecTime().after(EasyTime.now()),
+        ServiceException.isTrue(found.getExecTime().after(curTime()),
                 bundle.getString("msg-plan-execute-time-later"));
         // 初始化中间参数实例
-        MsgPlanState planState = MsgPlanState.init(found, cur, false);
+        boolean closeToExecTime = closeToExecTime(found.getExecTime());
+        MsgPlanState planState = MsgPlanState.init(found, cur, closeToExecTime);
         // 消息结算
         messageComponent.msgPlanSettlement(planState);
         // 修改任务结算信息
-        found.setStatus(MessagePlanStatus.SCHEDULING.getValue());
+        found.setStatus(closeToExecTime ? MessagePlanStatus.QUEUING.getValue() : MessagePlanStatus.SCHEDULING.getValue());
         found.setMsgTotal(planState.msgTotal);
         found.setCreditPayNum(planState.creditPayNum);
         found.setCreditPayCost(planState.creditPayCost);
@@ -270,6 +277,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         // 产生消息账单
         saveMsgBill(cur.getId(), found.getIsSms(), -found.getMsgTotal(), bundle.getString("bill-restart-plan"));
+        // 若临近执行时间，则将任务加入容器
+        if (closeToExecTime) {
+            messagePlanTask.scheduledPlan(found);
+        }
         log.info("leave restart");
         return 1;
     }
@@ -339,7 +350,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         overLengthValid(msgPlanInfo.getText(), Current.get());
         
         ServiceException.notNull(msgPlanInfo.getExecTime(), bundle.getString("msg-plan-execute-time"));
-        ServiceException.isTrue(msgPlanInfo.getExecTime().after(EasyTime.init().addMinutes(-5).stamp()), bundle.getString("msg-plan-execute-time-later"));
+        ServiceException.isTrue(msgPlanInfo.getExecTime().after(curTime()), bundle.getString("msg-plan-execute-time-later"));
         
         if (msgPlanInfo.getMediaIdlList() != null && msgPlanInfo.getMediaIdlList().size() > 0) {
             Assert.isTrue(msgPlanInfo.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM, bundle.getString("msg-plan-media-list"));
@@ -367,6 +378,11 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         ServiceException.isTrue((msgPlanInfo.getToNumberList() != null && msgPlanInfo.getToNumberList().size() > 0) ||
                         (msgPlanInfo.getGroupList() != null && msgPlanInfo.getGroupList().size() > 0),
                 bundle.getString("msg-plan-contacts"));
+    }
+    
+    // 获取自定义的当前时间
+    private Timestamp curTime() {
+        return EasyTime.init().addMinutes(-5).stamp();
     }
     
     // 检查用户套餐和信用额度
@@ -399,12 +415,12 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     // 生成消息发送任务
-    private MessagePlan generatePlan(CreateMessagePlan create) {
+    private MessagePlan generatePlan(CreateMessagePlan create, boolean closeToExecTime) {
         MessagePlan plan = new MessagePlan();
         plan.setCustomerId(Current.get().getId());
         create.copy(plan);
         plan.setDisable(false);
-        plan.setStatus(MessagePlanStatus.SCHEDULING.getValue());
+        plan.setStatus(closeToExecTime ? MessagePlanStatus.QUEUING.getValue() : MessagePlanStatus.SCHEDULING.getValue());
         plan.setMsgTotal(0);
         plan.setCreditPayNum(0);
         plan.setCreditPayCost(BigDecimal.ZERO);
@@ -441,5 +457,10 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         } else {
             mmsBillComponent.saveMmsBill(customerId, description, amount);
         }
+    }
+    
+    // 是否临近执行时间
+    private boolean closeToExecTime(Timestamp execTime) {
+        return execTime.before(EasyTime.init().addMinutes(5).stamp());
     }
 }

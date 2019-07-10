@@ -6,11 +6,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.MmsBill;
 import com.adbest.smsmarketingentity.SmsBill;
 import com.adbest.smsmarketingfront.entity.middleware.MsgPlanState;
-import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
-import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
 import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
-
-import java.math.BigDecimal;
 
 /**
  * 消息(SMS/MMS)处理组件
@@ -42,11 +38,11 @@ public interface MessageComponent {
     void updateMsgPlanSettlement(Long planId, int amount, boolean isSms);
     
     /**
-     * 执行前的最终校验
+     * plan执行前的最终校验
      * @param planId
      * @return 可执行消息量
      */
-    void validBeforeExec(Long planId);
+    MessagePlan validBeforeExec(Long planId);
     
     /**
      * 自动回复消息结算
