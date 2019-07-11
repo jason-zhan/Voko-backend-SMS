@@ -41,7 +41,7 @@ public class MsgPlanState {
     public static MsgPlanState init(MessagePlan plan, CustomerVo customerVo, boolean saveMsg) {
         List<String> fromNumList = StrSegTools.getStrList(plan.getFromNumList());
         List<String> toNumList = StrSegTools.getStrList(plan.getToNumList());
-        List<Long> toGroupList = StrSegTools.getList(plan.getToGroupList());
+        List<Long> toGroupList = StrSegTools.getLongList(plan.getToGroupList());
         return init(plan, customerVo, fromNumList, toNumList, toGroupList, saveMsg);
     }
     

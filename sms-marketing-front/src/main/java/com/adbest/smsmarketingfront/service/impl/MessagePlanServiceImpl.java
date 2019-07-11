@@ -224,18 +224,20 @@ public class MessagePlanServiceImpl implements MessagePlanService {
                         .replace("$status$", messagePlanStatusMap.get(MessagePlanStatus.SCHEDULING.getValue()))
         );
         // 套餐周期内，返还套餐量
-        if (!crossedPackages(found)) {
+        int rebateMsg = found.getMsgTotal() - found.getCreditPayNum();
+        if (!crossedPackages(found) && rebateMsg > 0) {
             if (found.getIsSms()) {
-                customerMarketSettingDao.updateSmsByCustomerId(cur.getId(), found.getMsgTotal());
-                smsBillComponent.saveSmsBill(cur.getId(), bundle.getString("bill-cancel-plan"), found.getMsgTotal());
+                customerMarketSettingDao.updateSmsByCustomerId(cur.getId(), rebateMsg);
+                smsBillComponent.saveSmsBill(cur.getId(), bundle.getString("bill-cancel-plan"), rebateMsg);
             } else {
-                customerMarketSettingDao.updateMmsByCustomerId(cur.getId(), found.getMsgTotal());
-                mmsBillComponent.saveMmsBill(cur.getId(), bundle.getString("bill-cancel-plan"), found.getMsgTotal());
+                customerMarketSettingDao.updateMmsByCustomerId(cur.getId(), rebateMsg);
+                mmsBillComponent.saveMmsBill(cur.getId(), bundle.getString("bill-cancel-plan"), rebateMsg);
             }
         }
         // 无论是否套餐周期内，都须返还信用消费
         if (found.getCreditPayCost().compareTo(BigDecimal.ZERO) > 0) {
             creditBillComponent.savePlanConsume(cur.getId(), found.getId(), found.getCreditPayCost(), bundle.getString("bill-cancel-plan"));
+            customerDao.updateCredit(cur.getId(), found.getCreditPayCost());
         }
         // 更新任务 - 变更为编辑中
         int cancelResult = messagePlanDao.cancelMessagePlan(found.getId(), MessagePlanStatus.EDITING.getValue(), MessagePlanStatus.SCHEDULING.getValue());
@@ -310,7 +312,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         if (plan == null) {
             return null;
         }
-        List<ContactsGroup> groupList = contactsGroupDao.findByCustomerIdAndIdIn(curId, StrSegTools.getList(plan.getToGroupList()));
+        List<ContactsGroup> groupList = contactsGroupDao.findByCustomerIdAndIdIn(curId, StrSegTools.getLongList(plan.getToGroupList()));
         MessagePlanVo planVo = new MessagePlanVo(plan, groupList);
         log.info("leave findById");
         return planVo;

@@ -235,9 +235,9 @@ public class MessageComponentImpl implements MessageComponent {
     
     // 计算消息总数
     private void calcMsgTotal(MsgPlanState planState) {
+        clearUniqueKeysCache(planState.planId);
         toNumbersTraversal(planState);
         contactsGroupsTraversal(planState);
-        clearUniqueKeysCache(planState.planId);
     }
     
     // 遍历输入的手机号并计算消息量

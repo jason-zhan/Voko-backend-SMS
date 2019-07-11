@@ -59,8 +59,6 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         bill.setAmount(amount);
         bill.setRemark(remark);
         creditBillDao.save(bill);
-        int creditResult = customerDao.updateCredit(customerId, amount);
-        ServiceException.isTrue(creditResult > 0, bundle.getString("credit-not-enough"));
         log.info("leave savePlanConsume");
         return true;
     }
