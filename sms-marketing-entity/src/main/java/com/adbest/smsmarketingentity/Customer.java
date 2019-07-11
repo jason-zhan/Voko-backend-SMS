@@ -64,5 +64,10 @@ public class Customer implements Serializable {
         Matcher matcher = pattern.matcher(password);
         return matcher.matches();
     }
-    
+
+    public static boolean checkCustomerLogin(String customerLogin) {
+        Pattern pattern = Pattern.compile("^[a-zA-Z0-9_@]{4,32}$", Pattern.CASE_INSENSITIVE);
+        Matcher matcher = pattern.matcher(customerLogin);
+        return matcher.matches();
+    }
 }

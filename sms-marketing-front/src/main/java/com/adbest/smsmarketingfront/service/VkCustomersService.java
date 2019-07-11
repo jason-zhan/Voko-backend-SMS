@@ -8,9 +8,5 @@ import java.util.List;
 public interface VkCustomersService {
     List<VkCustomers> findByInLeadinIsNull(Pageable pageable);
 
-    List<VkCustomers> findByInLeadinIsNullAndEmailNotNull(Pageable pageable);
-
-    Integer updateInLeadinByEmailIn(boolean inLeadin, List<String> emails);
-
     Integer updateInLeadinByLoginIn(boolean inLeadin, List<String> loginIns);
 }

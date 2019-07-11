@@ -70,6 +70,7 @@ public class CustomerMarketSettingTask {
                     cms.setInvalidTime(TimeTools.addDay(TimeTools.now(),marketSetting.getDaysNumber()));
                     if (marketSetting.getSmsTotal()>0){smsBills.add(new SmsBill(cms.getCustomerId(), infoDescribeGift,marketSetting.getSmsTotal()));}
                     if (marketSetting.getMmsTotal()>0){mmsBills.add(new MmsBill(cms.getCustomerId(), infoDescribeGift,marketSetting.getMmsTotal()));}
+
                 }catch (Exception e){
                     cms.setInvalidStatus(true);
                     cms.setSmsTotal(0);

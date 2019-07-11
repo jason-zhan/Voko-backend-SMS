@@ -31,8 +31,9 @@ public interface VkCDRAccountsDao extends JpaRepository<VkCDRAccounts, Integer> 
     @Query(value = "update VkCDRAccounts set inLeadin = true where id in :ids")
     Integer updateInLeadin(List<Integer> ids);
 
-    @Query(value = "SELECT obj.id,b.customer_id,b.phone,b.id contactsId,c.content,b.first_name,b.last_name,a.first_name cus_first_name,a.last_name cus_last_name,obj.call_id FROM " +
-            "(SELECT id,SUBSTRING(CLI, 2, 11) CLI,i_customer,call_id FROM vkCDR_Accounts WHERE id in :ids AND send_status IS NULL) as obj " +
+    @Query(value = "SELECT obj.id,b.customer_id,b.phone,b.id contactsId,c.content,b.first_name,b.last_name,a.first_name cus_first_name,a.last_name cus_last_name," +
+            "obj.call_id,obj.used_quantity FROM " +
+            "(SELECT id,SUBSTRING(CLI, 2, 11) CLI,i_customer,call_id,used_quantity FROM vkCDR_Accounts WHERE id in :ids AND send_status IS NULL) as obj " +
             "LEFT JOIN customer a ON a.vk_customers_id = obj.i_customer " +
             "LEFT JOIN contacts b ON b.customer_id = a.id and b.phone = obj.CLI " +
             "LEFT JOIN customer_settings c ON c.customer_id = a.id " +

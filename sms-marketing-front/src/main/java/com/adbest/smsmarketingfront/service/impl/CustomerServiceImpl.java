@@ -141,6 +141,7 @@ public class CustomerServiceImpl implements  CustomerService {
             ServiceException.isTrue(Customer.checkEmail(createSysUser.getEmail()), returnMsgUtil.msg("EMAIL_INCORRECT_FORMAT"));
         }
         ServiceException.isTrue(Customer.checkPassword(createSysUser.getPassword()), returnMsgUtil.msg("PASSWORD_INCORRECT_FORMAT"));
+        ServiceException.isTrue(Customer.checkCustomerLogin(createSysUser.getUsername()), returnMsgUtil.msg("USERNAME_INCORRECT_FORMAT"));
         Customer repeat = customerDao.findFirstByCustomerLogin(createSysUser.getUsername());
         ServiceException.isNull(repeat, returnMsgUtil.msg("USERNAME_EXISTS"));
         Customer customer = new Customer();
@@ -174,7 +175,7 @@ public class CustomerServiceImpl implements  CustomerService {
         CustomerSettings customerSettings = new CustomerSettings(false, customer.getId(), false);
         customerSettingsService.save(customerSettings);
         initCustomerData(customer);
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getEmail(), createSysUser.getPassword());
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getCustomerLogin(), createSysUser.getPassword());
         Authentication authenticatedUser = authenticationManager
         .authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
