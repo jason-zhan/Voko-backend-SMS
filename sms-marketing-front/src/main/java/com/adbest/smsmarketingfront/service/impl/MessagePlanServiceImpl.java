@@ -7,6 +7,7 @@ import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingentity.MessagePlan;
 import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.QMessagePlan;
+import com.adbest.smsmarketingfront.dao.ContactsDao;
 import com.adbest.smsmarketingfront.dao.ContactsGroupDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
@@ -65,6 +66,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     @Autowired
     private CustomerMarketSettingDao customerMarketSettingDao;
     @Autowired
+    ContactsDao contactsDao;
+    @Autowired
     private ContactsGroupDao contactsGroupDao;
     
     @Autowired
@@ -104,7 +107,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 检查客户号码(发送消息的号码)
         createPlan.setFromNumList(checkFromNumbers(createPlan.getFromNumList()));
         // 验证用户消息余量
-        validCustomerBalance(cur.getId(), createPlan.getMediaIdlList() == null || createPlan.getMediaIdlList().size() == 0);
+        validCustomerBalance(cur.getId(), createPlan.isSms(), createPlan.getToNumberList(), createPlan.getGroupList());
         // 持久化任务(消息结算需要任务id)
         boolean closeToExecTime = closeToExecTime(createPlan.getExecTime());
         MessagePlan plan = generatePlan(createPlan, closeToExecTime);
@@ -144,7 +147,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         // 检查客户号码(发送消息的号码)
         create.setFromNumList(checkFromNumbers(create.getFromNumList()));
         // 验证用户消息余量
-        validCustomerBalance(cur.getId(), create.getMediaIdlList() == null || create.getMediaIdlList().size() == 0);
+        validCustomerBalance(cur.getId(), create.isSms(), create.getToNumberList(), create.getGroupList());
         // 生成任务实例
         MessagePlan plan = generatePlan(create, true);
         // 持久化任务(消息结算需要任务id)
@@ -358,6 +361,9 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             Assert.isTrue(msgPlanInfo.getMediaIdlList().size() <= MessageTools.MAX_MSG_MEDIA_NUM, bundle.getString("msg-plan-media-list"));
             // todo 验证资源
             msgPlanInfo.setMediaIdlList(msgPlanInfo.getMediaIdlList().stream().distinct().collect(Collectors.toList()));
+            msgPlanInfo.setSms(msgPlanInfo.getMediaIdlList().size() <= 0);
+        } else {
+            msgPlanInfo.setSms(true);
         }
         
         // 发送消息的号码数必须大于0
@@ -388,18 +394,24 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     }
     
     // 检查用户套餐和信用额度
-    private void validCustomerBalance(Long curId, boolean isSms) {
-        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(curId);
-        if (marketSetting != null) {
-            if ((isSms && marketSetting.getSmsTotal() > 0) || (!isSms && marketSetting.getMmsTotal() > 0)) {
-                return;
-            }
+    private void validCustomerBalance(Long curId, boolean isSms, List<String> toNumList, List<Long> toGroupList) {
+        // 预计接收消息号码数
+        int expectMsg = 0;
+        if (toGroupList.size() > 0) {
+            expectMsg = contactsDao.countDistinctByCustomerIdAndGroupId(curId, toGroupList);
+        } else {
+            expectMsg = toNumList.size();
         }
         Optional<Customer> optional = customerDao.findById(curId);
-        Assert.isTrue(optional.isPresent(), "customer not exists");
+        Assert.isTrue(optional.isPresent(), "customer does not exists");
+        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(curId);
+        Assert.notNull(marketSetting, "The market-setting of this customer does not exists");
         Customer customer = optional.get();
-        ServiceException.isTrue(customer.getAvailableCredit().compareTo(isSms ? smsUnitPrice : mmsUnitPrice) >= 0,
-                bundle.getString("credit-not-enough"));
+        // 计算用户可支付数
+        int availablePay = isSms ? (marketSetting.getSmsTotal() + customer.getAvailableCredit().divide(smsUnitPrice).intValue())
+                : (marketSetting.getMmsTotal() + customer.getAvailableCredit().divide(mmsUnitPrice).intValue());
+        // 判定
+        ServiceException.isTrue(availablePay >= expectMsg, bundle.getString("credit-not-enough"));
     }
     
     // 验证发送消息的号码

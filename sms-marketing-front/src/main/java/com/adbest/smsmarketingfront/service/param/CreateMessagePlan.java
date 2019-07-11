@@ -19,6 +19,7 @@ public class CreateMessagePlan {
     private String text;  // 消息文本
     private Timestamp execTime;  // 执行时间
     private List<String> mediaIdlList;  // 媒体id列表
+    private boolean isSms;  // 是否短信（前端无须传入）
     private String remark;  // 备注
     //    private List<Long> fromList;  // 发送消息的号码id列表
     private List<String> fromNumList;  // 发送消息的用户号码列表
@@ -30,7 +31,7 @@ public class CreateMessagePlan {
         target.setTitle(title);
         target.setText(text);
         target.setMediaIdList(StrSegTools.getListStr(mediaIdlList));
-        target.setIsSms(mediaIdlList == null || mediaIdlList.size() == 0);
+        target.setIsSms(isSms);
         target.setExecTime(execTime);
         target.setRemark(remark);
         target.setFromNumList(StrSegTools.getListStr(fromNumList));

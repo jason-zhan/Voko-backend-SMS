@@ -49,10 +49,6 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     @Query("update MessageRecord set status = ?2 where planId = ?1 and disable = false")
     int updateStatusByPlanIdAndDisableIsFalse(Long planId, int status);
     
-    // 根据计划id统计实际发送消息条数
-    @Query("select sum(segments) from MessageRecord where planId = ?1")
-    int sumMsgNumByPlanId(Long planId);
-    
     MessageRecord findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     
     boolean existsByPlanId(Long planId);

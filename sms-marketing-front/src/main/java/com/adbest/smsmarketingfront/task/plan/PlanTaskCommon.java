@@ -24,9 +24,8 @@ public class PlanTaskCommon {
      */
     public static boolean closeToExecTime(MessagePlan plan) {
         if (plan.getMsgTotal() <= 100000) {
-            return (plan.getMsgTotal() < 1000 && plan.getExecTime().before(EasyTime.init().addMinutes(5).stamp())) ||
-                    (plan.getMsgTotal() < 10000 && plan.getExecTime().before(EasyTime.init().addMinutes(10).stamp())) ||
-                    (plan.getMsgTotal() < 100000 && plan.getExecTime().before(EasyTime.init().addMinutes(20).stamp()));
+            return (plan.getMsgTotal() < 10000 && plan.getExecTime().before(EasyTime.init().addMinutes(5).stamp())) ||
+                    (plan.getMsgTotal() < 100000 && plan.getExecTime().before(EasyTime.init().addMinutes(10).stamp()));
         }
         return false;
     }

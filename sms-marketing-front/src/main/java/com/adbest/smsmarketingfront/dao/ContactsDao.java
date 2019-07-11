@@ -28,6 +28,10 @@ public interface ContactsDao extends JpaRepository<Contacts, Long>, JpaSpecifica
     
     Long countByIdInAndCustomerId(List<Long> contactsIds, Long customerId);
     
+    @Query("select count(distinct link.contactsId) from com.adbest.smsmarketingentity.ContactsLinkGroup link inner join Contacts c " +
+            "on c.id = link.contactsId where c.customerId = ?1 and link.groupId in ?2")
+    int countDistinctByCustomerIdAndGroupId(Long customerId, List<Long> groupIdList);
+    
     List<Contacts> findByCustomerId(Long customerId);
     
     Contacts findByIdAndCustomerIdAndIsDeleteIsFalse(Long id, Long customerId);
