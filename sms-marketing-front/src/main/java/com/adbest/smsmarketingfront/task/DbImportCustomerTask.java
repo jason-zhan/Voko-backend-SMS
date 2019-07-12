@@ -100,7 +100,7 @@ public class DbImportCustomerTask {
         customerService.saveImportCustomer(customerList);
     }
 
-    @Scheduled(cron = "0/30 * * * * ?")
+//    @Scheduled(cron = "0/30 * * * * ?")
     public void importContactsTask(){
 //        int size = 500;
 //        int page = 0;

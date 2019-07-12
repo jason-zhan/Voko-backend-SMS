@@ -42,7 +42,7 @@ public class PlanTaskCommon {
         map.put("plan", plan);
         return JobBuilder.newJob(GenerateMessageJob.class)
                 .setJobData(new JobDataMap(map))
-                .withIdentity(plan.getId().toString(), "CREATE_MSG")
+                .withIdentity("CREATE_MSG:" + plan.getId(), plan.getId().toString())
                 .build();
     }
     

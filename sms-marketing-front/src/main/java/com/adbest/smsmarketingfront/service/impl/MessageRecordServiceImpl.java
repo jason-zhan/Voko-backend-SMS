@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
+import com.adbest.smsmarketingfront.entity.vo.InboxMessageVo;
 import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
@@ -52,28 +53,28 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     Map<Integer, String> inboxStatusMap;
     @Autowired
     Map<Integer, String> outboxStatusMap;
-
+    
     @Autowired
     private MobileNumberService mobileNumberService;
-
+    
     @Autowired
     private ContactsService contactsService;
-
+    
     @Autowired
     private KeywordService keywordService;
-
+    
     @Autowired
     private SmsBillComponent smsBillComponent;
-
+    
     @Autowired
     private SmsBillService smsBillService;
-
+    
     @Autowired
     private TwilioUtil twilioUtil;
-
+    
     @Autowired
     private MessageRecordService messageRecordService;
-
+    
     @Autowired
     private CustomerService customerService;
     
@@ -124,27 +125,37 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     }
     
     @Override
-    public MessageRecord findById(Long id) {
-        log.info("enter findById, id=" + id);
+    public InboxMessageVo findInboxMsgById(Long id) {
+        log.info("enter findInboxMsgById, id={}", id);
         Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
-        MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
-        if (messageRecord != null && messageRecord.getInbox() && messageRecord.getStatus() == InboxStatus.UNREAD.getValue()) {
-            messageRecordDao.updateStatusById(messageRecord.getId(), InboxStatus.ALREADY_READ.getValue());
-        }
-        log.info("leave findById");
-        return messageRecord;
+        // TODO
+        log.info("leave findInboxMsgById");
+        return null;
     }
     
     @Override
-    public Page<OutboxMessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage) {
+    public OutboxMessageVo findOutboxMsgById(Long id) {
+        log.info("enter findOutboxMsgById, id={}", id);
+        Assert.notNull(id, CommonMessage.ID_CANNOT_EMPTY);
+        MessageRecord messageRecord = messageRecordDao.findByIdAndCustomerIdAndDisableIsFalse(id, Current.get().getId());
+        // TODO 标为已读
+        log.info("leave findOutboxMsgById");
+        return null;
+    }
+    
+    @Override
+    public Page<InboxMessageVo> findInboxByConditions(GetInboxMessagePage getInboxPage) {
         log.info("enter findInboxByConditions, param={}", getInboxPage);
         Assert.notNull(getInboxPage, CommonMessage.PARAM_IS_NULL);
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
         BooleanBuilder builder = new BooleanBuilder();
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
+        builder.and(qMessageRecord.disable.isFalse());
+        builder.and(qMessageRecord.inbox.isTrue());
         getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
-        QueryResults<OutboxMessageVo> queryResults = jpaQueryFactory.select(
-                Projections.constructor(OutboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
+        QueryResults<InboxMessageVo> queryResults = jpaQueryFactory.select(
+                Projections.constructor(InboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
                 .where(builder)
@@ -152,7 +163,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
                 .offset(getInboxPage.getPage() * getInboxPage.getSize())
                 .limit(getInboxPage.getSize())
                 .fetchResults();
-        Page<OutboxMessageVo> messagePage = PageBase.toPageEntity(queryResults, getInboxPage);
+        Page<InboxMessageVo> messagePage = getInboxPage.toPageEntity(queryResults);
         log.info("leave findInboxByConditions");
         return messagePage;
     }
@@ -163,23 +174,21 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         Assert.notNull(getOutboxPage, CommonMessage.PARAM_IS_NULL);
         QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
         QContacts qContacts = QContacts.contacts;
-        QContactsGroup qCGroup = QContactsGroup.contactsGroup;
         BooleanBuilder builder = new BooleanBuilder();
         builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
         builder.and(qMessageRecord.disable.isFalse());
         builder.and(qMessageRecord.inbox.isFalse());
         getOutboxPage.fillConditions(builder, qMessageRecord, qContacts);
         QueryResults<OutboxMessageVo> queryResults = jpaQueryFactory.select(
-                Projections.constructor(OutboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName, qCGroup.title))
+                Projections.constructor(OutboxMessageVo.class, qMessageRecord, qContacts.firstName, qContacts.lastName))
                 .from(qMessageRecord)
                 .leftJoin(qContacts).on(qMessageRecord.contactsId.eq(qContacts.id))
-//                .leftJoin(qCGroup).on(qMessageRecord.contactsGroupId.eq(qCGroup.id))
                 .where(builder)
                 .orderBy(qMessageRecord.createTime.desc())
                 .offset(getOutboxPage.getPage() * getOutboxPage.getSize())
                 .limit(getOutboxPage.getSize())
                 .fetchResults();
-        Page<OutboxMessageVo> messagePage = PageBase.toPageEntity(queryResults, getOutboxPage);
+        Page<OutboxMessageVo> messagePage = getOutboxPage.toPageEntity(queryResults);
         log.info("leave findOutboxByConditions");
         return messagePage;
     }
@@ -197,7 +206,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("leave outboxStatusMap");
         return outboxStatusMap;
     }
-
+    
     @Override
     public void saveInbox(InboundMsg inboundMsg) {
         List<MobileNumber> list = mobileNumberService.findByNumberAndDisable(inboundMsg.getTo(), false);
@@ -247,7 +256,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         if (keywords.size() <= 0) {
             return;
         }
-
+        
         MessageRecord send = new MessageRecord();
         send.setCustomerId(mobileNumber.getCustomerId());
         send.setCustomerNumber(inboundMsg.getTo());
@@ -267,9 +276,9 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setSendTime(timestamp);
 //        send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
-        messageRecordService.sendSms(send,bundle.getString("KEYWORD_REPLY"));
+        messageRecordService.sendSms(send, bundle.getString("KEYWORD_REPLY"));
     }
-
+    
     @Override
     public void sendCallReminder(List<MessageRecord> messageRecords) {
         String msg = bundle.getString("CALL_RESPONSE");
@@ -277,7 +286,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
             messageRecordService.sendSms(m, msg);
         }
     }
-
+    
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));

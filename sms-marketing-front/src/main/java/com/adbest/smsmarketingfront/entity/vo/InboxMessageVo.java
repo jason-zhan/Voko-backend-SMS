@@ -15,7 +15,7 @@ public class InboxMessageVo {
     
     private Long id;  // 消息id
     private Long customerId;  // 用户id
-    private String customerNumber;  // 用户号码
+        private String customerNumber;  // 用户号码
     private String content;  // 消息内容
     //    private String mediaList;  // 资源列表 [资源url,多个以','分隔]
     private Boolean sms;  // 是否短信(true:是)

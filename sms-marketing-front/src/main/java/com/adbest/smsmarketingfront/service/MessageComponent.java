@@ -51,5 +51,5 @@ public interface MessageComponent {
      * @param amount     消息数量
      * @param isSms      是否短信(true:是)
      */
-    void autoReplySettlement(Long customerId, int amount, boolean isSms);
+    void autoReplySettlement(Long customerId, int amount, boolean isSms, String remark);
 }

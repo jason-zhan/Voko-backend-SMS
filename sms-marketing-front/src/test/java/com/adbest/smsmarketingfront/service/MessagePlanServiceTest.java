@@ -38,19 +38,19 @@ public class MessagePlanServiceTest {
         CreateMessagePlan create = new CreateMessagePlan();
         create.setFromNumList(Arrays.asList("1001111", "2002222", "4004444"));
 //        create.setToNumberList(Arrays.asList("0000001", "0000002", "0000003", "0000004", "0000005"));
-        create.setGroupList(Arrays.asList(1L));
-        create.setRemark("create plan with GT1 [batch]");
+        create.setGroupList(Arrays.asList(2L));
+        create.setRemark("test multi repair");
         create.setTitle(EasyTime.init().format("yyyy-MM-dd HH:mm:ss") + " test");
         create.setText("Hello! Here is twilio agent service center, is there anything I can do for you? ");
-        create.setExecTime(EasyTime.init().addMinutes(2).stamp());
+        create.setExecTime(EasyTime.init().addMinutes(5).stamp());
         messagePlanService.create(create);
         long end = EasyTime.nowMillis();
         System.out.println("time-spend=" + (end - begin));
-//        try {
-//            Thread.sleep(5000);
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        try {
+            Thread.sleep(5000);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
     
     @Test
