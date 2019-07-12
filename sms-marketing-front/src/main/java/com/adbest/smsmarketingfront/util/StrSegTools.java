@@ -1,8 +1,7 @@
 package com.adbest.smsmarketingfront.util;
 
-import com.fasterxml.jackson.core.SerializableString;
 import org.apache.poi.ss.formula.functions.T;
-import org.springframework.util.CollectionUtils;
+import org.springframework.util.NumberUtils;
 import org.springframework.util.StringUtils;
 
 import javax.validation.constraints.NotNull;
@@ -38,38 +37,32 @@ public class StrSegTools {
         return sb.substring(1);
     }
     
-    public static @NotNull  <T extends Serializable> List<T> getList(String listStr){
+    public static @NotNull  List<String> getStrList(String listStr){
+        if(StringUtils.isEmpty(listStr)){
+            return new ArrayList<>();
+        }
+        return Arrays.asList(listStr.split(","));
+    }
+    
+    public static @NotNull  List<Long> getLongList(String listStr){
         if(StringUtils.isEmpty(listStr)){
             return new ArrayList<>();
         }
         String[] strings = listStr.split(",");
-        List<T> list = new ArrayList<>();
+        List<Long> list = new ArrayList<>();
         for (String s : strings) {
-            list.add((T) s);
+            list.add(Long.parseLong(s));
         }
         return list;
     }
-    
-    /**
-     * 获取分割后的字符串列表
-     *
-     * @param strings 以','分隔的多个字符串组成的字符串
-     * @return
-     */
-    public static @NotNull List<String> getStrList(String strings) {
-        if (StringUtils.hasText(strings)) {
-            return Arrays.asList(strings.split(","));
-        } else {
-            return new ArrayList<>();
-        }
-    }
-    
-    /**
-     * 获取uri列表
-     *
-     * @param strings 以','分隔的多个字符串组成的字符串
-     * @return
-     */
+        
+        
+        /**
+         * 获取uri列表
+         *
+         * @param strings 以','分隔的多个字符串组成的字符串
+         * @return
+         */
     public static @NotNull List<URI> getUriList(String strings) {
         if (StringUtils.hasText(strings)) {
             List<URI> uriList = new ArrayList<>();

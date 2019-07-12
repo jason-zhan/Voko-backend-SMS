@@ -15,8 +15,8 @@ public interface MessagePlanDao extends JpaRepository<MessagePlan, Long>, JpaSpe
     
     @Transactional
     @Modifying
-    @Query("update MessagePlan set status = ?2 where id = ?1")
-    int updateStatusById(Long id, int status);
+    @Query("update MessagePlan set status = ?2 where id = ?1 and status = ?3")
+    int updateStatusById(Long id, int targetStatus, int originStatus);
     
     @Transactional
     @Modifying

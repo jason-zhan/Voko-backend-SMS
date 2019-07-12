@@ -86,11 +86,14 @@ public class JavaTest {
 //        System.out.printf("result=%s%n", s);
 //        System.out.printf("calc=%s%n", (i - 32768) % (32768 * 2) + 32768);
 //        BigDecimal a = BigDecimal.valueOf(0.1);
-        BigDecimal a = new BigDecimal(0.1);
+//        BigDecimal a = new BigDecimal(0.1);
 //        BigDecimal b = BigDecimal.valueOf(0.2);
-        BigDecimal b = new BigDecimal(0.2);
-        BigDecimal c = a.add(b);
-        System.out.printf("result(%s)%n", c);
+//        BigDecimal b = new BigDecimal(0.2);
+//        BigDecimal c = a.add(b);
+//        System.out.printf("result(%s)%n", c);
+        BigDecimal a = BigDecimal.valueOf(52.999);
+        int b = a.intValue();
+        System.out.println(b);
     }
     
     @Test

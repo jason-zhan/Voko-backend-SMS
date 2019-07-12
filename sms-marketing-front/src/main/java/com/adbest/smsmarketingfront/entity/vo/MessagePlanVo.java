@@ -28,6 +28,7 @@ public class MessagePlanVo {
     private List<String> toNumList; // 接收消息的联系人号码列表
     private List<ContactsGroupVo> toGroupList;  // 接收消息的群组列表
     private Integer status;  // 任务状态
+    private Integer msgTotal;  // 消息数
     private Timestamp createTime;  // 创建时间
     private Timestamp updateTime;  // 更新时间
     
@@ -35,17 +36,18 @@ public class MessagePlanVo {
     }
     
     public MessagePlanVo(MessagePlan plan, List<ContactsGroup> groupList) {
-        this.id = plan.getId();
-        this.customerId = plan.getCustomerId();
-        this.title = plan.getTitle();
-        this.text = plan.getText();
-        this.execTime = plan.getExecTime();
-        this.remark = plan.getRemark();
-        this.fromNumList = StrSegTools.getStrList(plan.getFromNumList());
-        this.toNumList = StrSegTools.getStrList(plan.getToNumList());
-        this.toGroupList = groupList.stream().map(group -> new ContactsGroupVo(group.getId(), group.getTitle(), null)).collect(Collectors.toList());
-        this.status = plan.getStatus();
-        this.createTime = plan.getCreateTime();
-        this.updateTime = plan.getUpdateTime();
+        id = plan.getId();
+        customerId = plan.getCustomerId();
+        title = plan.getTitle();
+        text = plan.getText();
+        execTime = plan.getExecTime();
+        remark = plan.getRemark();
+        fromNumList = StrSegTools.getStrList(plan.getFromNumList());
+        toNumList = StrSegTools.getStrList(plan.getToNumList());
+        toGroupList = groupList.stream().map(group -> new ContactsGroupVo(group.getId(), group.getTitle(), null)).collect(Collectors.toList());
+        status = plan.getStatus();
+        msgTotal = plan.getMsgTotal();
+        createTime = plan.getCreateTime();
+        updateTime = plan.getUpdateTime();
     }
 }

@@ -6,12 +6,14 @@ import com.adbest.smsmarketingfront.dao.ContactsDao;
 import com.adbest.smsmarketingfront.dao.ContactsLinkGroupDao;
 import com.adbest.smsmarketingfront.entity.vo.MessagePlanVo;
 import com.adbest.smsmarketingfront.service.param.CreateMessagePlan;
+import com.adbest.smsmarketingfront.service.param.GetMessagePlanPage;
 import com.adbest.smsmarketingfront.service.param.UpdateMessagePlan;
 import com.adbest.smsmarketingfront.util.EasyTime;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
@@ -31,30 +33,37 @@ public class MessagePlanServiceTest {
     
     @Test
     public void create() {
+//        createBatchContacts();
+        long begin = EasyTime.nowMillis();
         CreateMessagePlan create = new CreateMessagePlan();
-        create.setFromNumList(Arrays.asList("0100000", "1111111"));
-//        create.setGroupList(Arrays.asList(1L));
-        create.setToNumberList(Arrays.asList("0000001", "0000002", "0000003", "0000004", "0000005"));
-        create.setRemark("test create plan");
-        create.setTitle("2019-7-9 10:15:54 test");
-        create.setText("Hello! There is twilio agent service center, how do you do? (It will be deleted next.)");
-        create.setExecTime(EasyTime.init().addDays(1).stamp());
+        create.setFromNumList(Arrays.asList("1001111", "2002222", "4004444"));
+//        create.setToNumberList(Arrays.asList("0000001", "0000002", "0000003", "0000004", "0000005"));
+        create.setGroupList(Arrays.asList(1L));
+        create.setRemark("create plan with GT1 [batch]");
+        create.setTitle(EasyTime.init().format("yyyy-MM-dd HH:mm:ss") + " test");
+        create.setText("Hello! Here is twilio agent service center, is there anything I can do for you? ");
+        create.setExecTime(EasyTime.init().addMinutes(2).stamp());
         messagePlanService.create(create);
+        long end = EasyTime.nowMillis();
+        System.out.println("time-spend=" + (end - begin));
+//        try {
+//            Thread.sleep(5000);
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
     }
     
     @Test
     public void createInstant() {
         CreateMessagePlan create = new CreateMessagePlan();
-        create.setFromNumList(Arrays.asList("0100000", "1111111"));
-//        create.setGroupList(Arrays.asList(1L));
+        create.setFromNumList(Arrays.asList("1001111", "2222222", "6666666"));
         create.setToNumberList(Arrays.asList("0000001", "0000002", "0000003", "0000004", "0000005"));
         create.setRemark("test create send-immediately plan");
-        create.setTitle("2019-7-8 16:32:33 test");
+        create.setTitle("2019-7-11 09:50:14 test");
         create.setText("Hello! There is twilio agent service center, how do you do?");
-//        create.setExecTime(EasyTime.init().addDays(1).stamp());
         messagePlanService.createInstant(create);
         try {
-            Thread.sleep(5000);
+            Thread.sleep(8000);
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
@@ -64,25 +73,25 @@ public class MessagePlanServiceTest {
     public void update() {
         UpdateMessagePlan update = new UpdateMessagePlan();
         update.setId(7L);
-        update.setFromNumList(Arrays.asList("6666666", "0100000"));
+        update.setFromNumList(Arrays.asList("1001111", "2002222", "2002222"));
         update.setText("Hello world! Hello XiaMi!");
-        update.setTitle("update a plan");
-        update.setToNumberList(Arrays.asList("0000003", "0000006", "0000008", "6666666"));
-        update.setExecTime(EasyTime.init().addDays(2).stamp());
+        update.setTitle("update a plan on " + EasyTime.init().format("yyyy-MM-dd HH:mm:ss"));
+        update.setGroupList(Arrays.asList(2L));
+        update.setToNumberList(Arrays.asList("0000001", "0000002", "0000003", "0000004", "0000005"));
+        update.setExecTime(EasyTime.init().addDays(1).stamp());
         update.setRemark("update test");
         messagePlanService.update(update);
     }
     
     @Test
     public void checkCrossBeforeCancel() {
-        
-        boolean allow = messagePlanService.checkCrossBeforeCancel(7L);
+        boolean allow = messagePlanService.checkCrossBeforeCancel(2L);
         System.out.println(allow);
     }
     
     @Test
     public void cancel() {
-        messagePlanService.cancel(7L);
+        messagePlanService.cancel(5L);
     }
     
     @Test
@@ -92,17 +101,24 @@ public class MessagePlanServiceTest {
     
     @Test
     public void delete() {
-        messagePlanService.delete(10L);
+        messagePlanService.delete(5L);
     }
     
     @Test
     public void findById() {
-        MessagePlanVo planVo = messagePlanService.findById(7L);
+        MessagePlanVo planVo = messagePlanService.findById(3L);
         System.out.printf("planVo={}", planVo);
     }
     
     @Test
     public void findByConditions() {
+        GetMessagePlanPage getPlanPage = new GetMessagePlanPage();
+        getPlanPage.setKeyword("test");
+//        getPlanPage.setStatus(3);
+        getPlanPage.setStart(EasyTime.init().addHours(-6).stamp());
+        getPlanPage.setEnd(EasyTime.now());
+        Page<MessagePlanVo> planVoPage = messagePlanService.findByConditions(getPlanPage);
+        System.out.println(planVoPage.getTotalElements());
     }
     
     @Test
@@ -110,14 +126,15 @@ public class MessagePlanServiceTest {
     }
     
     private void createBatchContacts() {
-        int phoneFrom = 0;
-        int travel = 100;
+        int phoneFrom = 100001;
+        int travel = 1;
         Long customerId = 1L;
-        Long groupId = 1L;
+        Long groupId = 2L;
         while (travel > 0) {
+            System.out.println("pos=" + travel);
             List<Contacts> contactsList = new ArrayList<>();
             List<ContactsLinkGroup> linkList = new ArrayList<>();
-            for (int i = 0; i < 1000; i++) {
+            for (int i = 0; i < 100; i++) {
                 // 生成联系人
                 Contacts contacts = new Contacts();
                 contacts.setId((long) phoneFrom);
