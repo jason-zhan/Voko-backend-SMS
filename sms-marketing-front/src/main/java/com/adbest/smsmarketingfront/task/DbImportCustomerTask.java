@@ -33,8 +33,7 @@ public class DbImportCustomerTask {
     @Autowired
     private VkCDRAccountsService vkCDRAccountsService;
 
-//    @Scheduled(cron = "30 48 11 * * ?")
-    @Scheduled(cron = "15 0/10 * * * ?")
+//    @Scheduled(cron = "15 0/10 * * * ?")
     public void importCustomerTask(){
         int size = 1000;
         int page = 0;
@@ -80,7 +79,7 @@ public class DbImportCustomerTask {
         customerService.saveImportCustomer(customerList);
     }
 
-    @Scheduled(cron = "0/30 * * * * ?")
+//    @Scheduled(cron = "0/30 * * * * ?")
     public void importContactsTask(){
         int size = 500;
         int page = 0;

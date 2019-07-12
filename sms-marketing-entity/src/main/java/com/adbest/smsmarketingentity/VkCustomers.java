@@ -15,8 +15,8 @@ import java.sql.Timestamp;
  * V公司商户表
  */
 @Data
-@Entity
-@Table(name = "vkcustomers")
+//@Entity
+//@Table(name = "vkcustomers")
 public class VkCustomers implements Serializable {
     @Id
     private Integer i_customer;
@@ -55,29 +55,15 @@ public class VkCustomers implements Serializable {
     public VkCustomers(Boolean inLeadin, String email,Integer i_customer,String firstname,String lastname,String login,String name,String phone1,String phone2) {
         this.i_customer = i_customer;
         this.name = name;
-        this.balance = balance;
         this.firstname = firstname;
         this.lastname = lastname;
         this.email = email;
-        this.cont1 = cont1;
         this.phone1 = phone1;
-        this.cont2 = cont2;
         this.phone2 = phone2;
         this.login = login;
-        this.i_distributor = i_distributor;
-        this.baddr1 = baddr1;
-        this.baddr2 = baddr2;
-        this.baddr3 = baddr3;
-        this.city = city;
-        this.state = state;
-        this.zip = zip;
-        this.country = country;
-        this.tax_id = tax_id;
-        this.note = note;
-        this.creation_date = creation_date;
-        this.i_rep = i_rep;
-        this.due_date = due_date;
-        this.billed_to = billed_to;
         this.inLeadin = inLeadin;
+    }
+
+    public VkCustomers() {
     }
 }

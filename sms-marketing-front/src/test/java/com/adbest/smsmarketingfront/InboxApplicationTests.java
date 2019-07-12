@@ -1,12 +1,12 @@
 package com.adbest.smsmarketingfront;
 
 import com.adbest.smsmarketingentity.*;
-import com.adbest.smsmarketingfront.dao.VkCDRAccountsDao;
+import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
+import com.adbest.smsmarketingfront.util.ObjectConvertUtils;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
-import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,8 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.sql.Timestamp;
-import java.util.Arrays;
 import java.util.List;
 
 @RunWith(SpringRunner.class)
@@ -40,10 +38,10 @@ public class InboxApplicationTests {
     private TwilioUtil twilioUtil;
 
     @Autowired
-    private VkCDRAccountsDao vkCDRAccountsDao;
-    
+    private CustomerDao customerDao;
+
     @Test
-    public void test() {
+    public void test() throws Exception {
 //        InboundMsg inboundMsg = new InboundMsg();
 //        inboundMsg.setMessageSid(UUID.randomUUID().toString());
 //        inboundMsg.setBody("优惠");
@@ -63,11 +61,11 @@ public class InboxApplicationTests {
 //        send.setStatus(OutboxStatus.SENT.getValue());
 //        PreSendMsg preSendMsg = new PreSendMsg(send);
 //        twilioUtil.sendMessage(preSendMsg);
-
-        Pageable pageRequest = PageRequest.of(0,100);
-        long time = System.currentTimeMillis()-1000*60*60*24*3;
-        List<?> objects = vkCDRAccountsDao.selectEffectiveData(new Timestamp(time),new Timestamp(time+1000*60*3),pageRequest);
-        System.out.println(objects.size());
+//
+//        Pageable pageRequest = PageRequest.of(0,100);
+//        long time = System.currentTimeMillis()-1000*60*60*24*3;
+//        List<?> objects = vkCDRAccountsDao.selectEffectiveData(new Timestamp(time),new Timestamp(time+1000*60*3),pageRequest);
+//        System.out.println(objects.size());
 
 //        List<?> objects = vkCDRAccountsDao.selectNeedToSend(Arrays.asList(4673510, 4673509, 4673508, 4673507, 4673506, 4673505, 4673504));
 //        System.out.println(objects.size());

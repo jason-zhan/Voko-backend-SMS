@@ -67,7 +67,7 @@ public class MobileNumberTask {
                 mobileNumber.setInvalidTime(TimeTools.addDay(mobileNumber.getInvalidTime(), 30));
                 renewMobileNumber.add(mobileNumber);
             }catch (Exception e){
-                log.error("手机号码自动续费扣费失败,{},{}",mobileNumber.getNumber(),e);
+                log.error("Failure of automatic renewal and deduction of mobile phone number,{},{}",mobileNumber.getNumber(),e);
             }
         }
         mobileNumberService.saveAll(renewMobileNumber);

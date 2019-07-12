@@ -260,7 +260,7 @@ public class CustomerServiceImpl implements  CustomerService {
             helper.setSubject("Your Password Reset Request");
             helper.setText(emailText, true);
         } catch (MessagingException e) {
-            log.error("发送邮件错误，{}",e);
+            log.error("Error sending mail，{}",e);
             throw new ServiceException(returnMsgUtil.msg("T500"));
         }
         javaMailSender.send(message);
@@ -393,7 +393,7 @@ public class CustomerServiceImpl implements  CustomerService {
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         Customer customer = customerDao.findFirstByCustomerLogin(s);
         if (customer == null) {
-            throw new UsernameNotFoundException("用户不存在");
+            throw new UsernameNotFoundException(returnMsgUtil.msg("ACCOUNT_NOT_REGISTERED"));
         }
         return new UserDetailsVo(customer);
     }
