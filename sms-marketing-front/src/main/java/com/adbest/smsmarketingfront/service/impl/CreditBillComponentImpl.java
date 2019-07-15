@@ -28,6 +28,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
     ResourceBundle bundle;
     
     @Override
+    @Transactional
     public boolean adjustCustomerMaxCredit(Long customerId, BigDecimal amount) {
         log.info("enter adjustCustomerMaxCredit, customerId={}, amount={}", customerId, amount);
         Assert.isTrue(amount.compareTo(BigDecimal.ZERO) != 0, "amount must not be zero.");

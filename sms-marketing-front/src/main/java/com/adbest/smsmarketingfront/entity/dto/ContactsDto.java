@@ -14,9 +14,10 @@ public class ContactsDto {
     private String customeFirstName;
     private String customerLastName;
     private String callId;
+    private String usedQuantity;
 
     public ContactsDto(Long id, Long customerId, String phone, Integer vkCDRAccountsId, String content, String firstName, String lastName, String customeFirstName,
-                       String customerLastName,String callId) {
+                       String customerLastName,String callId, String usedQuantity) {
         this.id = id;
         this.customerId = customerId;
         this.phone = phone;
@@ -27,6 +28,7 @@ public class ContactsDto {
         this.customeFirstName = customeFirstName;
         this.customerLastName = customerLastName;
         this.callId = callId;
+        this.usedQuantity = usedQuantity;
     }
 
     public ContactsDto() {

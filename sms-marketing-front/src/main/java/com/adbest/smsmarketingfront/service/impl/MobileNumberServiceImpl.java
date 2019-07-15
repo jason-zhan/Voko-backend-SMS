@@ -252,7 +252,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         try {
             incomingPhoneNumber = twilioUtil.purchaseNumber(phoneNumber);
         }catch (ApiException e){
-            log.error("购买手机号出错，{}",e);
+            log.error("Error in purchasing mobile phone number，{}",e);
             ServiceException.isTrue(false, returnMsgUtil.msg("MOBILE_NOT_BUY"));
         }
         MobileNumber mobileNumber = new MobileNumber();

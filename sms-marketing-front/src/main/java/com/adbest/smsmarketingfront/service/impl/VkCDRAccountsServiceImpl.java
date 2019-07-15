@@ -1,7 +1,7 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.*;
-import com.adbest.smsmarketingfront.dao.VkCDRAccountsDao;
+import com.adbest.smsmarketingfront.dao.ContactsDao;
 import com.adbest.smsmarketingfront.entity.dto.ContactsDto;
 import com.adbest.smsmarketingfront.entity.dto.VkCDRAccountsDto;
 import com.adbest.smsmarketingfront.entity.enums.VkCDRCustomersSendStatus;
@@ -28,7 +28,7 @@ import java.util.stream.Stream;
 public class VkCDRAccountsServiceImpl implements VkCDRAccountsService {
 
     @Autowired
-    private VkCDRAccountsDao vkCDRAccountsDao;
+    private ContactsDao contactsDao;
 
     @Autowired
     private ContactsService contactsService;
@@ -70,21 +70,24 @@ public class VkCDRAccountsServiceImpl implements VkCDRAccountsService {
         }
         contactsService.saveAll(contactsList);
         List<Integer> ids = vkCDRAccountsDtos.stream().map(s -> s.getId()).collect(Collectors.toList());
-        vkCDRAccountsDao.updateInLeadin(ids);
+        contactsDao.updateInLeadin(ids);
         map.clear();
     }
 
     @Override
     public List<?> selectEffectiveData(Timestamp timestamp, Pageable pageRequest) {
-        return vkCDRAccountsDao.selectEffectiveData(timestamp, new Timestamp(timestamp.getTime()+1000*60*60), pageRequest);
+        return contactsDao.selectEffectiveData(timestamp, new Timestamp(timestamp.getTime()+1000*3*60), pageRequest);
     }
 
     @Override
     @Transactional
     public void sendSms(List<?> data) {
         List<Integer> ids = data.stream().map(s -> Integer.valueOf(((Object[]) s)[0].toString())).collect(Collectors.toList());
-        List<?> sendList =  vkCDRAccountsDao.selectNeedToSend(ids);
-        if (sendList.size()<=0){return;}
+        List<?> sendList =  contactsDao.selectNeedToSend(ids);
+        if (sendList.size()<=0){
+            if (ids.size()>0){contactsDao.updateSendStatus(ids, VkCDRCustomersSendStatus.UNWANTED_SENT.getValue());}
+            return;
+        }
         List<ContactsDto> contactsDtos = new ArrayList<>();
         Map<String, ContactsDto> map = new HashMap<>();
         ContactsDto contactsDto = null;
@@ -93,9 +96,9 @@ public class VkCDRAccountsServiceImpl implements VkCDRAccountsService {
             contactsDto = new ContactsDto(Long.valueOf(objects[3].toString()), Long.valueOf(objects[1].toString()), objects[2].toString(),
                     Integer.valueOf(objects[0].toString()), objects[4] == null ? null : objects[4].toString(), objects[5] == null ? null : objects[5].toString(),
                     objects[6] == null ? null : objects[6].toString(), objects[7] == null ? null : objects[7].toString(),
-                    objects[8] == null ? null : objects[8].toString(),objects[9] == null ? null : objects[9].toString());
+                    objects[8] == null ? null : objects[8].toString(),objects[9] == null ? null : objects[9].toString(), objects[10] == null ? null : objects[10].toString());
             contactsDtos.add(contactsDto);
-            map.put(contactsDto.getCallId(), contactsDto);
+            map.put(contactsDto.getCallId()+"_"+contactsDto.getUsedQuantity(), contactsDto);
         }
 
         List<MobileNumber> numbers = mobileNumberService.findByCustomerIdInAndDisable(contactsDtos.stream().map(s -> s.getCustomerId()).collect(Collectors.toList()), false);
@@ -129,12 +132,11 @@ public class VkCDRAccountsServiceImpl implements VkCDRAccountsService {
         }
         messageRecordService.sendCallReminder(messageRecords);
         messageRecords.clear();
-        List<Integer> vkaIds = contactsDtos.stream().map(s -> s.getVkCDRAccountsId()).collect(Collectors.toList());
         contactsDtos.clear();
-        if(VkCDRAccountsIds.size()>0){vkCDRAccountsDao.updateSendStatus(VkCDRAccountsIds, VkCDRCustomersSendStatus.ALREADY_SENT.getValue());}
+        if(VkCDRAccountsIds.size()>0){contactsDao.updateSendStatus(VkCDRAccountsIds, VkCDRCustomersSendStatus.ALREADY_SENT.getValue());}
         VkCDRAccountsIds.clear();
-        if (vkaIds.size()>0){vkCDRAccountsDao.updateSendStatus(vkaIds, VkCDRCustomersSendStatus.UNWANTED_SENT.getValue());}
-        vkaIds.clear();
+        if (ids.size()>0){contactsDao.updateSendStatus(ids, VkCDRCustomersSendStatus.UNWANTED_SENT.getValue());}
         sendList.clear();
+        ids.clear();
     }
 }

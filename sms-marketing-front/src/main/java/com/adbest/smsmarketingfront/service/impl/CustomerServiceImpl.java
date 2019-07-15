@@ -141,6 +141,7 @@ public class CustomerServiceImpl implements  CustomerService {
             ServiceException.isTrue(Customer.checkEmail(createSysUser.getEmail()), returnMsgUtil.msg("EMAIL_INCORRECT_FORMAT"));
         }
         ServiceException.isTrue(Customer.checkPassword(createSysUser.getPassword()), returnMsgUtil.msg("PASSWORD_INCORRECT_FORMAT"));
+        ServiceException.isTrue(Customer.checkCustomerLogin(createSysUser.getUsername()), returnMsgUtil.msg("USERNAME_INCORRECT_FORMAT"));
         Customer repeat = customerDao.findFirstByCustomerLogin(createSysUser.getUsername());
         ServiceException.isNull(repeat, returnMsgUtil.msg("USERNAME_EXISTS"));
         Customer customer = new Customer();
@@ -174,7 +175,7 @@ public class CustomerServiceImpl implements  CustomerService {
         CustomerSettings customerSettings = new CustomerSettings(false, customer.getId(), false);
         customerSettingsService.save(customerSettings);
         initCustomerData(customer);
-        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getEmail(), createSysUser.getPassword());
+        UsernamePasswordAuthenticationToken authenticationToken = new UsernamePasswordAuthenticationToken(customer.getCustomerLogin(), createSysUser.getPassword());
         Authentication authenticatedUser = authenticationManager
         .authenticate(authenticationToken);
         SecurityContextHolder.getContext().setAuthentication(authenticatedUser);
@@ -259,7 +260,7 @@ public class CustomerServiceImpl implements  CustomerService {
             helper.setSubject("Your Password Reset Request");
             helper.setText(emailText, true);
         } catch (MessagingException e) {
-            log.error("发送邮件错误，{}",e);
+            log.error("Error sending mail，{}",e);
             throw new ServiceException(returnMsgUtil.msg("T500"));
         }
         javaMailSender.send(message);
@@ -392,7 +393,7 @@ public class CustomerServiceImpl implements  CustomerService {
     public UserDetails loadUserByUsername(String s) throws UsernameNotFoundException {
         Customer customer = customerDao.findFirstByCustomerLogin(s);
         if (customer == null) {
-            throw new UsernameNotFoundException("用户不存在");
+            throw new UsernameNotFoundException(returnMsgUtil.msg("ACCOUNT_NOT_REGISTERED"));
         }
         return new UserDetailsVo(customer);
     }

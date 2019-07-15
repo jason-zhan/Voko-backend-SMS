@@ -34,7 +34,7 @@ public class ImportExcelUtil {
 		// 创建Excel工作薄
 		Workbook work = this.getWorkbook(in, fileName);
 		if (null == work) {
-			throw new Exception("创建Excel工作薄为空！");
+			throw new Exception("Create Excel workbook empty！");
 		}
 		Sheet sheet = null;
 		Row row = null;
@@ -97,7 +97,7 @@ public class ImportExcelUtil {
 		} else if (excel2007U.equals(fileType)) {
 			wb = new XSSFWorkbook(inStr); // 2007+
 		} else {
-			throw new Exception("解析的文件格式有误！");
+			throw new Exception("The parsed file format is incorrect！");
 		}
 		return wb;
 	}

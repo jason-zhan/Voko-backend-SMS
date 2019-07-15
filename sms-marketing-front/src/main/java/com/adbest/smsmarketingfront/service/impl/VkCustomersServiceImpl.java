@@ -1,8 +1,10 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.VkCustomers;
-import com.adbest.smsmarketingfront.dao.VkCustomersDao;
+import com.adbest.smsmarketingfront.dao.CustomerDao;
+import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.VkCustomersService;
+import com.adbest.smsmarketingfront.util.ObjectConvertUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -13,25 +15,22 @@ import java.util.List;
 public class VkCustomersServiceImpl implements VkCustomersService {
 
     @Autowired
-    private VkCustomersDao vkCustomersDao;
+    private CustomerDao customerDao;
 
     @Override
     public List<VkCustomers> findByInLeadinIsNull(Pageable pageable) {
-        return vkCustomersDao.selectByInLeadinIsNull(pageable);
-    }
-
-    @Override
-    public List<VkCustomers> findByInLeadinIsNullAndEmailNotNull(Pageable pageable) {
-        return vkCustomersDao.selectByInLeadinIsNullAndEmailNotNull(pageable);
-    }
-
-    @Override
-    public Integer updateInLeadinByEmailIn(boolean inLeadin, List<String> emails) {
-        return vkCustomersDao.updateInLeadinByEmailIn(inLeadin, emails);
+        List<Object[]> objects = customerDao.selectByInLeadinIsNull(pageable);
+        try {
+            List<VkCustomers> vkCustomers = ObjectConvertUtils.objectToBean(objects, VkCustomers.class);
+            return vkCustomers;
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new ServiceException(e.getMessage());
+        }
     }
 
     @Override
     public Integer updateInLeadinByLoginIn(boolean inLeadin, List<String> loginIns) {
-        return vkCustomersDao.updateInLeadinByLoginIn(inLeadin, loginIns);
+        return customerDao.updateInLeadinByLoginIn(inLeadin, loginIns);
     }
 }

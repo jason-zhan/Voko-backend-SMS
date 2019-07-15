@@ -275,7 +275,7 @@ public class ContactsServiceImpl implements ContactsService {
                 }
             return list;
         }catch(Exception e){
-            log.error("excel导入错误",e);
+            log.error("Excel Import error",e);
             throw new ServiceException(returnMsgUtil.msg("T500"));
         }
     }

@@ -8,6 +8,7 @@ import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
@@ -48,6 +49,15 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
 
     @Autowired
     private CustomerSettingsService customerSettingsService;
+
+    @Autowired
+    private CreditBillComponent creditBillComponent;
+
+    @Value("${marketing.paymentCredit}")
+    private String paymentCredit;
+
+    @Autowired
+    private CustomerService customerService;
 
     @Override
     @Transactional
@@ -130,7 +140,11 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
          * 扣费，账单
          */
         financeBillComponent.saveFinanceBill(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
-
+        Customer customer = customerService.findById(customerId);
+        BigDecimal credit = new BigDecimal(paymentCredit);
+        if (diffDays<=0 && (customer.getMaxCredit().doubleValue()!=credit.doubleValue() || customer.getAvailableCredit().doubleValue()!=credit.doubleValue())){
+            creditBillComponent.adjustCustomerMaxCredit(customerId, credit);
+        }
         Long num = mobileNumberService.countByDisableAndCustomerIdAndGiftNumber(false, customerId, true);
         if(num<=0){
             CustomerSettings customerSettings = customerSettingsService.findByCustomerId(customerId);

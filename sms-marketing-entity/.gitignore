@@ -6,6 +6,8 @@ target/
 mvnw
 mvnw.*
 application-local.yml
+application-pro.yml
+application.yml
 .project
 .classpath
 .settings/

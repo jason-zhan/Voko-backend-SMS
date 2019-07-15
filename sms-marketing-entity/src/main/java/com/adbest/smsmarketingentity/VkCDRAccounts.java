@@ -9,8 +9,8 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Data
-@Table(name = "vkCDR_Accounts")
-@Entity
+//@Table(name = "vkCDR_Accounts")
+//@Entity
 public class VkCDRAccounts {
     @Id
     private Integer id;
@@ -18,7 +18,7 @@ public class VkCDRAccounts {
     private String h323_conf_id;
     private String CLI;
     private String CLD;
-    private Timestamp setup_time;
+    private Integer setup_time;
     private Timestamp connect_time;
     private Timestamp disconnect_time;
     private Integer disconnect_cause;
@@ -26,7 +26,7 @@ public class VkCDRAccounts {
     private String account_id;
     private Integer i_dest;
     private Integer charged_time;
-    private BigDecimal  charged_amount;
+    private BigDecimal charged_amount;
     private String history;
     private Integer i_vendor;
     private BigDecimal cost;

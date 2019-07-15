@@ -21,9 +21,6 @@ public class FinanceBillComponentImpl implements FinanceBillComponent {
     @Autowired
     FinanceBillDao financeBillDao;
 
-    @Autowired
-    private PaymentComponent paymentComponent;
-
     @Override
     public int saveFinanceBill(Long customerId, BigDecimal cost, String description) {
         log.info("enter saveFinanceBill, customerId={}, cost={}, description={}", customerId, cost, description);
