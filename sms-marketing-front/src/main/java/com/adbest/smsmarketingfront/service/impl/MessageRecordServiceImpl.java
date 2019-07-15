@@ -292,7 +292,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
-        messageComponent.autoReplySettlement(messageRecord.getCustomerId(),messageRecord.getSegments(),messageRecord.getSms());
+        messageComponent.autoReplySettlement(messageRecord.getCustomerId(),messageRecord.getSegments(),messageRecord.getSms(), "Automatic reply SMS");
         messageRecordDao.save(messageRecord);
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
