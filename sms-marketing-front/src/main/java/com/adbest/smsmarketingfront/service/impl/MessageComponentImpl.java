@@ -97,16 +97,16 @@ public class MessageComponentImpl implements MessageComponent {
             return messageRecordDao.updateReturnCodeBySid(param.getMessageSid(), MessageReturnCode.QUEUED.getValue());
         }
         if (MessageReturnCode.FAILED == returnCode) {
-            return messageRecordDao.updateStatusBySid(param.getMessageSid(), OutboxStatus.FAILED.getValue());
+            return messageRecordDao.updateReturnCodeAndStatusBySid(param.getMessageSid(), MessageReturnCode.FAILED.getValue(), OutboxStatus.FAILED.getValue());
         }
         if (MessageReturnCode.SENT == returnCode) {
             return messageRecordDao.updateReturnCodeBySid(param.getMessageSid(), MessageReturnCode.SENT.getValue());
         }
         if (MessageReturnCode.DELIVERED == returnCode) {
-            return messageRecordDao.updateStatusBySid(param.getMessageSid(), OutboxStatus.DELIVERED.getValue());
+            return messageRecordDao.updateReturnCodeAndStatusBySid(param.getMessageSid(), MessageReturnCode.DELIVERED.getValue(), OutboxStatus.DELIVERED.getValue());
         }
         if (MessageReturnCode.UNDELIVERED == returnCode) {
-            return messageRecordDao.updateStatusBySid(param.getMessageSid(), OutboxStatus.UNDELIVERED.getValue());
+            return messageRecordDao.updateReturnCodeAndStatusBySid(param.getMessageSid(), MessageReturnCode.UNDELIVERED.getValue(), OutboxStatus.UNDELIVERED.getValue());
         }
         log.info("leave updateMessageStatus");
         return 0;
@@ -261,7 +261,7 @@ public class MessageComponentImpl implements MessageComponent {
         // 批量持久化增加的联系人并计算消息数
         if (newContactsList.size() > 0) {
             contactsDao.saveAll(newContactsList);
-            String content = "";
+            String content = planState.preContent;
             if (planState.contactsVars) {
                 // 默认联系人名称和姓氏
                 // TODO 内容优化
@@ -371,7 +371,7 @@ public class MessageComponentImpl implements MessageComponent {
             return;
         }
         //  计算内容
-        String content = "";
+        String content = planState.preContent;
         if (planState.contactsVars) {
             content = MessageTools.replaceContactsVariables(planState.preContent, contacts.getFirstName(), contacts.getLastName());
             overLengthValid(content);
@@ -393,16 +393,15 @@ public class MessageComponentImpl implements MessageComponent {
      * @return true:repeat | false:absent
      */
     private boolean isRepeatRecipient(Long planId, Long contactsId) {
-        String key = new StringBuilder(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey()).append(planId).append(":").append(contactsId).toString();
-        return !redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getTimeUnit());
+        String key = new StringBuilder(RedisKey.MSG_PLAN_UNIQUE_CONTACTS.getKey()).append(planId).append(":").append(contactsId).toString();
+        return !redisTemplate.opsForValue().setIfAbsent(key, contactsId, RedisKey.MSG_PLAN_UNIQUE_CONTACTS.getExpireTime(), RedisKey.MSG_PLAN_UNIQUE_CONTACTS.getTimeUnit());
     }
     
     // 手动失效验证号码唯一性redis缓存
-    private void clearUniqueKeysCache(Long planId){
-        Long clearNum = redisTemplate.delete(redisTemplate.keys(RedisKey.TMP_PLAN_UNIQUE_CONTACTS.getKey() + planId + ":*"));
+    private void clearUniqueKeysCache(Long planId) {
+        Long clearNum = redisTemplate.delete(redisTemplate.keys(RedisKey.MSG_PLAN_UNIQUE_CONTACTS.getKey() + planId + ":*"));
         log.info("clearUniqueKeysCache(clearNum={})", clearNum);
     }
-    
     
     
     // 内容超长验证提示
@@ -473,17 +472,17 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Transactional
     @Override
-    public void autoReplySettlement(Long customerId, int amount, boolean isSms) {
+    public void autoReplySettlement(Long customerId, int amount, boolean isSms, String remark) {
         log.info("enter autoReplySettlement, customerId={}, amount={}, isSms={}", customerId, amount, isSms);
         // 参数检查
         Assert.isTrue(amount > 0, "amount must be greater than zero.");
         CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customerId);
         Assert.notNull(marketSetting, "customer's market-setting is null");
-        if (marketSetting.getInvalidStatus() || (isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
+        if (marketSetting.getInvalidStatus() || (isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) <= 0) {
             // 使用信用结算
             BigDecimal creditPay = purchaseWithCredit(customerId, isSms, amount);
             // 产生金融账单
-            financeBillComponent.saveFinanceBill(customerId, creditPay, bundle.getString("bill-reply-msg"));
+            financeBillComponent.saveFinanceBill(customerId, creditPay, remark);
         } else {
             // 首先使用套餐余量结算
             int restAmount = amount - settlePartWithMarketSetting(marketSetting, isSms, amount);
@@ -491,11 +490,11 @@ public class MessageComponentImpl implements MessageComponent {
                 // 套餐余量不足部分，使用信用结算
                 BigDecimal creditPay = purchaseWithCredit(customerId, isSms, restAmount);
                 // 产生金融账单
-                financeBillComponent.saveFinanceBill(customerId, creditPay, bundle.getString("bill-reply-msg"));
+                financeBillComponent.saveFinanceBill(customerId, creditPay, remark);
             }
         }
         // 产生消息账单
-        saveMsgBill(customerId, isSms, -amount, bundle.getString("bill-reply-msg"));
+        saveMsgBill(customerId, isSms, -amount, remark);
         log.info("leave autoReplySettlement");
     }
     

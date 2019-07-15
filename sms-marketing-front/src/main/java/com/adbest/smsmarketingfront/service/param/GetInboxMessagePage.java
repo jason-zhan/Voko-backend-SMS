@@ -11,6 +11,8 @@ import com.adbest.smsmarketingfront.util.QueryDslTools;
 import com.querydsl.core.BooleanBuilder;
 import lombok.Data;
 
+import java.sql.Timestamp;
+
 /**
  * @see MessageRecord
  * @see MessageRecordService#findInboxByConditions(GetInboxMessagePage)
@@ -20,15 +22,15 @@ public class GetInboxMessagePage extends PageBase {
     
     private Boolean hasRead;  // 是否已读(true:是)
     private Boolean isSms;  // 是否短信(true:是)
+    private Timestamp start;  // 收件时间开始
+    private Timestamp end;  // 收件时间结束
     private String keyword;  // 关键词(联系人名字/姓氏/号码)
     
     public void fillConditions(BooleanBuilder builder, QMessageRecord qMessageRecord, QContacts qContacts) {
-        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
-        builder.and(qMessageRecord.disable.isFalse());
-        builder.and(qMessageRecord.inbox.isTrue());
         QueryDslTools dslTools = new QueryDslTools(builder);
         dslTools.ifTrue(this.hasRead, qMessageRecord.status, InboxStatus.ALREADY_READ.getValue(), InboxStatus.UNREAD.getValue());
         dslTools.eqNotNull(qMessageRecord.sms, this.isSms);
+        dslTools.betweenNotNull(qMessageRecord.createTime, start, end);
         dslTools.containsNotEmpty(false, this.keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);
     }
     
@@ -37,6 +39,8 @@ public class GetInboxMessagePage extends PageBase {
         return "GetInboxMessagePage{" +
                 "hasRead=" + hasRead +
                 ", isSms=" + isSms +
+                ", start=" + start +
+                ", end=" + end +
                 ", keyword='" + keyword +
                 ", page=" + page +
                 ", size=" + size +

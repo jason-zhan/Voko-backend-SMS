@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import com.adbest.smsmarketingfront.entity.vo.InboxMessageVo;
 import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
@@ -36,17 +37,10 @@ public class MessageRecordController {
         return ReturnEntity.successIfTrue(result > 0);
     }
     
-    @RequestMapping("/details")
-    @ResponseBody
-    public ReturnEntity findById(Long id) {
-        MessageRecord message = messageRecordService.findById(id);
-        return ReturnEntity.success(message);
-    }
-    
     @RequestMapping("/inbox")
     @ResponseBody
     public ReturnEntity findInboxByConditions(@RequestBody GetInboxMessagePage getInboxPage) {
-        Page<OutboxMessageVo> messagePage = messageRecordService.findInboxByConditions(getInboxPage);
+        Page<InboxMessageVo> messagePage = messageRecordService.findInboxByConditions(getInboxPage);
         return ReturnEntity.success(messagePage);
     }
     

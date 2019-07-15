@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
  */
 public enum RedisKey {
     
-    TMP_PLAN_UNIQUE_CONTACTS("tmp:createMsgPlan:", 1L, TimeUnit.HOURS),  // 消息发送任务-联系人唯一验证
+    MSG_PLAN_UNIQUE_CONTACTS("msg-plan:unique-contacts:", 1L, TimeUnit.HOURS),  // 消息发送任务-联系人唯一验证
     INIT_PHONE("init:phone:", 10l, TimeUnit.SECONDS),  //初始化用户手机号
     BUY_KEYWORD("buy:keyword", 5l, TimeUnit.SECONDS),  //关键字购买
 

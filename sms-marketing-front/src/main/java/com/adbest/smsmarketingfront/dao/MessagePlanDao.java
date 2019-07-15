@@ -30,5 +30,7 @@ public interface MessagePlanDao extends JpaRepository<MessagePlan, Long>, JpaSpe
 
     MessagePlan findByIdAndCustomerIdAndDisableIsFalse(Long id, Long customerId);
     
+    List<MessagePlan> findByStatusAndDisableIsFalse(int status);
+    
     List<MessagePlan> findByStatusInAndExecTimeBeforeAndDisableIsFalse(List<Integer> statusList, Date execTime);
 }
