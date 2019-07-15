@@ -5,6 +5,7 @@ import com.adbest.smsmarketingentity.ContactsSource;
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.MessagePlan;
+import com.adbest.smsmarketingentity.MessagePlanStatus;
 import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.MessageReturnCode;
 import com.adbest.smsmarketingentity.OutboxStatus;
@@ -23,9 +24,8 @@ import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.service.MmsBillComponent;
 import com.adbest.smsmarketingfront.service.SmsBillComponent;
-import com.adbest.smsmarketingfront.util.CommonMessage;
 import com.adbest.smsmarketingfront.util.twilio.MessageTools;
-import com.adbest.smsmarketingfront.util.twilio.param.StatusCallbackParam;
+import com.twilio.rest.api.v2010.account.Message.Status;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -81,32 +81,25 @@ public class MessageComponentImpl implements MessageComponent {
     @Autowired
     private RedisTemplate redisTemplate;
     
-    private static final int PAYMENT_RETRY = 5;  // 支付失败重试次数
-    
     @Override
-    public int updateMessageStatus(StatusCallbackParam param) {
-        log.info("enter updateMessageStatus, param={}", param);
-        Assert.notNull(param, CommonMessage.PARAM_IS_NULL);
-        MessageReturnCode returnCode = null;
-        try {
-            returnCode = MessageReturnCode.valueOf(param.getMessageStatus());
-        } catch (IllegalArgumentException | NullPointerException e) {
-            System.out.println(e);
+    public int updateMessageStatus(String sid, String status) {
+        log.info("enter updateMessageStatus, sid={}, status={}", sid, status);
+        Assert.hasText(sid, "sid is empty");
+        Assert.hasText(status, "status is empty");
+        if (Status.QUEUED.toString().equals(status)) {
+            return messageRecordDao.updateReturnCodeBySid(sid, MessageReturnCode.QUEUED.getValue());
         }
-        if (MessageReturnCode.QUEUED == returnCode) {
-            return messageRecordDao.updateReturnCodeBySid(param.getMessageSid(), MessageReturnCode.QUEUED.getValue());
+        if (Status.FAILED.toString().equals(status)) {
+            return messageRecordDao.updateReturnCodeAndStatusBySid(sid, MessageReturnCode.FAILED.getValue(), OutboxStatus.FAILED.getValue());
         }
-        if (MessageReturnCode.FAILED == returnCode) {
-            return messageRecordDao.updateReturnCodeAndStatusBySid(param.getMessageSid(), MessageReturnCode.FAILED.getValue(), OutboxStatus.FAILED.getValue());
+        if (Status.SENT.toString().equals(status)) {
+            return messageRecordDao.updateReturnCodeBySid(sid, MessageReturnCode.SENT.getValue());
         }
-        if (MessageReturnCode.SENT == returnCode) {
-            return messageRecordDao.updateReturnCodeBySid(param.getMessageSid(), MessageReturnCode.SENT.getValue());
+        if (Status.DELIVERED.toString().equals(status)) {
+            return messageRecordDao.updateReturnCodeAndStatusBySid(sid, MessageReturnCode.DELIVERED.getValue(), OutboxStatus.DELIVERED.getValue());
         }
-        if (MessageReturnCode.DELIVERED == returnCode) {
-            return messageRecordDao.updateReturnCodeAndStatusBySid(param.getMessageSid(), MessageReturnCode.DELIVERED.getValue(), OutboxStatus.DELIVERED.getValue());
-        }
-        if (MessageReturnCode.UNDELIVERED == returnCode) {
-            return messageRecordDao.updateReturnCodeAndStatusBySid(param.getMessageSid(), MessageReturnCode.UNDELIVERED.getValue(), OutboxStatus.UNDELIVERED.getValue());
+        if (Status.UNDELIVERED.toString().equals(status)) {
+            return messageRecordDao.updateReturnCodeAndStatusBySid(sid, MessageReturnCode.UNDELIVERED.getValue(), OutboxStatus.UNDELIVERED.getValue());
         }
         log.info("leave updateMessageStatus");
         return 0;
@@ -120,6 +113,7 @@ public class MessageComponentImpl implements MessageComponent {
         Assert.notNull(marketSetting, "customer's market-setting is null");
         // 计算消息总量
         calcMsgTotal(planState);
+        ServiceException.isTrue(planState.msgTotal <= 100000, bundle.getString("msg-total-max"));
         Assert.isTrue(planState.msgTotal > 0, "The total number of messages is incorrectly calculated");
         if (marketSetting.getInvalidStatus() || (planState.isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
             // 使用信用支付
@@ -496,6 +490,55 @@ public class MessageComponentImpl implements MessageComponent {
         // 产生消息账单
         saveMsgBill(customerId, isSms, -amount, remark);
         log.info("leave autoReplySettlement");
+    }
+    
+    @Transactional
+    @Override
+    public void validAndFinishPlan(MessagePlan plan) {
+        log.info("enter validAndFinishPlan, plan={}", plan);
+        if (messageRecordDao.existsByPlanIdAndStatus(plan.getId(), OutboxStatus.SENT.getValue())) {
+            return;
+        }
+        // 统计发送失败的数量
+        int failedMsg = messageRecordDao.sumMsgByPlanIdAndStatus(plan.getId(), OutboxStatus.FAILED.getValue());
+        if (failedMsg == 0) {
+            // 所有消息发送成功，直接完成任务
+            messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.FINISHED.getValue(), MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+            log.info("finish message plan: {}", plan.getId());
+            return;
+        }
+        // 计算信用额度和套餐余量返还量
+        BigDecimal creditChange = BigDecimal.ZERO;
+        int msgChange = 0;
+        if (plan.getCreditPayNum() > 0) {
+            int numDiff = plan.getCreditPayNum() - failedMsg;
+            if (numDiff > 0) {
+                creditChange = plan.getCreditPayCost().multiply(BigDecimal.valueOf(failedMsg)).divide(BigDecimal.valueOf(plan.getCreditPayNum()));
+            } else {
+                creditChange = plan.getCreditPayCost();
+                msgChange = -numDiff;
+            }
+        } else {
+            msgChange = failedMsg;
+        }
+        // 返还信用额度和套餐余量
+        if (creditChange.compareTo(BigDecimal.ZERO) > 0) {
+            customerDao.updateCredit(plan.getCustomerId(), creditChange);
+            creditBillComponent.savePlanConsume(plan.getCustomerId(), plan.getId(), creditChange, bundle.getString("bill-return-failed"));
+        }
+        if (msgChange > 0) {
+            if (plan.getIsSms()) {
+                customerMarketSettingDao.updateSmsByCustomerId(plan.getCustomerId(), msgChange);
+                smsBillComponent.saveSmsBill(plan.getCustomerId(), bundle.getString("bill-return-failed"), msgChange);
+            } else {
+                customerMarketSettingDao.updateMmsByCustomerId(plan.getCustomerId(), msgChange);
+                mmsBillComponent.saveMmsBill(plan.getCustomerId(), bundle.getString("bill-return-failed"), msgChange);
+            }
+        }
+        // 完成任务
+        messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.FINISHED.getValue(), MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+        log.info("finish message plan: {}", plan.getId());
+        log.info("leave validAndFinishPlan");
     }
     
     /**

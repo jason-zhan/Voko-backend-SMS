@@ -32,7 +32,7 @@ public class PlanTaskCommon {
     
     
     /**
-     * 创建 生成消息的作业
+     * 生成 持久化消息的作业
      *
      * @param plan
      * @return
@@ -48,7 +48,7 @@ public class PlanTaskCommon {
     
     
     /**
-     * 创建 生成消息的作业触发器
+     * 生成 持久化消息的作业触发器
      *
      * @param jobDetail
      * @return
@@ -62,7 +62,7 @@ public class PlanTaskCommon {
     
     
     /**
-     * 创建 发送消息的作业(JobDetail)
+     * 生成 发送消息的作业(JobDetail)
      *
      * @param plan
      * @param messagePage
@@ -72,14 +72,15 @@ public class PlanTaskCommon {
         Map<String, Object> map = new HashMap<>();
         map.put("execTime", plan.getExecTime());
         map.put("messageList", messagePage.getContent());
+        map.put("page", messagePage.getNumber());
         return JobBuilder.newJob(SendMessageJob.class)
                 .setJobData(new JobDataMap(map))
-                .withIdentity(messagePage.getNumber() + "", plan.getId().toString())
+                .withIdentity("SEND_MSG:" + plan.getId() + "-" + messagePage.getNumber(), plan.getId().toString())
                 .build();
     }
     
     /**
-     * 创建 发送消息的作业触发器
+     * 生成 发送消息的作业触发器
      *
      * @param jobDetail 必须携带执行时间(execTime)
      * @return
@@ -89,6 +90,34 @@ public class PlanTaskCommon {
         return TriggerBuilder.newTrigger()
                 .forJob(jobDetail.getKey())
                 .startAt((Date) jobDataMap.get("execTime"))
+                .build();
+    }
+    
+    /**
+     * 生成 获取消息最新状态的作业
+     *
+     * @param plan
+     * @return
+     */
+    public static JobDetail createFetchMsgJob(MessagePlan plan) {
+        Map<String, Object> map = new HashMap<>();
+        map.put("plan", plan);
+        return JobBuilder.newJob(FetchMessageJob.class)
+                .setJobData(new JobDataMap(map))
+                .withIdentity("FETCH_MSG:" + plan.getId(), plan.getId().toString())
+                .build();
+    }
+    
+    /**
+     * 生成 获取消息最新状态的作业触发器
+     *
+     * @param jobDetail
+     * @return
+     */
+    public static Trigger createFetchMsgTrigger(JobDetail jobDetail) {
+        return TriggerBuilder.newTrigger()
+                .forJob(jobDetail.getKey())
+                .startAt(EasyTime.now())
                 .build();
     }
 }

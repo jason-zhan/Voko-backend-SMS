@@ -31,6 +31,7 @@ public class GenerateMessageJob implements Job {
         JobDataMap dataMap = context.getJobDetail().getJobDataMap();
         MessagePlan plan = (MessagePlan) dataMap.get("plan");
         Assert.notNull(plan, "plan is null");
+        log.info("run message plan: {}", plan.getId());
         // 当前任务可能已经生成消息
         if (!messageRecordDao.existsByPlanId(plan.getId())) {
             // 执行前校验、生成消息、结算
