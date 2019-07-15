@@ -70,5 +70,5 @@ public class InboxApplicationTests {
 //        List<?> objects = vkCDRAccountsDao.selectNeedToSend(Arrays.asList(4673510, 4673509, 4673508, 4673507, 4673506, 4673505, 4673504));
 //        System.out.println(objects.size());
     }
-    
+
 }

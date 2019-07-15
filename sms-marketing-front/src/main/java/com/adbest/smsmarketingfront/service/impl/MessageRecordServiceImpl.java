@@ -79,7 +79,9 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     
     @Value("${twilio.viewFileUrl}")
     private String viewFileUrl;
-    
+
+    @Autowired
+    private MessageComponent messageComponent;
     
     @Override
     public int delete(List<Long> idList) {
@@ -281,11 +283,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
-        Long sum = smsBillService.sumByCustomerId(messageRecord.getCustomerId());
-//        ServiceException.isTrue((sum == null ? 0l : sum) - messageRecord.getSegments() >= 0, "Insufficient allowance");
-        if ((sum == null ? 0l : sum) - messageRecord.getSegments() < 0) {
-            return;
-        }
+        messageComponent.autoReplySettlement(messageRecord.getCustomerId(),messageRecord.getSegments(),messageRecord.getSms());
         messageRecordDao.save(messageRecord);
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
