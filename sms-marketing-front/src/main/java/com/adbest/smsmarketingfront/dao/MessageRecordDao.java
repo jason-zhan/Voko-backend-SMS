@@ -53,9 +53,12 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     boolean existsByPlanId(Long planId);
     
-    long countByPlanIdAndDisableIsFalse(Long planId);
+    boolean existsByPlanIdAndStatus(Long planId, int status);
     
-    long countByPlanIdAndStatusAndDisableIsFalse(Long planId, int status);
+    int countByPlanIdAndStatus(Long planId, int status);
+    
+    @Query("select coalesce(sum(segments),0) from MessageRecord where planId = ?1 and status = ?2")
+    int sumMsgByPlanIdAndStatus(Long planId, int status);
     
     Page<MessageRecord> findByPlanIdAndStatusAndDisableIsFalse(Long planId, int status, Pageable pageable);
     

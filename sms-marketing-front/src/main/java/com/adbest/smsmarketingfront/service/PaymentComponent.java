@@ -12,7 +12,7 @@ public interface PaymentComponent {
      * @param customerId 用户id
      * @param cost 支付金额(>0)
      */
-    void realTimePayment(Long customerId, BigDecimal cost);
+    void realTimePayment(Long customerId, BigDecimal cost, String remark);
     
     // 推送指定用户账单
     void paymentRequest(Long customerId);

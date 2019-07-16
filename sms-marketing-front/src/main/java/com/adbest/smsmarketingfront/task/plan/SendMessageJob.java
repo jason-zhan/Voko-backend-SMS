@@ -41,20 +41,20 @@ public class SendMessageJob implements Job {
         // 获取操作参数
         JobKey jobKey = jobDetail.getKey();
         Long planId = Long.valueOf(jobKey.getGroup());
-        Integer page = Integer.valueOf(jobKey.getName());
+        Integer page = (Integer) jobDataMap.get("page");
         List<MessageRecord> messageList = (List<MessageRecord>) jobDataMap.get("messageList");
+        log.info("run send message: planId={}, page={}, size={}", planId, page, messageList.size());
         if (messageList == null || messageList.size() == 0) {
             System.out.printf("[ERROR] message list is empty,  planId=%s, page=%s, size=%s [task] %n", planId, page, 0);
             return;
         }
-        System.out.printf("will execute send message, planId=%s, page=%s, size=%s [task] %n", planId, page, messageList.size());
         // 执行
         sendMessage(messageList, planId, page);
         // 统计任务完成度
-        long queueCount = messageRecordDao.countByPlanIdAndStatusAndDisableIsFalse(planId, OutboxStatus.QUEUE.getValue());
+        int queueCount = messageRecordDao.countByPlanIdAndStatus(planId, OutboxStatus.QUEUE.getValue());
         if (queueCount == 0) {
             messagePlanDao.updateStatusById(planId, MessagePlanStatus.EXECUTION_COMPLETED.getValue(), MessagePlanStatus.EXECUTING.getValue());
-            System.out.printf("complete message plan, planId=%s [task] %n", planId);
+            log.info("complete message plan, planId={} [task]", planId);
         } else {
             System.out.printf("executed send message, planId=%s, page=%s, size=%s [task] %n", planId, page, messageList.size());
         }

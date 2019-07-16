@@ -20,10 +20,10 @@ public class TwilioCallbackController {
     
     @Autowired
     MessageComponent messageRecordComponent;
-
+    
     @Autowired
     private MessageRecordService messageRecordService;
-
+    
     @Autowired
     private TwilioUtil twilioUtil;
     
@@ -37,7 +37,9 @@ public class TwilioCallbackController {
     public void receiveMessage(HttpServletRequest request, HttpServletResponse response) {
         InboundMsg inboundMsg = InboundMsg.parse(request);
         boolean validate = twilioUtil.validate(request);
-        if (!validate){return;}
+        if (!validate) {
+            return;
+        }
         messageRecordService.saveInbox(inboundMsg);
         System.out.println(inboundMsg);
     }
@@ -50,7 +52,9 @@ public class TwilioCallbackController {
      */
     @RequestMapping("/message-status-callback")
     public void messageStatusCallback(HttpServletRequest request, HttpServletResponse response) {
-        messageRecordComponent. updateMessageStatus(StatusCallbackParam.parse(request));
+        String sid = request.getParameter("MessageSid");
+        String status = request.getParameter("MessageStatus");
+        messageRecordComponent.updateMessageStatus(sid, status);
     }
     
     

@@ -69,7 +69,7 @@ public class MessagePlanTask {
             JobDetail messageJob = PlanTaskCommon.createMessageJob(plan);
             // 将任务加入容器
             if (!quartzTools.addJobIfGroupNone(messageJob)) {
-                return;
+                continue;
             }
             // 锁定任务，使得不可被修改
             messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.QUEUING.getValue(), MessagePlanStatus.SCHEDULING.getValue());
@@ -119,12 +119,24 @@ public class MessagePlanTask {
      * 1.对于所有消息的状态回执已达到最终状态的任务，直接归档完成
      * 2.对于部分消息的状态回执未达到最终状态的任务，主动查询更新消息状态，并视条件归档完成
      */
-    @Scheduled(initialDelay = 30 * 1000, fixedDelay = 5 * 60 * 1000)
+//    @Scheduled(initialDelay = 30 * 1000, fixedDelay = 10 * 60 * 1000)
     public void finishPlan() {
         log.info("enter finishPlan [TASK]");
         List<MessagePlan> planList = messagePlanDao.findByStatusAndDisableIsFalse(MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+        checkPlanByGroup(planList);
+        if (planList.size() == 0) {
+            log.info("leave finishPlan for empty plan list [TASK]");
+            return;
+        }
         for (MessagePlan plan : planList) {
-//            messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.SENT.getValue(), )
+            if (!messageRecordDao.existsByPlanIdAndStatus(plan.getId(), OutboxStatus.SENT.getValue())) {
+                continue;
+            }
+            JobDetail fetchMsgJob = PlanTaskCommon.createFetchMsgJob(plan);
+            if (!quartzTools.addJobIfGroupNone(fetchMsgJob)) {
+                continue;
+            }
+            quartzTools.scheduleJob(PlanTaskCommon.createFetchMsgTrigger(fetchMsgJob));
         }
         log.info("leave finishPlan [TASK]");
     }
