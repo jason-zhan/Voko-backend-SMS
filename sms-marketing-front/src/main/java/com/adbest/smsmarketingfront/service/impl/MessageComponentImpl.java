@@ -466,30 +466,61 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Transactional
     @Override
-    public void autoReplySettlement(Long customerId, int amount, boolean isSms, String remark) {
-        log.info("enter autoReplySettlement, customerId={}, amount={}, isSms={}", customerId, amount, isSms);
+    public void autoReplySettlement(MessageRecord message, String remark) {
+        log.info("enter autoReplySettlement, message={}, remark={}", message, remark);
         // 参数检查
-        Assert.isTrue(amount > 0, "amount must be greater than zero.");
-        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(customerId);
+        Assert.isTrue(message.getSegments() > 0, "amount of messages must be greater than zero.");
+        Assert.hasText(remark, "remark is empty.");
+        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(message.getCustomerId());
         Assert.notNull(marketSetting, "customer's market-setting is null");
-        if (marketSetting.getInvalidStatus() || (isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) <= 0) {
+        // TODO 修改支付逻辑： 纯套餐支付或纯信用支付
+        if (marketSetting.getInvalidStatus() || (message.getSms() ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) <= 0) {
             // 使用信用结算
-            BigDecimal creditPay = purchaseWithCredit(customerId, isSms, amount);
+            BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
             // 产生金融账单
-            financeBillComponent.saveFinanceBill(customerId, creditPay, remark);
+            financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
         } else {
-            // 首先使用套餐余量结算
-            int restAmount = amount - settlePartWithMarketSetting(marketSetting, isSms, amount);
-            if (restAmount > 0) {
-                // 套餐余量不足部分，使用信用结算
-                BigDecimal creditPay = purchaseWithCredit(customerId, isSms, restAmount);
-                // 产生金融账单
-                financeBillComponent.saveFinanceBill(customerId, creditPay, remark);
-            }
+        
+//            // 首先使用套餐余量结算
+//            int restAmount = message.getSegments() - settlePartWithMarketSetting(marketSetting, message.getSms(), message.getSegments());
+//            if (restAmount > 0) {
+//                // 套餐余量不足部分，使用信用结算
+//                BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), restAmount);
+//                // 产生金融账单
+//                financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
+//            }
         }
         // 产生消息账单
-        saveMsgBill(customerId, isSms, -amount, remark);
+        saveMsgBill(message.getCustomerId(), message.getSms(), -message.getSegments(), remark);
         log.info("leave autoReplySettlement");
+    }
+    
+    @Override
+    public void autoReplyReturn(MessageRecord message, String remark) {
+        log.info("enter autoReplyReturn, message={}, remark={}", message, remark);
+        Assert.isTrue(message.getSegments() > 0, "amount of messages must be greater than zero.");
+        Assert.hasText(remark, "remark is empty.");
+        if (message.getCost() == null || message.getCost().compareTo(BigDecimal.ZERO) == 0) {
+            // 套餐支付，若未跨套餐，则更新用户套餐余量
+            CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(message.getCustomerId());
+            Assert.notNull(marketSetting, "customer's market-setting is null");
+            if (marketSetting.getInvalidStatus() || marketSetting.getOrderTime().after(message.getSendTime())) {
+                return;
+            }
+            if (message.getSms()) {
+                customerMarketSettingDao.updateSmsByCustomerId(message.getCustomerId(), message.getSegments());
+                smsBillComponent.saveSmsBill(message.getCustomerId(), remark, message.getSegments());
+            } else {
+                customerMarketSettingDao.updateMmsByCustomerId(message.getCustomerId(), message.getSegments());
+                mmsBillComponent.saveMmsBill(message.getCustomerId(), remark, message.getSegments());
+            }
+        } else {
+            Assert.isTrue(message.getCost().compareTo(BigDecimal.ZERO)>0, "the cost of message must be greater than zero.");
+            // 信用支付，更新用户信用额度并保存金融账单
+            customerDao.updateCredit(message.getCustomerId(), message.getCost());
+            financeBillComponent.saveFinanceBill(message.getCustomerId(), message.getCost(), remark);
+        }
+        log.info("leave autoReplyReturn");
     }
     
     @Transactional

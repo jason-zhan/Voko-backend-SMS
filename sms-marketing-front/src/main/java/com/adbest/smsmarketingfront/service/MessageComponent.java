@@ -54,13 +54,17 @@ public interface MessageComponent {
     
     /**
      * 自动回复消息结算
-     *
-     * @param customerId
-     * @param amount  消息数量
-     * @param isSms  是否短信(true:是)
+     * @param message
      * @param remark  备注/说明
      */
-    void autoReplySettlement(Long customerId, int amount, boolean isSms, String remark);
+    void autoReplySettlement(MessageRecord message, String remark);
+    
+    /**
+     * 自动回复消息失败返还
+     * @param message
+     * @param remark  备注/说明
+     */
+    void autoReplyReturn(MessageRecord message, String remark);
     
     /**
      * 消息发送失败的处理

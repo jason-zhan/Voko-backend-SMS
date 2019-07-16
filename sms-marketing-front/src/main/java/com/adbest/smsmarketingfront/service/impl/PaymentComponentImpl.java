@@ -23,7 +23,8 @@ public class PaymentComponentImpl implements PaymentComponent {
     @Override
     public void realTimePayment(Long customerId, BigDecimal cost, String remark) {
         log.info("enter realTimePayment, customerId={}, cost={}", customerId, cost);
-        Assert.isTrue(cost != null && cost.compareTo(BigDecimal.ZERO) > 0, "cost must be greater than zero.");
+        // TODO amount 校验
+//        Assert.isTrue(cost != null && cost.compareTo(BigDecimal.ZERO) > 0, "cost must be greater than zero.");
         Assert.hasText(remark, "remark is empty.");
         // TODO 持久化金融账单
         log.info("leave realTimePayment");
