@@ -35,7 +35,7 @@ public class CustomerMarketSettingTask {
     private MmsBillService mmsBillService;
 
     @Autowired
-    private FinanceBillComponent financeBillComponent;
+    private PaymentComponent paymentComponent;
 
     @Autowired
     private ResourceBundle resourceBundle;
@@ -64,7 +64,7 @@ public class CustomerMarketSettingTask {
                  * 扣费，成功：保存 失败：放入未续费
                  */
                 try {
-                    financeBillComponent.saveFinanceBill(cms.getCustomerId(), marketSetting.getPrice(),resourceBundle.getString("PACKAGE_RENEWAL"));
+                    paymentComponent.realTimePayment(cms.getCustomerId(), marketSetting.getPrice(),resourceBundle.getString("PACKAGE_RENEWAL"));
                     cms.setSmsTotal(marketSetting.getSmsTotal());
                     cms.setMmsTotal(marketSetting.getMmsTotal());
                     cms.setInvalidTime(TimeTools.addDay(TimeTools.now(),marketSetting.getDaysNumber()));

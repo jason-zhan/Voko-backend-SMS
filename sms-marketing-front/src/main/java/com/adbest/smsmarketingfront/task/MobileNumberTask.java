@@ -4,6 +4,7 @@ import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingfront.service.CustomerService;
 import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.MobileNumberService;
+import com.adbest.smsmarketingfront.service.PaymentComponent;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -27,7 +28,7 @@ public class MobileNumberTask {
     private MobileNumberService mobileNumberService;
 
     @Autowired
-    private FinanceBillComponent financeBillComponent;
+    private PaymentComponent paymentComponent;
 
     @Value("${mobilePrice.free}")
     private BigDecimal freeMobilePrice;
@@ -63,7 +64,7 @@ public class MobileNumberTask {
                 price = ordinaryMobilePrice;
             }
             try {
-                financeBillComponent.saveFinanceBill(mobileNumber.getCustomerId(), price,resourceBundle.getString("MOBILE_RENEWAL"));
+                paymentComponent.realTimePayment(mobileNumber.getCustomerId(), price,resourceBundle.getString("MOBILE_RENEWAL"));
                 mobileNumber.setInvalidTime(TimeTools.addDay(mobileNumber.getInvalidTime(), 30));
                 renewMobileNumber.add(mobileNumber);
             }catch (Exception e){

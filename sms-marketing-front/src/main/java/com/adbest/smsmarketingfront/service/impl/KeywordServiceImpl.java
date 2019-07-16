@@ -13,6 +13,7 @@ import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CustomerMarketSettingService;
 import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.KeywordService;
+import com.adbest.smsmarketingfront.service.PaymentComponent;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
@@ -46,7 +47,7 @@ public class KeywordServiceImpl implements KeywordService {
     private String keywordPrice;
 
     @Autowired
-    private FinanceBillComponent financeBillComponent;
+    private PaymentComponent paymentComponent;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -150,7 +151,7 @@ public class KeywordServiceImpl implements KeywordService {
         if (customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis()))&&customerMarketSetting.getKeywordTotal() - num>0){
             keyword.setGiftKeyword(true);
         }else {
-            financeBillComponent.saveFinanceBill(customerId, new BigDecimal(keywordPrice).negate(),returnMsgUtil.msg("KEYWORD_PURCHASE"));
+            paymentComponent.realTimePayment(customerId, new BigDecimal(keywordPrice).negate(),returnMsgUtil.msg("KEYWORD_PURCHASE"));
             keyword.setGiftKeyword(false);
         }
         keyword = keywordDao.save(keyword);

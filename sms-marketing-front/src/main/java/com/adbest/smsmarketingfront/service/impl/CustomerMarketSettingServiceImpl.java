@@ -42,7 +42,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     private SmsBillComponentImpl smsBillComponent;
 
     @Autowired
-    private FinanceBillComponent financeBillComponent;
+    private PaymentComponent paymentComponent;
 
     @Autowired
     private MobileNumberService mobileNumberService;
@@ -135,7 +135,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         /**
          * 扣费，账单
          */
-        financeBillComponent.saveFinanceBill(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
+        paymentComponent.realTimePayment(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
         Customer customer = customerService.findById(customerId);
         BigDecimal credit = new BigDecimal(paymentCredit);
         if (diffDays<=0 && (customer.getMaxCredit().doubleValue()!=credit.doubleValue() || customer.getAvailableCredit().doubleValue()!=credit.doubleValue())){
