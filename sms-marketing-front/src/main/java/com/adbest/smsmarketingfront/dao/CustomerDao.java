@@ -32,7 +32,7 @@ public interface CustomerDao extends JpaRepository<Customer, Long>, JpaSpecifica
     @Query("update Customer set availableCredit = availableCredit+?2, maxCredit = maxCredit+?2 where id = ?1 and maxCredit+?2 >= 0")
     int updateMaxCredit(Long customerId, BigDecimal amount);
 
-    @Query(value = "select obj.in_leadin,obj.email,obj.i_customer,obj.firstname,obj.lastname,obj.login,obj.name,obj.phone1,obj.phone2 " +
+    @Query(value = "select obj.in_leadin,obj.email,obj.i_customer,obj.firstname,obj.lastname,obj.login,obj.name,obj.phone1,obj.phone2,obj.password " +
             "from vkCustomers obj where obj.in_leadin is null", nativeQuery = true)
     List<Object[]> selectByInLeadinIsNull(Pageable pageable);
 

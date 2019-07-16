@@ -70,10 +70,6 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         Long customerId = Current.get().getId();
         CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
         CustomerMarketSettingVo customerMarketSettingVo = new CustomerMarketSettingVo(customerMarketSetting);
-//        Long smsNum = smsBillService.sumByCustomerId(customerId);
-//        Long mmsNum = mmsBillService.sumByCustomerId(customerId);
-//        customerMarketSettingVo.setSmsTotal(smsNum.intValue());
-//        customerMarketSettingVo.setMmsTotal(mmsNum.intValue());
         return customerMarketSettingVo;
     }
 

@@ -44,15 +44,13 @@ public class VkCustomers implements Serializable {
     private Integer i_rep;
     private Date due_date;
     private Timestamp billed_to;
-
-    @Transient
-    private String password = "123";
+    private String password;
     /**
      * 是否已导入到系统
      */
     private Boolean inLeadin;
 
-    public VkCustomers(Boolean inLeadin, String email,Integer i_customer,String firstname,String lastname,String login,String name,String phone1,String phone2) {
+    public VkCustomers(Boolean inLeadin, String email,Integer i_customer,String firstname,String lastname,String login,String name,String phone1,String phone2,String password) {
         this.i_customer = i_customer;
         this.name = name;
         this.firstname = firstname;
@@ -62,6 +60,7 @@ public class VkCustomers implements Serializable {
         this.phone2 = phone2;
         this.login = login;
         this.inLeadin = inLeadin;
+        this.password = password;
     }
 
     public VkCustomers() {

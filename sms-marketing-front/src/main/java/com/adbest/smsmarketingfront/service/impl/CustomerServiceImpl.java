@@ -233,6 +233,12 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setIndustry(customerForm.getIndustry());
         customer.setLastName(customerForm.getLastName());
         customer.setFirstName(customerForm.getFirstName());
+        if (StringUtils.hasText(customerForm.getEmail())){
+            ServiceException.isTrue(Customer.checkEmail(customerForm.getEmail()), returnMsgUtil.msg("EMAIL_INCORRECT_FORMAT"));
+            customer.setEmail(customerForm.getEmail());
+        }else {
+            customer.setEmail(null);
+        }
         customerDao.save(customer);
         return new CustomerVo(customer);
     }

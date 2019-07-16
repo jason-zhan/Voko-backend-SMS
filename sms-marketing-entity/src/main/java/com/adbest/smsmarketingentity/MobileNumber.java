@@ -52,7 +52,7 @@ public class MobileNumber implements Serializable {
     private Timestamp invalidTime;
 
     /**
-     * 是否开启自动续费
+     * 是否开启自动续费(true:开启)
      */
     private Boolean automaticRenewal;
 
