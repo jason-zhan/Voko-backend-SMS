@@ -21,9 +21,6 @@ public class MarketSettingServiceImpl implements MarketSettingService {
     @Autowired
     private MarketSettingDao marketSettingDao;
 
-    @Autowired
-    private CustomerMarketSettingService customerMarketSettingService;
-
     @Override
     public List<MarketSetting> findAll() {
         return marketSettingDao.findAll();
@@ -31,12 +28,9 @@ public class MarketSettingServiceImpl implements MarketSettingService {
 
     @Override
     public MarketSettingVo list() {
-        Long customeId = Current.get().getId();
         List<MarketSetting> marketSettings = marketSettingDao.findAll();
         MarketSettingVo vo = new MarketSettingVo();
         vo.setMarketSettings(marketSettings);
-        CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customeId);
-        vo.setCustomerMarketSetting(customerMarketSetting);
         return vo;
     }
 

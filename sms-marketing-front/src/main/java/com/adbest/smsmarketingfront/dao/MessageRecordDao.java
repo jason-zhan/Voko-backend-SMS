@@ -9,6 +9,8 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, JpaSpecificationExecutor<MessageRecord> {
     
     int deleteByPlanId(Long planId);
@@ -61,5 +63,6 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     int sumMsgByPlanIdAndStatus(Long planId, int status);
     
     Page<MessageRecord> findByPlanIdAndStatusAndDisableIsFalse(Long planId, int status, Pageable pageable);
-    
+
+    List<MessageRecord> findByReturnCodeAndDisableAndPlanIdIsNull(Integer returnCode, Boolean disable, Pageable pageable);
 }

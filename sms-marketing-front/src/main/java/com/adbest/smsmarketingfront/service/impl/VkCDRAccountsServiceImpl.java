@@ -127,6 +127,7 @@ public class VkCDRAccountsServiceImpl implements VkCDRAccountsService {
             Timestamp timestamp = new Timestamp(System.currentTimeMillis());
             send.setSendTime(timestamp);
             send.setStatus(OutboxStatus.SENT.getValue());
+            send.setReturnCode(MessageReturnCode.SENT.getValue());
             VkCDRAccountsIds.add(cd.getVkCDRAccountsId());
             messageRecords.add(send);
         }

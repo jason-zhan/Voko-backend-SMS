@@ -27,12 +27,6 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     private MarketSettingService marketSettingService;
 
     @Autowired
-    private SmsBillService smsBillService;
-
-    @Autowired
-    private MmsBillService mmsBillService;
-
-    @Autowired
     private ResourceBundle resourceBundle;
 
     @Autowired

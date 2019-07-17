@@ -21,10 +21,12 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.QueryResults;
 import com.querydsl.core.types.Projections;
 import com.querydsl.jpa.impl.JPAQueryFactory;
+import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
@@ -276,8 +278,8 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         send.setDisable(false);
         Timestamp timestamp = new Timestamp(System.currentTimeMillis());
         send.setSendTime(timestamp);
-//        send.setExpectedSendTime(timestamp);
         send.setStatus(OutboxStatus.SENT.getValue());
+        send.setReturnCode(MessageReturnCode.SENT.getValue());
         messageRecordService.sendSms(send, bundle.getString("KEYWORD_REPLY"));
     }
     
@@ -300,6 +302,19 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         smsBill.setInfoDescribe(bundle.getString("KEYWORD_REPLY"));
         smsBillComponent.save(smsBill);
         PreSendMsg preSendMsg = new PreSendMsg(messageRecord);
-//        twilioUtil.sendMessage(preSendMsg);
+        Message message = twilioUtil.sendMessage(preSendMsg);
+        messageRecord.setSid(message.getSid());
+        messageRecordDao.save(messageRecord);
+    }
+
+    @Override
+    public List<MessageRecord> findByReturnCodeAndDisableAndPlanIdIsNull(Integer returnCode, Boolean disable, Pageable pageable) {
+        return messageRecordDao.findByReturnCodeAndDisableAndPlanIdIsNull(returnCode, disable, pageable);
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<MessageRecord> successMsg) {
+        messageRecordDao.saveAll(successMsg);
     }
 }
