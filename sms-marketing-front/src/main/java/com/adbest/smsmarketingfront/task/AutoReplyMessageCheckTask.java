@@ -69,13 +69,16 @@ public class AutoReplyMessageCheckTask {
                 successMsg.clear();
             }
             if (failedMsg.size()>0){
-                //退款
-
-                messageRecordService.saveAll(failedMsg);
+                for (MessageRecord messageRecord : failedMsg) {
+                    try {
+                        messageRecordService.autoReplyReturn(messageRecord);
+                    }catch (Exception e){
+                        log.error("SMS failed to return error,{}",e);
+                    }
+                }
                 failedMsg.clear();
             }
             list.clear();
         }while (length==size);
-
     }
 }

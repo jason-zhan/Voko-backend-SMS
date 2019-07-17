@@ -54,4 +54,6 @@ public interface MessageRecordService {
     List<MessageRecord> findByReturnCodeAndDisableAndPlanIdIsNull(Integer returnCode, Boolean disable, Pageable pageable);
 
     void saveAll(List<MessageRecord> successMsg);
+
+    void autoReplyReturn(MessageRecord messageRecord);
 }

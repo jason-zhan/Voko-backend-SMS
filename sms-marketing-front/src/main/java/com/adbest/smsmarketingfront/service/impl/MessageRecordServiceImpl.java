@@ -294,7 +294,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
-        messageComponent.autoReplySettlement( messageRecord, "Automatic reply SMS");
+        messageComponent.autoReplySettlement( messageRecord, msg);
         messageRecordDao.save(messageRecord);
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
@@ -316,5 +316,12 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     @Transactional
     public void saveAll(List<MessageRecord> successMsg) {
         messageRecordDao.saveAll(successMsg);
+    }
+
+    @Override
+    @Transactional
+    public void autoReplyReturn(MessageRecord messageRecord) {
+        messageComponent.autoReplyReturn(messageRecord, bundle.getString("SMS_FAILED_RETURN"));
+        messageRecordDao.save(messageRecord);
     }
 }
