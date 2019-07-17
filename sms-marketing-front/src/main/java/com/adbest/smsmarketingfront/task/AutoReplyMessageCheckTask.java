@@ -8,6 +8,7 @@ import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -27,8 +28,13 @@ public class AutoReplyMessageCheckTask {
     @Autowired
     private TwilioUtil twilioUtil;
 
-//    @Scheduled(cron = "50 0/22 * * * ?")
+    @Autowired
+    private Environment environment;
+
+    @Scheduled(cron = "50 0/22 * * * ?")
     public void checkAutoReplyMessage(){
+        String taskSwitch = environment.getProperty("taskSwitch");
+        if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
         log.info("Check AutoReplyMessage...");
         int size = 200;
         Pageable pageable = null;

@@ -16,8 +16,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
 
-import java.util.List;
-
 @RunWith(SpringRunner.class)
 @SpringBootTest
 public class InboxApplicationTests {
@@ -70,5 +68,4 @@ public class InboxApplicationTests {
 //        List<?> objects = vkCDRAccountsDao.selectNeedToSend(Arrays.asList(4673510, 4673509, 4673508, 4673507, 4673506, 4673505, 4673504));
 //        System.out.println(objects.size());
     }
-
 }
