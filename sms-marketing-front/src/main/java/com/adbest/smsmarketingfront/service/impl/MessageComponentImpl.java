@@ -475,25 +475,20 @@ public class MessageComponentImpl implements MessageComponent {
         // 参数检查
         Assert.isTrue(message.getSegments() > 0, "amount of messages must be greater than zero.");
         Assert.hasText(remark, "remark is empty.");
-        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(message.getCustomerId());
-        Assert.notNull(marketSetting, "customer's market-setting is null");
-        if (marketSetting.getInvalidStatus() || (message.getSms() ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) <= 0) {
-            // 跨套餐或套餐余量为0，使用信用结算
-            BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
-            financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
+        // 首先尝试套餐余量支付
+        int packageResult = 0;
+        if (message.getSms()) {
+            packageResult = customerMarketSettingDao.updateSmsByCustomerId(message.getCustomerId(), message.getSegments());
         } else {
-            // 未跨套餐且套餐余量大于0，首先尝试套餐余量支付
-            int packageResult = 0;
-            if (message.getSms()) {
-                packageResult = customerMarketSettingDao.updateSmsByCustomerId(message.getCustomerId(), message.getSegments());
-            } else {
-                packageResult = customerMarketSettingDao.updateMmsByCustomerId(message.getCustomerId(), message.getSegments());
-            }
-            // 若套餐余量支付失败，则信用支付
-            if (packageResult <= 0) {
-                BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
-                financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
-            }
+            packageResult = customerMarketSettingDao.updateMmsByCustomerId(message.getCustomerId(), message.getSegments());
+        }
+        // 若套餐余量支付失败，则信用支付
+        if (packageResult > 0) {
+            message.setCost(BigDecimal.ZERO);
+        } else {
+            BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
+            financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay.negate(), remark);
+            message.setCost(creditPay);
         }
         // 产生消息账单
         saveMsgBill(message.getCustomerId(), message.getSms(), -message.getSegments(), remark);
@@ -510,6 +505,7 @@ public class MessageComponentImpl implements MessageComponent {
             CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(message.getCustomerId());
             Assert.notNull(marketSetting, "customer's market-setting is null");
             if (marketSetting.getInvalidStatus() || marketSetting.getOrderTime().after(message.getSendTime())) {
+                log.info("leave autoReplyReturn [market-setting invalid]");
                 return;
             }
             if (message.getSms()) {

@@ -67,7 +67,7 @@ public interface MessageComponent {
     void autoReplyReturn(MessageRecord message, String remark);
     
     /**
-     * 消息发送失败的处理
+     * 消息发送任务-发送消息失败的处理
      * 所有消息状态已达到最终状态，对于发送失败的消息，返还对应套餐余量或信用额度
      * [refer] https://www.twilio.com/docs/sms/api/message-resource#message-status-values
      *

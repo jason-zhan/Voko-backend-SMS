@@ -13,7 +13,7 @@ public interface FinanceBillComponent {
     /**
      * 生成一条金融记录
      * @param customerId 用户id
-     * @param cost  金额
+     * @param cost  金额 (+-)
      * @param description  描述
      * @return
      */
