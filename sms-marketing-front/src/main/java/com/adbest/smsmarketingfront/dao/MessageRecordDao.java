@@ -13,27 +13,20 @@ import java.util.List;
 
 public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, JpaSpecificationExecutor<MessageRecord> {
     
-    int deleteByPlanId(Long planId);
-    
     @Transactional
     @Modifying
-    @Query("update MessageRecord set status = ?2 where sid = ?1")
+    @Query("update MessageRecord set returnCode = ?2, status = ?3 where sid = ?1 and planId is null")
     int updateReturnCodeAndStatusBySid(String sid, int returnCode, int status);
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set returnCode = ?2 where sid = ?1")
+    @Query("update MessageRecord set returnCode = ?2 where sid = ?1 and planId is null")
     int updateReturnCodeBySid(String sid, int returnCode);
     
     @Transactional
     @Modifying
     @Query("update MessageRecord set disable = ?2 where id = ?1")
     int disableById(Long id, boolean disable);
-    
-    @Transactional
-    @Modifying
-    @Query("update MessageRecord set status = ?2 where id = ?1")
-    int updateStatusById(Long id, int status);
     
     @Transactional
     @Modifying(flushAutomatically = true, clearAutomatically = true)

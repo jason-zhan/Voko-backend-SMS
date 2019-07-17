@@ -91,9 +91,16 @@ public class JavaTest {
 //        BigDecimal b = new BigDecimal(0.2);
 //        BigDecimal c = a.add(b);
 //        System.out.printf("result(%s)%n", c);
-        BigDecimal a = BigDecimal.valueOf(52.999);
-        int b = a.intValue();
-        System.out.println(b);
+//        BigDecimal a = BigDecimal.valueOf(52.999);
+//        int b = a.intValue();
+//        System.out.println(b);
+    }
+    
+    @Test
+    public void testFloatDouble(){
+        // float double
+        float f = 33554439f;
+        System.out.println(f);
     }
     
     @Test
