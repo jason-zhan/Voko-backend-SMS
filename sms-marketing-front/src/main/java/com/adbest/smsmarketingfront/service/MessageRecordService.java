@@ -7,6 +7,7 @@ import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.twilio.param.InboundMsg;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Map;
@@ -49,4 +50,10 @@ public interface MessageRecordService {
 
     // 发送消息
     void sendSms(MessageRecord send, String msg);
+
+    List<MessageRecord> findByReturnCodeAndDisableAndPlanIdIsNull(Integer returnCode, Boolean disable, Pageable pageable);
+
+    void saveAll(List<MessageRecord> successMsg);
+
+    void autoReplyReturn(MessageRecord messageRecord);
 }

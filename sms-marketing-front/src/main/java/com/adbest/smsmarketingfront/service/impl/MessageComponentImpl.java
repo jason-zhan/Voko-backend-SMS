@@ -496,6 +496,7 @@ public class MessageComponentImpl implements MessageComponent {
     }
     
     @Override
+    @Transactional
     public void autoReplyReturn(MessageRecord message, String remark) {
         log.info("enter autoReplyReturn, message={}, remark={}", message, remark);
         Assert.isTrue(message.getSegments() > 0, "amount of messages must be greater than zero.");

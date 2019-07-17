@@ -32,7 +32,6 @@ public class DbImportCustomerTask {
 
     @Autowired
     private VkCDRAccountsService vkCDRAccountsService;
-
 //    @Scheduled(cron = "15 0/10 * * * ?")
     public void importCustomerTask(){
         int size = 1000;
@@ -73,7 +72,7 @@ public class DbImportCustomerTask {
             customer.setMaxCredit(BigDecimal.valueOf(0));
             customer.setCustomerLogin(vkCustomers.getLogin());
             customer.setVkCustomersId(vkCustomers.getI_customer());
-            customer.setPassword(encryptTools.encrypt(vkCustomers.getPassword()));
+            customer.setPassword(encryptTools.encrypt(encryptTools.vkPasswordDecrypt(vkCustomers.getPassword())));
             customerList.add(customer);
         }
         customerService.saveImportCustomer(customerList);

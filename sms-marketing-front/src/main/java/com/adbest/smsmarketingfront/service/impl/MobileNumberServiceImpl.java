@@ -11,6 +11,7 @@ import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CustomerSettingsService;
 import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.MobileNumberService;
+import com.adbest.smsmarketingfront.service.PaymentComponent;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import com.adbest.smsmarketingfront.util.TimeTools;
@@ -55,7 +56,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     private CustomerSettingsService customerSettingsService;
 
     @Autowired
-    private FinanceBillComponent financeBillComponent;
+    private PaymentComponent paymentComponent;
 
     @Value("${mobilePrice.free}")
     private BigDecimal freeMobilePrice;
@@ -246,7 +247,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         /**
          * 扣钱，账单
          */
-        financeBillComponent.saveFinanceBill(customerId, price.negate(),returnMsgUtil.msg("MOBILE_PURCHASE"));
+        paymentComponent.realTimePayment(customerId, price.negate(),returnMsgUtil.msg("MOBILE_PURCHASE"));
 
         IncomingPhoneNumber incomingPhoneNumber = null;
         try {

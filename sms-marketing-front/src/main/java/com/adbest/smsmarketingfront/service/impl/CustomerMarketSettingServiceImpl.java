@@ -27,12 +27,6 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     private MarketSettingService marketSettingService;
 
     @Autowired
-    private SmsBillService smsBillService;
-
-    @Autowired
-    private MmsBillService mmsBillService;
-
-    @Autowired
     private ResourceBundle resourceBundle;
 
     @Autowired
@@ -42,7 +36,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     private SmsBillComponentImpl smsBillComponent;
 
     @Autowired
-    private FinanceBillComponent financeBillComponent;
+    private PaymentComponent paymentComponent;
 
     @Autowired
     private MobileNumberService mobileNumberService;
@@ -70,10 +64,6 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         Long customerId = Current.get().getId();
         CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
         CustomerMarketSettingVo customerMarketSettingVo = new CustomerMarketSettingVo(customerMarketSetting);
-//        Long smsNum = smsBillService.sumByCustomerId(customerId);
-//        Long mmsNum = mmsBillService.sumByCustomerId(customerId);
-//        customerMarketSettingVo.setSmsTotal(smsNum.intValue());
-//        customerMarketSettingVo.setMmsTotal(mmsNum.intValue());
         return customerMarketSettingVo;
     }
 
@@ -139,7 +129,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         /**
          * 扣费，账单
          */
-        financeBillComponent.saveFinanceBill(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
+        paymentComponent.realTimePayment(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
         Customer customer = customerService.findById(customerId);
         BigDecimal credit = new BigDecimal(paymentCredit);
         if (diffDays<=0 && (customer.getMaxCredit().doubleValue()!=credit.doubleValue() || customer.getAvailableCredit().doubleValue()!=credit.doubleValue())){
