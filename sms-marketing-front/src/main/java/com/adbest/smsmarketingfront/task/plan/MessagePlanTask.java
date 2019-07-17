@@ -49,7 +49,7 @@ public class MessagePlanTask {
      * 定时扫描并任务
      * 临近执行期的任务将生成消息并加入任务容器
      */
-    @Scheduled(fixedDelay = 5 * 60 * 1000)
+//    @Scheduled(fixedDelay = 5 * 60 * 1000)
     public void runPlan() {
         log.info("enter runPlan [TASK]");
         List<MessagePlan> planList = messagePlanDao.findByStatusInAndExecTimeBeforeAndDisableIsFalse(
@@ -82,7 +82,7 @@ public class MessagePlanTask {
     /**
      * 检测中断任务并继续执行
      */
-    @Scheduled(initialDelay = 15 * 1000, fixedDelay = repairTimeRange * 60 * 1000)
+//    @Scheduled(initialDelay = 15 * 1000, fixedDelay = repairTimeRange * 60 * 1000)
     public void continuePlan() {
         log.info("enter continuePlan [task]");
         // 所有执行中状态的任务
@@ -119,7 +119,7 @@ public class MessagePlanTask {
      * 1.对于所有消息的状态回执已达到最终状态的任务，直接归档完成
      * 2.对于部分消息的状态回执未达到最终状态的任务，主动查询更新消息状态，并视条件归档完成
      */
-    @Scheduled(initialDelay = 30 * 1000, fixedDelay = 10 * 60 * 1000)
+    @Scheduled(initialDelay = 1 * 1000, fixedDelay = 10 * 60 * 1000)
     public void finishPlan() {
         log.info("enter finishPlan [TASK]");
         List<MessagePlan> planList = messagePlanDao.findByStatusAndDisableIsFalse(MessagePlanStatus.EXECUTION_COMPLETED.getValue());
@@ -129,9 +129,6 @@ public class MessagePlanTask {
             return;
         }
         for (MessagePlan plan : planList) {
-            if (!messageRecordDao.existsByPlanIdAndStatus(plan.getId(), OutboxStatus.SENT.getValue())) {
-                continue;
-            }
             JobDetail fetchMsgJob = PlanTaskCommon.createFetchMsgJob(plan);
             if (!quartzTools.addJobIfGroupNone(fetchMsgJob)) {
                 continue;

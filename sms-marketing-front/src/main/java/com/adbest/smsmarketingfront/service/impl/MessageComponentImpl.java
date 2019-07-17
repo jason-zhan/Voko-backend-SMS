@@ -35,6 +35,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
@@ -526,6 +527,7 @@ public class MessageComponentImpl implements MessageComponent {
     
     @Transactional
     @Override
+    @Async
     public void validAndFinishPlan(MessagePlan plan) {
         log.info("enter validAndFinishPlan, plan={}", plan);
         if (messageRecordDao.existsByPlanIdAndStatus(plan.getId(), OutboxStatus.SENT.getValue())) {
@@ -666,8 +668,10 @@ public class MessageComponentImpl implements MessageComponent {
     private void planFinalSettlement(MessagePlan plan) {
         // 统计该任务信用消费
         BigDecimal totalAmount = creditBillDao.sumAmountByTypeAndReferId(CreditBillType.MESSAGE_PLAN.getValue(), plan.getId());
-        // 产生金融账单
-        financeBillComponent.saveFinanceBill(plan.getCustomerId(), totalAmount, bundle.getString("bill-final-settle-plan"));
+        if (totalAmount.compareTo(BigDecimal.ZERO) > 0) {
+            // 产生金融账单
+            financeBillComponent.saveFinanceBill(plan.getCustomerId(), totalAmount, bundle.getString("bill-final-settle-plan"));
+        }
         // 更新任务状态 - 已完成
         messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.FINISHED.getValue(), MessagePlanStatus.EXECUTION_COMPLETED.getValue());
     }
