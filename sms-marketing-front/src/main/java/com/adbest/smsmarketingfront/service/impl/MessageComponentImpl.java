@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.Contacts;
 import com.adbest.smsmarketingentity.ContactsSource;
+import com.adbest.smsmarketingentity.CreditBillType;
 import com.adbest.smsmarketingentity.Customer;
 import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.MessagePlan;
@@ -10,6 +11,7 @@ import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingentity.MessageReturnCode;
 import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.ContactsDao;
+import com.adbest.smsmarketingfront.dao.CreditBillDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
@@ -57,6 +59,8 @@ public class MessageComponentImpl implements MessageComponent {
     private ContactsDao contactsDao;
     @Autowired
     private CustomerMarketSettingDao customerMarketSettingDao;
+    @Autowired
+    private CreditBillDao creditBillDao;
     
     @Autowired
     private SmsBillComponent smsBillComponent;
@@ -473,22 +477,23 @@ public class MessageComponentImpl implements MessageComponent {
         Assert.hasText(remark, "remark is empty.");
         CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(message.getCustomerId());
         Assert.notNull(marketSetting, "customer's market-setting is null");
-        // TODO 修改支付逻辑： 纯套餐支付或纯信用支付
         if (marketSetting.getInvalidStatus() || (message.getSms() ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) <= 0) {
-            // 使用信用结算
+            // 跨套餐或套餐余量为0，使用信用结算
             BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
-            // 产生金融账单
             financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
         } else {
-        
-//            // 首先使用套餐余量结算
-//            int restAmount = message.getSegments() - settlePartWithMarketSetting(marketSetting, message.getSms(), message.getSegments());
-//            if (restAmount > 0) {
-//                // 套餐余量不足部分，使用信用结算
-//                BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), restAmount);
-//                // 产生金融账单
-//                financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
-//            }
+            // 未跨套餐且套餐余量大于0，首先尝试套餐余量支付
+            int packageResult = 0;
+            if (message.getSms()) {
+                packageResult = customerMarketSettingDao.updateSmsByCustomerId(message.getCustomerId(), message.getSegments());
+            } else {
+                packageResult = customerMarketSettingDao.updateMmsByCustomerId(message.getCustomerId(), message.getSegments());
+            }
+            // 若套餐余量支付失败，则信用支付
+            if (packageResult <= 0) {
+                BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
+                financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay, remark);
+            }
         }
         // 产生消息账单
         saveMsgBill(message.getCustomerId(), message.getSms(), -message.getSegments(), remark);
@@ -509,17 +514,16 @@ public class MessageComponentImpl implements MessageComponent {
             }
             if (message.getSms()) {
                 customerMarketSettingDao.updateSmsByCustomerId(message.getCustomerId(), message.getSegments());
-                smsBillComponent.saveSmsBill(message.getCustomerId(), remark, message.getSegments());
             } else {
                 customerMarketSettingDao.updateMmsByCustomerId(message.getCustomerId(), message.getSegments());
-                mmsBillComponent.saveMmsBill(message.getCustomerId(), remark, message.getSegments());
             }
         } else {
-            Assert.isTrue(message.getCost().compareTo(BigDecimal.ZERO)>0, "the cost of message must be greater than zero.");
+            Assert.isTrue(message.getCost().compareTo(BigDecimal.ZERO) > 0, "the cost of message must be greater than zero.");
             // 信用支付，更新用户信用额度并保存金融账单
             customerDao.updateCredit(message.getCustomerId(), message.getCost());
             financeBillComponent.saveFinanceBill(message.getCustomerId(), message.getCost(), remark);
         }
+        saveMsgBill(message.getCustomerId(), message.getSms(), message.getSegments(), remark);
         log.info("leave autoReplyReturn");
     }
     
@@ -533,11 +537,13 @@ public class MessageComponentImpl implements MessageComponent {
         // 统计发送失败的数量
         int failedMsg = messageRecordDao.sumMsgByPlanIdAndStatus(plan.getId(), OutboxStatus.FAILED.getValue());
         if (failedMsg == 0) {
-            // 所有消息发送成功，直接完成任务
-            messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.FINISHED.getValue(), MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+            // 无失败消息，直接完成任务
+            planFinalSettlement(plan);
             log.info("finish message plan: {}", plan.getId());
             return;
         }
+        // 发送失败数大于0，保存消息账单
+        saveMsgBill(plan.getCustomerId(), plan.getIsSms(), failedMsg, bundle.getString("bill-return-failed"));
         // 计算信用额度和套餐余量返还量
         BigDecimal creditChange = BigDecimal.ZERO;
         int msgChange = 0;
@@ -560,14 +566,12 @@ public class MessageComponentImpl implements MessageComponent {
         if (msgChange > 0) {
             if (plan.getIsSms()) {
                 customerMarketSettingDao.updateSmsByCustomerId(plan.getCustomerId(), msgChange);
-                smsBillComponent.saveSmsBill(plan.getCustomerId(), bundle.getString("bill-return-failed"), msgChange);
             } else {
                 customerMarketSettingDao.updateMmsByCustomerId(plan.getCustomerId(), msgChange);
-                mmsBillComponent.saveMmsBill(plan.getCustomerId(), bundle.getString("bill-return-failed"), msgChange);
             }
         }
-        // 完成任务
-        messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.FINISHED.getValue(), MessagePlanStatus.EXECUTION_COMPLETED.getValue());
+        // 总结算/完成任务
+        planFinalSettlement(plan);
         log.info("finish message plan: {}", plan.getId());
         log.info("leave validAndFinishPlan");
     }
@@ -655,6 +659,20 @@ public class MessageComponentImpl implements MessageComponent {
         BigDecimal nowCreditPay = BigDecimal.valueOf(restAmount).multiply(isSms ? smsUnitPrice : mmsUnitPrice);
         ServiceException.isTrue(creditTotal.compareTo(nowCreditPay) >= 0, bundle.getString("credit-not-enough"));
         return 2;
+    }
+    
+    /**
+     * 消息发送任务最终结算
+     *
+     * @param plan
+     */
+    private void planFinalSettlement(MessagePlan plan) {
+        // 统计该任务信用消费
+        BigDecimal totalAmount = creditBillDao.sumAmountByTypeAndReferId(CreditBillType.MESSAGE_PLAN.getValue(), plan.getId());
+        // 产生金融账单
+        financeBillComponent.saveFinanceBill(plan.getCustomerId(), totalAmount, bundle.getString("bill-final-settle-plan"));
+        // 更新任务状态 - 已完成
+        messagePlanDao.updateStatusById(plan.getId(), MessagePlanStatus.FINISHED.getValue(), MessagePlanStatus.EXECUTION_COMPLETED.getValue());
     }
     
 }

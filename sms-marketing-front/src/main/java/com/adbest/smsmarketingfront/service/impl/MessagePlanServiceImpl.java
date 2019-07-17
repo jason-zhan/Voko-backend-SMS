@@ -231,10 +231,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         if (!crossedPackages(found) && rebateMsg > 0) {
             if (found.getIsSms()) {
                 customerMarketSettingDao.updateSmsByCustomerId(cur.getId(), rebateMsg);
-                smsBillComponent.saveSmsBill(cur.getId(), bundle.getString("bill-cancel-plan"), rebateMsg);
             } else {
                 customerMarketSettingDao.updateMmsByCustomerId(cur.getId(), rebateMsg);
-                mmsBillComponent.saveMmsBill(cur.getId(), bundle.getString("bill-cancel-plan"), rebateMsg);
             }
         }
         // 无论是否套餐周期内，都须返还信用消费
@@ -242,6 +240,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
             creditBillComponent.savePlanConsume(cur.getId(), found.getId(), found.getCreditPayCost(), bundle.getString("bill-cancel-plan"));
             customerDao.updateCredit(cur.getId(), found.getCreditPayCost());
         }
+        saveMsgBill(cur.getId(), found.getIsSms(), found.getMsgTotal(), bundle.getString("bill-cancel-plan"));
         // 更新任务 - 变更为编辑中
         int cancelResult = messagePlanDao.cancelMessagePlan(found.getId(), MessagePlanStatus.EDITING.getValue(), MessagePlanStatus.SCHEDULING.getValue());
         ServiceException.isTrue(cancelResult > 0, bundle.getString("msg-plan-cancel-failed"));
