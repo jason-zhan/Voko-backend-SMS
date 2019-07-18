@@ -28,9 +28,21 @@ public class MarketSetting implements Serializable {
     /**
      * 天数
      */
+    @Column(nullable = false)
     private Integer daysNumber;
     /**
      * 价格
      */
+    @Column(nullable = false)
     private BigDecimal price;
+    /**
+     * 套餐外短信单价
+     */
+    @Column(nullable = false)
+    private BigDecimal smsPrice;
+    /**
+     * 套餐外彩信单价
+     */
+    @Column(nullable = false)
+    private BigDecimal mmsPrice;
 }

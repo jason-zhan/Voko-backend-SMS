@@ -8,6 +8,7 @@ import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -40,9 +41,14 @@ public class CustomerMarketSettingTask {
     @Autowired
     private ResourceBundle resourceBundle;
 
-//    @Scheduled(cron = "45 0/1 * * * ?")
+    @Autowired
+    private Environment environment;
+
+    @Scheduled(cron = "45 0/1 * * * ?")
     @Transactional
     public void checkCustomerMarketSetting(){
+        String taskSwitch = environment.getProperty("taskSwitch");
+        if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
         log.info(TimeTools.formatDateStr(System.currentTimeMillis(),"yyyy-MM-dd HH:mm:ss")+" CustomerMarketSettingTask");
         List<CustomerMarketSetting> list = customerMarketSettingService.findByInvalidStatusAndInvalidTimeBefore(false, TimeTools.now());
         if (list.size()<=0){return;}

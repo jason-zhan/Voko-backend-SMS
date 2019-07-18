@@ -53,6 +53,12 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     @Autowired
     private CustomerService customerService;
 
+    @Autowired
+    private SmsBillService smsBillService;
+
+    @Autowired
+    private MmsBillService mmsBillService;
+
     @Override
     @Transactional
     public CustomerMarketSetting save(CustomerMarketSetting customerMarketSetting) {
@@ -95,13 +101,24 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         BigDecimal price = null;
         Integer smsTotal = 0;
         Integer mmsTotal = 0;
-        if (ms!=null && diffDays>0){
+        if (ms!=null && diffDays>0 && marketSetting.getPrice().doubleValue()!=0){
             ServiceException.isTrue(ms.getSmsTotal()<marketSetting.getSmsTotal(), resourceBundle.getString("UNABLE_UPGRADE_MARKET_SETTING"));
             smsTotal = marketSetting.getSmsTotal()-ms.getSmsTotal();
             mmsTotal = marketSetting.getMmsTotal()-ms.getMmsTotal();
             price = marketSetting.getPrice().subtract(ms.getPrice());
             price = price.doubleValue()>=0?price:BigDecimal.valueOf(0);
         }else {
+            if (diffDays>0 && marketSetting.getPrice().doubleValue()==0){
+                String infoDescribe = resourceBundle.getString("FREE_PACKAGE_DEDUCTION");
+                if (customerMarketSetting.getSmsTotal()>0){
+                    SmsBill smsBill = new SmsBill(customerMarketSetting.getCustomerId(), infoDescribe, -customerMarketSetting.getSmsTotal());
+                    smsBillService.save(smsBill);
+                }
+                if (customerMarketSetting.getMmsTotal()>0){
+                    MmsBill mmsBill = new MmsBill(customerMarketSetting.getCustomerId(), infoDescribe, -customerMarketSetting.getMmsTotal());
+                    mmsBillService.save(mmsBill);
+                }
+            }
             smsTotal = marketSetting.getSmsTotal();
             mmsTotal = marketSetting.getMmsTotal();
             price = marketSetting.getPrice();
@@ -115,6 +132,8 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         customerMarketSetting.setTitle(marketSetting.getTitle());
         customerMarketSetting.setAutomaticRenewal(automaticRenewal==null?false:true);
         customerMarketSetting.setInvalidStatus(false);
+        customerMarketSetting.setSmsTotal(marketSetting.getSmsTotal());
+        customerMarketSetting.setMmsTotal(marketSetting.getMmsTotal());
         customerMarketSettingDao.save(customerMarketSetting);
         String infoDescribe = resourceBundle.getString("PACKAGE_PRESENTATION");
         if (smsTotal>0){

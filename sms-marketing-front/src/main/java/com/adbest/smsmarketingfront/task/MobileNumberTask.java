@@ -9,6 +9,7 @@ import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
@@ -41,8 +42,13 @@ public class MobileNumberTask {
     @Autowired
     private ResourceBundle resourceBundle;
 
-//    @Scheduled(cron = "20 1 1 * * ?")
+    @Autowired
+    private Environment environment;
+
+    @Scheduled(cron = "20 1 1 * * ?")
     public void deleteMobileNumber(){
+        String taskSwitch = environment.getProperty("taskSwitch");
+        if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
         Timestamp time = TimeTools.addDay(TimeTools.now(), - mobileNumberRecyclingDays);
         List<MobileNumber> mobiles = mobileNumberService.findInvalidMobile(time);
         List<MobileNumber> chargeMobiles = mobileNumberService.findByGiftNumberAndDisableAndInvalidTimebefore(false, false, time);
@@ -50,9 +56,11 @@ public class MobileNumberTask {
         mobiles.forEach(mobileNumber -> {mobileNumberService.delete(mobileNumber);});
     }
 
-//    @Scheduled(cron = "20 31 0 * * ?")
+    @Scheduled(cron = "20 31 0 * * ?")
     @Transactional
     public void renewMobileNumber(){
+        String taskSwitch = environment.getProperty("taskSwitch");
+        if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
         Timestamp time = TimeTools.now();
         List<MobileNumber> chargeMobiles = mobileNumberService.findByGiftNumberAndDisableAndInvalidTimebeforeAndAutomaticRenewal(false, false, time, true);
         BigDecimal price = null;

@@ -21,4 +21,6 @@ public interface SmsBillService {
     Long sumByCustomerId(Long customerId);
 
     void saveAll(List<SmsBill> smsBills);
+
+    SmsBill save(SmsBill smsBill);
 }

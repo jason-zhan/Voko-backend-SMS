@@ -6,6 +6,7 @@ import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.EncryptTools;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.env.Environment;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.EnableAsync;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -32,8 +33,14 @@ public class DbImportCustomerTask {
 
     @Autowired
     private VkCDRAccountsService vkCDRAccountsService;
-//    @Scheduled(cron = "15 0/10 * * * ?")
+
+    @Autowired
+    private Environment environment;
+    @Scheduled(cron = "15 0/10 * * * ?")
     public void importCustomerTask(){
+        String taskSwitch = environment.getProperty("taskSwitch");
+        if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
+
         int size = 1000;
         int page = 0;
         do {
@@ -78,8 +85,10 @@ public class DbImportCustomerTask {
         customerService.saveImportCustomer(customerList);
     }
 
-//    @Scheduled(cron = "0/30 * * * * ?")
+    @Scheduled(cron = "0/30 * * * * ?")
     public void importContactsTask(){
+        String taskSwitch = environment.getProperty("taskSwitch");
+        if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
         int size = 500;
         int page = 0;
         boolean is = true;

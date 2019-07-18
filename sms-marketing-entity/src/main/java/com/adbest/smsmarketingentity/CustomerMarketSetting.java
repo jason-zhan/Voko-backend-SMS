@@ -4,6 +4,7 @@ import lombok.Data;
 
 import javax.persistence.*;
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 /**
@@ -53,12 +54,23 @@ public class CustomerMarketSetting implements Serializable {
      */
     private Boolean invalidStatus;
 
+    /**
+     * 套餐外短信单价
+     */
+    private BigDecimal smsPrice;
+    /**
+     * 套餐外彩信单价
+     */
+    private BigDecimal mmsPrice;
+
     public CustomerMarketSetting(MarketSetting marketSetting) {
         this.title = marketSetting.getTitle();
         this.smsTotal = marketSetting.getSmsTotal();
         this.mmsTotal = marketSetting.getMmsTotal();
         this.keywordTotal = marketSetting.getKeywordTotal();
         this.marketSettingId = marketSetting.getId();
+        this.smsPrice = marketSetting.getSmsPrice();
+        this.mmsPrice = marketSetting.getMmsPrice();
     }
 
     public CustomerMarketSetting() {
