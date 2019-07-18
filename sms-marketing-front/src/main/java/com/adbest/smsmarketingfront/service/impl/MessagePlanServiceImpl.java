@@ -88,10 +88,6 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;
-    @Value("${marketing.smsUnitPrice}")
-    private BigDecimal smsUnitPrice;
-    @Value("${marketing.mmsUnitPrice}")
-    private BigDecimal mmsUnitPrice;
     
     @Autowired
     private Map<Integer, String> messagePlanStatusMap;
@@ -263,6 +259,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         );
         ServiceException.isTrue(found.getExecTime().after(curTime()),
                 bundle.getString("msg-plan-execute-time-later"));
+        // 验证用户消息余量
+        validCustomerBalance(cur.getId(), found.getIsSms(), StrSegTools.getStrList(found.getToNumList()), StrSegTools.getLongList(found.getToGroupList()));
         // 初始化中间参数实例
         boolean closeToExecTime = closeToExecTime(found.getExecTime());
         MsgPlanState planState = MsgPlanState.init(found, cur, closeToExecTime);
@@ -396,7 +394,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     private void validCustomerBalance(Long curId, boolean isSms, List<String> toNumList, List<Long> toGroupList) {
         // 预计接收消息号码数
         int expectMsg = 0;
-        if (toGroupList.size() > 0) {
+        if (toGroupList != null && toGroupList.size() > 0) {
             expectMsg = contactsDao.countDistinctByCustomerIdAndGroupId(curId, toGroupList);
         } else {
             expectMsg = toNumList.size();
@@ -407,8 +405,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(marketSetting, "The market-setting of this customer does not exists");
         Customer customer = optional.get();
         // 计算用户可支付数
-        int availablePay = isSms ? (marketSetting.getSmsTotal() + customer.getAvailableCredit().divide(smsUnitPrice).intValue())
-                : (marketSetting.getMmsTotal() + customer.getAvailableCredit().divide(mmsUnitPrice).intValue());
+        int availablePay = isSms ? (marketSetting.getSmsTotal() + customer.getAvailableCredit().divide(marketSetting.getSmsPrice()).intValue())
+                : (marketSetting.getMmsTotal() + customer.getAvailableCredit().divide(marketSetting.getMmsPrice()).intValue());
         // 判定
         ServiceException.isTrue(availablePay >= expectMsg, bundle.getString("credit-not-enough"));
     }

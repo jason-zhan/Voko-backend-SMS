@@ -72,10 +72,6 @@ public class MessageComponentImpl implements MessageComponent {
     @Autowired
     private CreditBillComponent creditBillComponent;
     
-    @Value("${marketing.smsUnitPrice}")
-    private BigDecimal smsUnitPrice;
-    @Value("${marketing.mmsUnitPrice}")
-    private BigDecimal mmsUnitPrice;
     @Value("${message.contacts.defaultFirstName}")
     private String contactsFirstName;
     @Value("${message.contacts.defaultLastName}")
@@ -122,7 +118,7 @@ public class MessageComponentImpl implements MessageComponent {
         Assert.isTrue(planState.msgTotal > 0, "The total number of messages is incorrectly calculated");
         if (marketSetting.getInvalidStatus() || (planState.isSms ? marketSetting.getSmsTotal() : marketSetting.getMmsTotal()) == 0) {
             // 使用信用支付
-            BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, planState.msgTotal);
+            BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, planState.msgTotal, marketSetting);
             planState.setSettledTotal(planState.msgTotal);
             planState.setCreditPayNum(planState.msgTotal);
             planState.setCreditPayCost(creditPay.abs());
@@ -131,40 +127,13 @@ public class MessageComponentImpl implements MessageComponent {
             int restAmount = planState.msgTotal - settlePartWithMarketSetting(marketSetting, planState.isSms, planState.msgTotal);
             if (restAmount > 0) {
                 // 套餐不足部分，使用信用支付
-                BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, restAmount);
+                BigDecimal creditPay = purchaseWithCredit(planState.cur.getId(), planState.isSms, restAmount, marketSetting);
                 planState.setCreditPayNum(restAmount);
                 planState.setCreditPayCost(creditPay.abs());
             }
             planState.setSettledTotal(planState.msgTotal);
         }
         log.info("leave msgPlanSettlement");
-    }
-    
-    @Transactional
-    @Override
-    public void updateMsgPlanSettlement(Long planId, int amount, boolean isSms) {
-        log.info("enter updateMsgPlanSettlement, planId={}, amount={}, isSms={}", planId, amount, isSms);
-        // 参数检查
-        Assert.notNull(planId, "planId is null");
-        Assert.isTrue(amount > 0, "amount must be greater than zero");
-        Optional<MessagePlan> planOptional = messagePlanDao.findById(planId);
-        Assert.isTrue(planOptional.isPresent(), "message plan does not exists");
-        MessagePlan plan = planOptional.get();
-        Optional<Customer> customerOptional = customerDao.findById(plan.getCustomerId());
-        Assert.isTrue(customerOptional.isPresent(), "customer does not exists");
-        CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(plan.getCustomerId());
-        Assert.notNull(marketSetting, "customer's market-setting is null");
-        // 套餐校验
-        ServiceException.isTrue(!marketSetting.getInvalidStatus() &&
-                        plan.getUpdateTime().after(marketSetting.getOrderTime()) &&
-                        plan.getUpdateTime().before(marketSetting.getInvalidTime()),
-                bundle.getString("msg-plan-update-past-package")
-        );
-        // 余量校验
-        int method = simulatedPayment(marketSetting, plan, customerOptional.get().getAvailableCredit(), amount, isSms);
-        /*** 支付 & 结算 ***/
-        calcChangeAndPay(method, plan, marketSetting, amount, isSms);
-        log.info("leave updateMsgPlanSettlement");
     }
     
     @Transactional
@@ -208,7 +177,7 @@ public class MessageComponentImpl implements MessageComponent {
         // 判断当前是否跨套餐
         boolean outerPackage = marketSetting.getInvalidStatus() || plan.getUpdateTime().before(marketSetting.getOrderTime());
         if (msgDiff < 0) {
-            BigDecimal creditPay = BigDecimal.valueOf(-msgDiff).multiply(planState.isSms ? smsUnitPrice : mmsUnitPrice);
+            BigDecimal creditPay = BigDecimal.valueOf(-msgDiff).multiply(planState.isSms ? marketSetting.getSmsPrice() : marketSetting.getMmsPrice());
             creditChange = plan.getCreditPayCost().subtract(creditPay);
             plan.setCreditPayNum(-msgDiff);
             plan.setCreditPayCost(creditPay);
@@ -409,65 +378,6 @@ public class MessageComponentImpl implements MessageComponent {
                 bundle.getString("msg-content-over-length-gsm7") : bundle.getString("msg-content-over-length-ucs2"));
     }
     
-    /**
-     * 计算各项变化并结算
-     *
-     * @param method
-     * @param plan
-     * @param marketSetting
-     * @param amount
-     * @param isSms
-     */
-    private void calcChangeAndPay(int method, MessagePlan plan, CustomerMarketSetting marketSetting, int amount, boolean isSms) {
-        int smsChange = 0;  // 套餐短信量变化
-        int mmsChange = 0;  // 套餐彩信量变化
-        BigDecimal creditChange = null;  // 用户信用额度变化
-        if (method == 1) {  // 纯套餐支付
-            if (isSms && plan.getIsSms()) {  // 本次短信 上次短信
-                smsChange = plan.getMsgTotal() - amount;
-            }
-            if (isSms && !plan.getIsSms()) {   // 本次短信 上次彩信
-                smsChange = -amount;
-                mmsChange = plan.getMsgTotal();
-            }
-            if (!isSms && plan.getIsSms()) {   // 本次彩信 上次短信
-                smsChange = plan.getMsgTotal();
-                mmsChange = -amount;
-            }
-            if (!isSms && !plan.getIsSms()) {  // 本次彩信 上次彩信
-                mmsChange = plan.getMsgTotal() - amount;
-            }
-        } else if (method == 2) {  // 套餐量不足，信用额度补刀
-            if (isSms && plan.getIsSms()) {
-                smsChange = -marketSetting.getSmsTotal();
-            }
-            if (isSms && !plan.getIsSms()) {
-                smsChange = -marketSetting.getSmsTotal();
-                mmsChange = plan.getMsgTotal();
-            }
-            if (!isSms && plan.getIsSms()) {
-                smsChange = plan.getMsgTotal();
-                mmsChange = -marketSetting.getMmsTotal();
-            }
-            if (!isSms && !plan.getIsSms()) {
-                mmsChange = -marketSetting.getMmsTotal();
-            }
-            if (isSms) {
-                creditChange = plan.getCreditPayCost().subtract(BigDecimal.valueOf(amount + smsChange).multiply(smsUnitPrice));
-            } else {
-                creditChange = plan.getCreditPayCost().subtract(BigDecimal.valueOf(amount + mmsChange).multiply(mmsUnitPrice));
-            }
-        }
-        if (smsChange != 0) {
-            smsBillComponent.saveSmsBill(plan.getCustomerId(), bundle.getString("bill-update-plan"), smsChange);
-        }
-        if (mmsChange != 0) {
-            mmsBillComponent.saveMmsBill(plan.getCustomerId(), bundle.getString("bill-update-plan"), mmsChange);
-        }
-        if (creditChange != null && creditChange.compareTo(BigDecimal.ZERO) != 0) {
-            creditBillComponent.savePlanConsume(plan.getCustomerId(), plan.getId(), creditChange, bundle.getString("bill-update-plan"));
-        }
-    }
     
     @Transactional
     @Override
@@ -487,7 +397,9 @@ public class MessageComponentImpl implements MessageComponent {
         if (packageResult > 0) {
             message.setCost(BigDecimal.ZERO);
         } else {
-            BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments());
+            CustomerMarketSetting marketSetting = customerMarketSettingDao.findFirstByCustomerId(message.getCustomerId());
+            Assert.notNull(marketSetting, "customer's market-setting is null");
+            BigDecimal creditPay = purchaseWithCredit(message.getCustomerId(), message.getSms(), message.getSegments(), marketSetting);
             financeBillComponent.saveFinanceBill(message.getCustomerId(), creditPay.negate(), remark);
             message.setCost(creditPay);
         }
@@ -609,8 +521,8 @@ public class MessageComponentImpl implements MessageComponent {
      * @param amount
      * @return 支付金额
      */
-    private BigDecimal purchaseWithCredit(Long customerId, boolean isSms, int amount) {
-        BigDecimal payCredit = BigDecimal.valueOf(amount).multiply(isSms ? smsUnitPrice : mmsUnitPrice);
+    private BigDecimal purchaseWithCredit(Long customerId, boolean isSms, int amount, CustomerMarketSetting marketSetting) {
+        BigDecimal payCredit = BigDecimal.valueOf(amount).multiply(isSms ? marketSetting.getSmsPrice() : marketSetting.getMmsPrice());
         int result = customerDao.updateCredit(customerId, payCredit.negate());
         ServiceException.isTrue(result > 0, bundle.getString("credit-not-enough"));
         return payCredit;
@@ -631,33 +543,6 @@ public class MessageComponentImpl implements MessageComponent {
         } else {
             mmsBillComponent.saveMmsBill(customerId, description, amount);
         }
-    }
-    
-    /**
-     * 模拟支付 以预知支付结果
-     *
-     * @param marketSetting
-     * @param plan
-     * @param realCredit    用户当前信用额度
-     * @param msgAmount
-     * @param isSms
-     */
-    private int simulatedPayment(CustomerMarketSetting marketSetting, MessagePlan plan, BigDecimal realCredit, int msgAmount, boolean isSms) {
-        // 套餐余量
-        int packageTotal = isSms ?
-                (plan.getIsSms() ? marketSetting.getSmsTotal() + plan.getMsgTotal() : marketSetting.getSmsTotal())
-                :
-                (plan.getIsSms() ? marketSetting.getMmsTotal() : marketSetting.getMmsTotal() + plan.getMsgTotal());
-        BigDecimal creditTotal = realCredit.add(plan.getCreditPayCost());
-        // 首先使用套餐支付
-        int restAmount = msgAmount - packageTotal;
-        if (restAmount <= 0) {  // 套餐余量足以支付
-            return 1;
-        }
-        // 不足部分使用信用额度支付
-        BigDecimal nowCreditPay = BigDecimal.valueOf(restAmount).multiply(isSms ? smsUnitPrice : mmsUnitPrice);
-        ServiceException.isTrue(creditTotal.compareTo(nowCreditPay) >= 0, bundle.getString("credit-not-enough"));
-        return 2;
     }
     
     /**

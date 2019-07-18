@@ -77,8 +77,8 @@ public class MessageTools {
     public static String replaceCustomerVariables(String text, String customerFirstName, String customerLastName) {
         if (StringUtils.hasText(text)) {
             return text
-                    .replaceAll(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), customerFirstName == null ? "" : customerFirstName)
-                    .replaceAll(MsgTemplateVariable.CUS_LASTNAME.getTitle(), customerLastName == null ? "" : customerLastName);
+                    .replaceAll(MsgTemplateVariable.CUS_FIRSTNAME.getTitle(), customerFirstName == null ? "(nameless)" : customerFirstName)
+                    .replaceAll(MsgTemplateVariable.CUS_LASTNAME.getTitle(), customerLastName == null ? "(nameless)" : customerLastName);
         }
         return "";
     }
