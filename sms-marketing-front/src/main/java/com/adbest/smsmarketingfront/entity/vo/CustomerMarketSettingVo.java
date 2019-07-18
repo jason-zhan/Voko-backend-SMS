@@ -5,6 +5,7 @@ import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.Data;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Data
@@ -33,6 +34,15 @@ public class CustomerMarketSettingVo implements Serializable {
      */
     private Integer daysRemaining;
 
+    /**
+     * 套餐外短信单价
+     */
+    private BigDecimal smsPrice;
+    /**
+     * 套餐外彩信单价
+     */
+    private BigDecimal mmsPrice;
+
     public CustomerMarketSettingVo(CustomerMarketSetting customerMarketSetting) {
         this.title = customerMarketSetting.getTitle();
         this.smsTotal = customerMarketSetting.getSmsTotal();
@@ -42,6 +52,8 @@ public class CustomerMarketSettingVo implements Serializable {
         this.orderTime = customerMarketSetting.getOrderTime();
         this.invalidTime = customerMarketSetting.getInvalidTime();
         this.daysRemaining = TimeTools.getDiffDays(TimeTools.now(), customerMarketSetting.getInvalidTime());
+        this.smsPrice = customerMarketSetting.getSmsPrice();
+        this.mmsPrice = customerMarketSetting.getMmsPrice();
     }
 
     public CustomerMarketSettingVo() {

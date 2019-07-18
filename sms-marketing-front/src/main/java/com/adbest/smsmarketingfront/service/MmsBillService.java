@@ -22,4 +22,6 @@ public interface MmsBillService {
     Long sumByCustomerId(Long customerId);
 
     void saveAll(List<MmsBill> mmsBills);
+
+    MmsBill save(MmsBill mmsBill);
 }

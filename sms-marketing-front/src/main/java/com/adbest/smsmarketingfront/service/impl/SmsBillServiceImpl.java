@@ -66,4 +66,10 @@ public class SmsBillServiceImpl implements SmsBillService {
     public void saveAll(List<SmsBill> smsBills) {
         smsBillDao.saveAll(smsBills);
     }
+
+    @Override
+    @Transactional
+    public SmsBill save(SmsBill smsBill) {
+        return smsBillDao.save(smsBill);
+    }
 }

@@ -67,4 +67,10 @@ public class MmsBillServiceImpl implements MmsBillService {
     public void saveAll(List<MmsBill> mmsBills) {
         mmsBillDao.saveAll(mmsBills);
     }
+
+    @Override
+    @Transactional
+    public MmsBill save(MmsBill mmsBill) {
+        return mmsBillDao.save(mmsBill);
+    }
 }
