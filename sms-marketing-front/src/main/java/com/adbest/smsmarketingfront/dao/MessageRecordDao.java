@@ -15,18 +15,18 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set returnCode = ?2, status = ?3 where sid = ?1 and planId is null")
+    @Query("update MessageRecord set returnCode = ?2, status = ?3 where sid = ?1 and planId is not null")
     int updateReturnCodeAndStatusBySid(String sid, int returnCode, int status);
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set returnCode = ?2 where sid = ?1 and planId is null")
+    @Query("update MessageRecord set returnCode = ?2 where sid = ?1 and planId is not null")
     int updateReturnCodeBySid(String sid, int returnCode);
     
     @Transactional
     @Modifying
-    @Query("update MessageRecord set disable = ?2 where id = ?1")
-    int disableById(Long id, boolean disable);
+    @Query("update MessageRecord set disable = ?3 where id = ?1 and customerId = ?2")
+    int disableByIdAndCustomerId(Long id, Long customerId, boolean disable);
     
     @Transactional
     @Modifying(flushAutomatically = true, clearAutomatically = true)

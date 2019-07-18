@@ -82,7 +82,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     
     @Value("${twilio.viewFileUrl}")
     private String viewFileUrl;
-
+    
     @Autowired
     private MessageComponent messageComponent;
     
@@ -97,15 +97,16 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         String errMsg = "";
         for (Long id : idList) {
             Optional<MessageRecord> optional = messageRecordDao.findById(id);
-            if (optional.isPresent()) {
-                MessageRecord message = optional.get();
-                Assert.isTrue(cur.getId().equals(message.getCustomerId()), "can't delete other customer's message.");
-                if (!message.getInbox() && OutboxStatus.QUEUE.getValue() == message.getStatus()) {
-                    errMsg = bundle.getString("msg-record-delete-status")
-                            .replace("$status$", outboxStatusMap.get(OutboxStatus.QUEUE.getValue()));
-                    continue;
-                }
-                result += messageRecordDao.disableById(id, true);
+            if (!optional.isPresent()) {
+                continue;
+            }
+            MessageRecord message = optional.get();
+            if (message.getInbox() || message.getStatus() == OutboxStatus.DELIVERED.getValue() ||
+                    message.getStatus() == OutboxStatus.UNDELIVERED.getValue() || message.getStatus() == OutboxStatus.FAILED.getValue()) {
+                // 符合状态，禁用
+                result += messageRecordDao.disableByIdAndCustomerId(id, cur.getId(), true);
+            } else {
+                errMsg = bundle.getString("msg-record-delete-status");
             }
         }
         ServiceException.isTrue(StringUtils.isEmpty(errMsg), errMsg);
@@ -294,7 +295,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     @Transactional
     public void sendSms(MessageRecord messageRecord, String msg) {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
-        messageComponent.autoReplySettlement( messageRecord, msg);
+        messageComponent.autoReplySettlement(messageRecord, msg);
         messageRecordDao.save(messageRecord);
         SmsBill smsBill = new SmsBill();
         smsBill.setAmount(-messageRecord.getSegments());
@@ -306,18 +307,18 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         messageRecord.setSid(message.getSid());
         messageRecordDao.save(messageRecord);
     }
-
+    
     @Override
     public List<MessageRecord> findByReturnCodeAndDisableAndPlanIdIsNull(Integer returnCode, Boolean disable, Pageable pageable) {
         return messageRecordDao.findByReturnCodeAndDisableAndPlanIdIsNull(returnCode, disable, pageable);
     }
-
+    
     @Override
     @Transactional
     public void saveAll(List<MessageRecord> successMsg) {
         messageRecordDao.saveAll(successMsg);
     }
-
+    
     @Override
     @Transactional
     public void autoReplyReturn(MessageRecord messageRecord) {
