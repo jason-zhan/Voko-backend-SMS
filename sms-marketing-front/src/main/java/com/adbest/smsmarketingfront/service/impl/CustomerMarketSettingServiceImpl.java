@@ -132,8 +132,8 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         customerMarketSetting.setTitle(marketSetting.getTitle());
         customerMarketSetting.setAutomaticRenewal(automaticRenewal==null?false:true);
         customerMarketSetting.setInvalidStatus(false);
-        customerMarketSetting.setSmsTotal(marketSetting.getSmsTotal());
-        customerMarketSetting.setMmsTotal(marketSetting.getMmsTotal());
+        customerMarketSetting.setSmsPrice(marketSetting.getSmsPrice());
+        customerMarketSetting.setMmsPrice(marketSetting.getMmsPrice());
         customerMarketSettingDao.save(customerMarketSetting);
         String infoDescribe = resourceBundle.getString("PACKAGE_PRESENTATION");
         if (smsTotal>0){
