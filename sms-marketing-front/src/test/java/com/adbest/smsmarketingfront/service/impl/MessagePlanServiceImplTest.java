@@ -175,9 +175,9 @@ public class MessagePlanServiceImplTest {
     public void createInstant() {
         CreateMessagePlan create = new CreateMessagePlan();
         create.setTitle("测试立即发送");
-        create.setText("2019-5-31 15:51:36");
+        create.setText("test content is empty...");
         create.setRemark("测试");
-//        create.setFromList(Arrays.asList(1L, 2L, 3L));
+        create.setFromNumList(Arrays.asList("1001111", "2002222"));
         create.setToNumberList(Arrays.asList("0000000", "0000001", "0000002", "0000003", "0000004"));
         messagePlanService.createInstant(create);
         try {

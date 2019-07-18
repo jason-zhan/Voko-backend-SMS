@@ -98,9 +98,9 @@ public class JavaTest {
     
     @Test
     public void testFloatDouble(){
-        // float double
-        float f = 33554439f;
-        System.out.println(f);
+        String a = "abc";
+        String b = "abcd";
+        System.out.println(a==b);
     }
     
     @Test

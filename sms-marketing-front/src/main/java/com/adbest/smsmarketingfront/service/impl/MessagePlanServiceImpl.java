@@ -263,6 +263,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         );
         ServiceException.isTrue(found.getExecTime().after(curTime()),
                 bundle.getString("msg-plan-execute-time-later"));
+        // 验证用户消息余量
+        validCustomerBalance(cur.getId(), found.getIsSms(), StrSegTools.getStrList(found.getToNumList()), StrSegTools.getLongList(found.getToGroupList()));
         // 初始化中间参数实例
         boolean closeToExecTime = closeToExecTime(found.getExecTime());
         MsgPlanState planState = MsgPlanState.init(found, cur, closeToExecTime);
@@ -396,7 +398,7 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     private void validCustomerBalance(Long curId, boolean isSms, List<String> toNumList, List<Long> toGroupList) {
         // 预计接收消息号码数
         int expectMsg = 0;
-        if (toGroupList.size() > 0) {
+        if (toGroupList != null && toGroupList.size() > 0) {
             expectMsg = contactsDao.countDistinctByCustomerIdAndGroupId(curId, toGroupList);
         } else {
             expectMsg = toNumList.size();
