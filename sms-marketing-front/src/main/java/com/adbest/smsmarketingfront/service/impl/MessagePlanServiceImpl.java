@@ -88,10 +88,6 @@ public class MessagePlanServiceImpl implements MessagePlanService {
     
     @Value("${twilio.planExecTimeDelay}")
     private int planExecTimeDelay;
-    @Value("${marketing.smsUnitPrice}")
-    private BigDecimal smsUnitPrice;
-    @Value("${marketing.mmsUnitPrice}")
-    private BigDecimal mmsUnitPrice;
     
     @Autowired
     private Map<Integer, String> messagePlanStatusMap;
@@ -409,8 +405,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         Assert.notNull(marketSetting, "The market-setting of this customer does not exists");
         Customer customer = optional.get();
         // 计算用户可支付数
-        int availablePay = isSms ? (marketSetting.getSmsTotal() + customer.getAvailableCredit().divide(smsUnitPrice).intValue())
-                : (marketSetting.getMmsTotal() + customer.getAvailableCredit().divide(mmsUnitPrice).intValue());
+        int availablePay = isSms ? (marketSetting.getSmsTotal() + customer.getAvailableCredit().divide(marketSetting.getSmsPrice()).intValue())
+                : (marketSetting.getMmsTotal() + customer.getAvailableCredit().divide(marketSetting.getMmsPrice()).intValue());
         // 判定
         ServiceException.isTrue(availablePay >= expectMsg, bundle.getString("credit-not-enough"));
     }

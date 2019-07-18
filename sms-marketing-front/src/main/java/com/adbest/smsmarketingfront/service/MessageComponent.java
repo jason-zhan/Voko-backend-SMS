@@ -35,16 +35,6 @@ public interface MessageComponent {
     void msgPlanSettlement(MsgPlanState planState);
     
     /**
-     * 更新任务结算
-     *
-     * @param planId
-     * @param amount
-     * @param isSms
-     * @deprecated
-     */
-    void updateMsgPlanSettlement(Long planId, int amount, boolean isSms);
-    
-    /**
      * plan执行前的最终校验
      *
      * @param planId
