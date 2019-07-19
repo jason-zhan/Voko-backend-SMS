@@ -28,4 +28,7 @@ public interface MobileNumberDao extends JpaRepository<MobileNumber,Long> {
 
     List<MobileNumber> findByGiftNumberAndDisableAndInvalidTimeBeforeAndAutomaticRenewal(Boolean giftNumber, Boolean disable, Timestamp time, Boolean automaticRenewal);
 
+    List<MobileNumber> findByDisableAndInvalidTimeBefore(Boolean disable, Timestamp time);
+
+    List<MobileNumber> findByGiftNumberAndDisableAndCustomerId(Boolean giftNumber, Boolean disable, Long customerId);
 }

@@ -40,4 +40,8 @@ public interface MobileNumberService {
     boolean delete(Long id);
 
     boolean automaticRenewal(Long id, Boolean automaticRenewal);
+
+    List<MobileNumber> findByDisableAndInvalidTimeBefore(Boolean disable, Timestamp time);
+
+    void updateGiftMobileNumberInvalidTime(Long customerId);
 }

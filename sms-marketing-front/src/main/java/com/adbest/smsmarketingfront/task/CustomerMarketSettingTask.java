@@ -1,9 +1,6 @@
 package com.adbest.smsmarketingfront.task;
 
-import com.adbest.smsmarketingentity.CustomerMarketSetting;
-import com.adbest.smsmarketingentity.MarketSetting;
-import com.adbest.smsmarketingentity.MmsBill;
-import com.adbest.smsmarketingentity.SmsBill;
+import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.TimeTools;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +10,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import javax.transaction.Transactional;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +42,9 @@ public class CustomerMarketSettingTask {
     @Autowired
     private Environment environment;
 
+    @Autowired
+    private MobileNumberService mobileNumberService;
+
     @Scheduled(cron = "45 0/1 * * * ?")
     @Transactional
     public void checkCustomerMarketSetting(){
@@ -60,6 +61,7 @@ public class CustomerMarketSettingTask {
         List<MarketSetting> settings = marketSettingService.findAll();
         Map<Long, MarketSetting> settingMap = settings.stream().collect(Collectors.toMap(MarketSetting::getId, s -> s));
         MarketSetting marketSetting = null;
+        Timestamp invalidTime = TimeTools.addDay(TimeTools.now(), marketSetting.getDaysNumber());
         for (CustomerMarketSetting cms : list) {
             if (cms.getSmsTotal()>0){smsBills.add(new SmsBill(cms.getCustomerId(), infoDescribe,-cms.getSmsTotal()));}
             if (cms.getMmsTotal()>0){mmsBills.add(new MmsBill(cms.getCustomerId(), infoDescribe,-cms.getMmsTotal()));}
@@ -73,10 +75,10 @@ public class CustomerMarketSettingTask {
                     paymentComponent.realTimePayment(cms.getCustomerId(), marketSetting.getPrice(),resourceBundle.getString("PACKAGE_RENEWAL"));
                     cms.setSmsTotal(marketSetting.getSmsTotal());
                     cms.setMmsTotal(marketSetting.getMmsTotal());
-                    cms.setInvalidTime(TimeTools.addDay(TimeTools.now(),marketSetting.getDaysNumber()));
+                    cms.setInvalidTime(invalidTime);
                     if (marketSetting.getSmsTotal()>0){smsBills.add(new SmsBill(cms.getCustomerId(), infoDescribeGift,marketSetting.getSmsTotal()));}
                     if (marketSetting.getMmsTotal()>0){mmsBills.add(new MmsBill(cms.getCustomerId(), infoDescribeGift,marketSetting.getMmsTotal()));}
-
+                    mobileNumberService.updateGiftMobileNumberInvalidTime(cms.getCustomerId());
                 }catch (Exception e){
                     cms.setInvalidStatus(true);
                     cms.setSmsTotal(0);

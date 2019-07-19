@@ -26,6 +26,7 @@ import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFreeRea
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -65,6 +66,9 @@ public class MobileNumberServiceImpl implements MobileNumberService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private Environment environment;
 
     @Override
     @Transactional
@@ -111,6 +115,8 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
         mobileNumber.setGiftNumber(true);
         mobileNumber.setSid(incomingPhoneNumber.getSid());
+        String mobileNumberRecyclingDays = environment.getProperty("MobileNumberRecyclingDays");
+        mobileNumber.setInvalidTime(TimeTools.addDay(TimeTools.now(),mobileNumberRecyclingDays==null?30:Integer.valueOf(mobileNumberRecyclingDays)));
         mobileNumberDao.save(mobileNumber);
         customerSettings.setNumberReceivingStatus(true);
         customerSettingsService.save(customerSettings);
@@ -181,6 +187,24 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumber.setAutomaticRenewal(automaticRenewal);
         mobileNumberDao.save(mobileNumber);
         return false;
+    }
+
+    @Override
+    public List<MobileNumber> findByDisableAndInvalidTimeBefore(Boolean disable, Timestamp time) {
+        return mobileNumberDao.findByDisableAndInvalidTimeBefore(disable, time);
+    }
+
+    @Override
+    @Transactional
+    public void updateGiftMobileNumberInvalidTime(Long customerId) {
+        List<MobileNumber> giftMobileNumbers = mobileNumberDao.findByGiftNumberAndDisableAndCustomerId(true, false, customerId);
+        if (giftMobileNumbers.size()>0){
+            String mobileNumberRecyclingDays = environment.getProperty("MobileNumberRecyclingDays");
+            Timestamp invalidTime = TimeTools.addDay(TimeTools.now(), mobileNumberRecyclingDays==null?30:Integer.valueOf(mobileNumberRecyclingDays));
+            MobileNumber mobileNumber = giftMobileNumbers.get(0);
+            mobileNumber.setInvalidTime(invalidTime);
+            mobileNumberDao.save(mobileNumber);
+        }
     }
 
     @Override
@@ -262,8 +286,8 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
         mobileNumber.setMms(incomingPhoneNumber.getCapabilities().getMms());
         mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
-        mobileNumber.setGiftNumber(false);
-        mobileNumber.setInvalidTime(TimeTools.addDay(TimeTools.now(),30));
+        mobileNumber.setGiftNumber(false);String mobileNumberRecyclingDays = environment.getProperty("MobileNumberRecyclingDays");
+        mobileNumber.setInvalidTime(TimeTools.addDay(TimeTools.now(),mobileNumberRecyclingDays==null?30:Integer.valueOf(mobileNumberRecyclingDays)));
         mobileNumber.setAutomaticRenewal(automaticRenewal==null?false:automaticRenewal);
         mobileNumber.setSid(incomingPhoneNumber.getSid());
         mobileNumberDao.save(mobileNumber);

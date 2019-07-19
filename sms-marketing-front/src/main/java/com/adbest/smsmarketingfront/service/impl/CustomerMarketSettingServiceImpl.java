@@ -118,12 +118,15 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
                     MmsBill mmsBill = new MmsBill(customerMarketSetting.getCustomerId(), infoDescribe, -customerMarketSetting.getMmsTotal());
                     mmsBillService.save(mmsBill);
                 }
+                customerMarketSetting.setSmsTotal(0);
+                customerMarketSetting.setMmsTotal(0);
             }
             smsTotal = marketSetting.getSmsTotal();
             mmsTotal = marketSetting.getMmsTotal();
             price = marketSetting.getPrice();
             customerMarketSetting.setOrderTime(TimeTools.now());
             customerMarketSetting.setInvalidTime(TimeTools.addDay(TimeTools.now(), marketSetting.getDaysNumber()));
+            mobileNumberService.updateGiftMobileNumberInvalidTime(customerId);
         }
         customerMarketSetting.setSmsTotal(smsTotal+customerMarketSetting.getSmsTotal());
         customerMarketSetting.setMmsTotal(mmsTotal+customerMarketSetting.getMmsTotal());
@@ -151,7 +154,8 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         paymentComponent.realTimePayment(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
         Customer customer = customerService.findById(customerId);
         BigDecimal credit = new BigDecimal(paymentCredit);
-        if (diffDays<=0 && (customer.getMaxCredit().doubleValue()!=credit.doubleValue() || customer.getAvailableCredit().doubleValue()!=credit.doubleValue())){
+        if (ms.getPrice().doubleValue()==0 || (diffDays<=0 && (customer.getMaxCredit().doubleValue()!=credit.doubleValue() ||
+                customer.getAvailableCredit().doubleValue()!=credit.doubleValue()))){
             creditBillComponent.adjustCustomerMaxCredit(customerId, credit);
         }
         Long num = mobileNumberService.countByDisableAndCustomerIdAndGiftNumber(false, customerId, true);

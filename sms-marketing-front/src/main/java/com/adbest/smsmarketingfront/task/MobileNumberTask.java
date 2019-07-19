@@ -51,7 +51,7 @@ public class MobileNumberTask {
         if (taskSwitch==null||!Boolean.valueOf(taskSwitch)){return;}
         Timestamp time = TimeTools.addDay(TimeTools.now(), - mobileNumberRecyclingDays);
         List<MobileNumber> mobiles = mobileNumberService.findInvalidMobile(time);
-        List<MobileNumber> chargeMobiles = mobileNumberService.findByGiftNumberAndDisableAndInvalidTimebefore(false, false, time);
+        List<MobileNumber> chargeMobiles = mobileNumberService.findByDisableAndInvalidTimeBefore(false, time);
         mobiles.addAll(chargeMobiles);
         mobiles.forEach(mobileNumber -> {mobileNumberService.delete(mobileNumber);});
     }
