@@ -47,6 +47,7 @@ public class MessageRecord implements Serializable {
     private String mediaList;  // 资源列表 [资源id,多个以','分隔]
     @Column(nullable = false)
     private Integer segments;  // 被分割为多少条消息
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal cost;  // 花费(套餐内：0)(暂用单位：$)
     /**
      * @see InboxStatus

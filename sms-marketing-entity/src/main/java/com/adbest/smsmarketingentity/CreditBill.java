@@ -31,7 +31,7 @@ public class CreditBill implements Serializable {
     private Integer type;  // 类型
     @Column(nullable = false)
     private Long referId;  // 关联的实体id
-    @Column(nullable = false)
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal amount;  // 金额
     @Column(nullable = false)
     private String remark;  // 备注

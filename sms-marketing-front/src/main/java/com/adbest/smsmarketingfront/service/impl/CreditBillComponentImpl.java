@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.Assert;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.ResourceBundle;
 
 @Component
@@ -42,6 +43,27 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         creditBill.setRemark(bundle.getString("adjust-max-credit"));
         creditBillDao.save(creditBill);
         log.info("leave adjustCustomerMaxCredit");
+        return true;
+    }
+
+    @Override
+    @Transactional
+    public boolean cancellationQuota(List<Long> customerIds, BigDecimal amount) {
+        if (customerIds.size()<=0){return true;}
+        CreditBill creditBill = null;
+        for (Long customerId: customerIds) {
+            int updateMaxCredit = customerDao.updateMaxCredit(customerId, amount);
+            if (updateMaxCredit>0){
+                creditBill = new CreditBill();
+                creditBill.setCustomerId(customerId);
+                creditBill.setType(CreditBillType.ADJUST_MAX_CREDIT.getValue());
+                creditBill.setReferId(customerId);
+                creditBill.setAmount(amount);
+                creditBill.setRemark(bundle.getString("adjust-max-credit"));
+                creditBillDao.save(creditBill);
+            }
+        }
+        log.info("leave cancellationQuota");
         return true;
     }
     

@@ -41,7 +41,7 @@ public class MessagePlan implements Serializable {
     private Integer msgTotal;  // 消息总数 (+)
     @Column(nullable = false)
     private Integer creditPayNum;  // 信用支付消息数 (+)
-    @Column(nullable = false)
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal creditPayCost;  // 额外支付金额 (+)
     @Column(nullable = false)
     private Boolean disable;  // 是否禁用(true:禁用)

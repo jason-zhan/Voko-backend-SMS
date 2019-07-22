@@ -26,7 +26,7 @@ public class FinanceBill implements Serializable {
     private Long customerId;
     @Column(nullable = false)
     private String infoDescribe;  // 描述
-    @Column(nullable = false)
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal amount;  // 金额
     @Column(nullable = false)
     @CreationTimestamp

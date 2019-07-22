@@ -154,8 +154,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         paymentComponent.realTimePayment(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
         Customer customer = customerService.findById(customerId);
         BigDecimal credit = new BigDecimal(paymentCredit);
-        if (ms.getPrice().doubleValue()==0 || (diffDays<=0 && (customer.getMaxCredit().doubleValue()!=credit.doubleValue() ||
-                customer.getAvailableCredit().doubleValue()!=credit.doubleValue()))){
+        if (customer.getMaxCredit().doubleValue()==0){
             creditBillComponent.adjustCustomerMaxCredit(customerId, credit);
         }
         Long num = mobileNumberService.countByDisableAndCustomerIdAndGiftNumber(false, customerId, true);

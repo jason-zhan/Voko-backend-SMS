@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.service;
 import com.adbest.smsmarketingentity.CreditBill;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 信用账单业务组件
@@ -27,5 +28,7 @@ public interface CreditBillComponent {
      * @return
      */
     boolean savePlanConsume(Long customerId, Long planId, BigDecimal amount, String remark);
+
+    boolean cancellationQuota(List<Long> customerIds, BigDecimal amount);
     
 }

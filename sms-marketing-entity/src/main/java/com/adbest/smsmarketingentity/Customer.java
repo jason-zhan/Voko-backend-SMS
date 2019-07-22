@@ -36,9 +36,9 @@ public class Customer implements Serializable {
     private Boolean disable;  // 是否禁用
     
     private Integer source;  // 来源
-    @Column(nullable = false)
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal availableCredit; // 可用信用额度(暂用单位：$)
-    @Column(nullable = false)
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal maxCredit;  // 最大信用额度(暂用单位：$)
 
     /**

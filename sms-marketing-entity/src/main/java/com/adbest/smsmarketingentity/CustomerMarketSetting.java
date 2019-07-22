@@ -62,7 +62,7 @@ public class CustomerMarketSetting implements Serializable {
     /**
      * 套餐外彩信单价
      */
-    @Column(name = "mmsPrice", columnDefinition = "decimal(5,3)")
+    @Column(columnDefinition = "decimal(5,3)")
     private BigDecimal mmsPrice;
 
     public CustomerMarketSetting(MarketSetting marketSetting) {

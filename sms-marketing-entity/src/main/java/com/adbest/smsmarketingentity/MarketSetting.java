@@ -33,7 +33,7 @@ public class MarketSetting implements Serializable {
     /**
      * 价格
      */
-    @Column(nullable = false)
+    @Column(columnDefinition = "decimal(10,3)",nullable = false)
     private BigDecimal price;
     /**
      * 套餐外短信单价
