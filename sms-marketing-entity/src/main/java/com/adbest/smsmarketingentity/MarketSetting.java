@@ -38,11 +38,11 @@ public class MarketSetting implements Serializable {
     /**
      * 套餐外短信单价
      */
-    @Column(nullable = false)
+    @Column(name = "smsPrice", columnDefinition = "decimal(5,3)",nullable = false)
     private BigDecimal smsPrice;
     /**
      * 套餐外彩信单价
      */
-    @Column(nullable = false)
+    @Column(name = "mmsPrice", columnDefinition = "decimal(5,3)",nullable = false)
     private BigDecimal mmsPrice;
 }

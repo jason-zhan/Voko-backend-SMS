@@ -1,6 +1,8 @@
 package com.adbest.smsmarketingfront.service.impl;
 
+import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.CustomerSettings;
+import com.adbest.smsmarketingentity.MarketSetting;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingfront.dao.MobileNumberDao;
 import com.adbest.smsmarketingfront.entity.enums.RedisKey;
@@ -8,10 +10,7 @@ import com.adbest.smsmarketingfront.entity.form.SearchTwilioForm;
 import com.adbest.smsmarketingfront.entity.vo.MobileNumberVo;
 import com.adbest.smsmarketingfront.entity.vo.TwilioPhoneVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
-import com.adbest.smsmarketingfront.service.CustomerSettingsService;
-import com.adbest.smsmarketingfront.service.FinanceBillComponent;
-import com.adbest.smsmarketingfront.service.MobileNumberService;
-import com.adbest.smsmarketingfront.service.PaymentComponent;
+import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import com.adbest.smsmarketingfront.util.TimeTools;
@@ -26,6 +25,7 @@ import com.twilio.rest.api.v2010.account.availablephonenumbercountry.TollFreeRea
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.env.Environment;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
@@ -65,6 +65,15 @@ public class MobileNumberServiceImpl implements MobileNumberService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private Environment environment;
+
+    @Autowired
+    private CustomerMarketSettingService customerMarketSettingService;
+
+    @Autowired
+    private MarketSettingService marketSettingService;
 
     @Override
     @Transactional
@@ -111,6 +120,8 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
         mobileNumber.setGiftNumber(true);
         mobileNumber.setSid(incomingPhoneNumber.getSid());
+        String mobileNumberRecyclingDays = environment.getProperty("MobileNumberRecyclingDays");
+        mobileNumber.setInvalidTime(TimeTools.addDay(TimeTools.now(),mobileNumberRecyclingDays==null?30:Integer.valueOf(mobileNumberRecyclingDays)));
         mobileNumberDao.save(mobileNumber);
         customerSettings.setNumberReceivingStatus(true);
         customerSettingsService.save(customerSettings);
@@ -184,6 +195,24 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     }
 
     @Override
+    public List<MobileNumber> findByDisableAndInvalidTimeBefore(Boolean disable, Timestamp time) {
+        return mobileNumberDao.findByDisableAndInvalidTimeBefore(disable, time);
+    }
+
+    @Override
+    @Transactional
+    public void updateGiftMobileNumberInvalidTime(Long customerId) {
+        List<MobileNumber> giftMobileNumbers = mobileNumberDao.findByGiftNumberAndDisableAndCustomerId(true, false, customerId);
+        if (giftMobileNumbers.size()>0){
+            String mobileNumberRecyclingDays = environment.getProperty("MobileNumberRecyclingDays");
+            Timestamp invalidTime = TimeTools.addDay(TimeTools.now(), mobileNumberRecyclingDays==null?30:Integer.valueOf(mobileNumberRecyclingDays));
+            MobileNumber mobileNumber = giftMobileNumbers.get(0);
+            mobileNumber.setInvalidTime(invalidTime);
+            mobileNumberDao.save(mobileNumber);
+        }
+    }
+
+    @Override
     public List<TwilioPhoneVo> search(SearchTwilioForm searchTwilioForm) {
         LocalReader us = Local.reader("US")
                 .setSmsEnabled(true)
@@ -236,6 +265,12 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     @Override
     @Transactional
     public boolean buyPhone(String phoneNumber, Boolean automaticRenewal) {
+        Long customerId = Current.get().getId();
+        CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customerId);
+        MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+        if (marketSetting!=null){
+            ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_NUMBER"));
+        }
         ServiceException.hasText(phoneNumber, returnMsgUtil.msg("PHONE_NOT_EMPTY"));
         BigDecimal price = null;
         if (phoneNumber.startsWith("+18")){
@@ -243,7 +278,6 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         }else{
             price = ordinaryMobilePrice;
         }
-        Long customerId = Current.get().getId();
         /**
          * 扣钱，账单
          */
@@ -262,8 +296,8 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         mobileNumber.setNumber(incomingPhoneNumber.getPhoneNumber().getEndpoint());
         mobileNumber.setMms(incomingPhoneNumber.getCapabilities().getMms());
         mobileNumber.setSms(incomingPhoneNumber.getCapabilities().getSms());
-        mobileNumber.setGiftNumber(false);
-        mobileNumber.setInvalidTime(TimeTools.addDay(TimeTools.now(),30));
+        mobileNumber.setGiftNumber(false);String mobileNumberRecyclingDays = environment.getProperty("MobileNumberRecyclingDays");
+        mobileNumber.setInvalidTime(TimeTools.addDay(TimeTools.now(),mobileNumberRecyclingDays==null?30:Integer.valueOf(mobileNumberRecyclingDays)));
         mobileNumber.setAutomaticRenewal(automaticRenewal==null?false:automaticRenewal);
         mobileNumber.setSid(incomingPhoneNumber.getSid());
         mobileNumberDao.save(mobileNumber);

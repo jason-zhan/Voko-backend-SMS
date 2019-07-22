@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.Keyword;
+import com.adbest.smsmarketingentity.MarketSetting;
 import com.adbest.smsmarketingfront.dao.KeywordDao;
 import com.adbest.smsmarketingfront.entity.enums.RedisKey;
 import com.adbest.smsmarketingfront.entity.form.KeywordForm;
@@ -10,10 +11,7 @@ import com.adbest.smsmarketingfront.entity.vo.KeywordInfo;
 import com.adbest.smsmarketingfront.entity.vo.KeywordVo;
 import com.adbest.smsmarketingfront.entity.vo.PageDataVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
-import com.adbest.smsmarketingfront.service.CustomerMarketSettingService;
-import com.adbest.smsmarketingfront.service.FinanceBillComponent;
-import com.adbest.smsmarketingfront.service.KeywordService;
-import com.adbest.smsmarketingfront.service.PaymentComponent;
+import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.PageBase;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
@@ -51,6 +49,9 @@ public class KeywordServiceImpl implements KeywordService {
 
     @Autowired
     private RedisTemplate redisTemplate;
+
+    @Autowired
+    private MarketSettingService marketSettingService;
 
     @Override
     @Transactional
@@ -148,6 +149,10 @@ public class KeywordServiceImpl implements KeywordService {
         keyword.setContent(keywordForm.getContent());
         Long num = keywordDao.countByCustomerIdAndGiftKeyword(customerId, true);
         CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customerId);
+        MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+        if (marketSetting!=null){
+            ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_KEYWORDS"));
+        }
         if (customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis()))&&customerMarketSetting.getKeywordTotal() - num>0){
             keyword.setGiftKeyword(true);
         }else {

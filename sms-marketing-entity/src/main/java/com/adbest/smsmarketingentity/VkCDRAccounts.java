@@ -9,8 +9,6 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 
 @Data
-//@Table(name = "vkCDR_Accounts")
-//@Entity
 public class VkCDRAccounts {
     @Id
     private Integer id;

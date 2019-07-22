@@ -15,8 +15,6 @@ import java.sql.Timestamp;
  * V公司商户表
  */
 @Data
-//@Entity
-//@Table(name = "vkcustomers")
 public class VkCustomers implements Serializable {
     @Id
     private Integer i_customer;
