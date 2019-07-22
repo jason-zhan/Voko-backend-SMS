@@ -67,6 +67,12 @@ public class CustomerMarketSettingTask {
             if (cms.getMmsTotal()>0){mmsBills.add(new MmsBill(cms.getCustomerId(), infoDescribe,-cms.getMmsTotal()));}
             if (cms.getAutomaticRenewal()){
                 marketSetting = settingMap.get(cms.getMarketSettingId());
+                if(marketSetting.getPrice().doubleValue()==0){
+                    cms.setInvalidStatus(true);
+                    cms.setSmsTotal(0);
+                    cms.setMmsTotal(0);
+                    continue;
+                }
 
                 /**
                  * 扣费，成功：保存 失败：放入未续费

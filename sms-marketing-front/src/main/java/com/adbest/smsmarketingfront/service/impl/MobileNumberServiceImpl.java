@@ -1,6 +1,8 @@
 package com.adbest.smsmarketingfront.service.impl;
 
+import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.CustomerSettings;
+import com.adbest.smsmarketingentity.MarketSetting;
 import com.adbest.smsmarketingentity.MobileNumber;
 import com.adbest.smsmarketingfront.dao.MobileNumberDao;
 import com.adbest.smsmarketingfront.entity.enums.RedisKey;
@@ -8,10 +10,7 @@ import com.adbest.smsmarketingfront.entity.form.SearchTwilioForm;
 import com.adbest.smsmarketingfront.entity.vo.MobileNumberVo;
 import com.adbest.smsmarketingfront.entity.vo.TwilioPhoneVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
-import com.adbest.smsmarketingfront.service.CustomerSettingsService;
-import com.adbest.smsmarketingfront.service.FinanceBillComponent;
-import com.adbest.smsmarketingfront.service.MobileNumberService;
-import com.adbest.smsmarketingfront.service.PaymentComponent;
+import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.util.Current;
 import com.adbest.smsmarketingfront.util.ReturnMsgUtil;
 import com.adbest.smsmarketingfront.util.TimeTools;
@@ -69,6 +68,12 @@ public class MobileNumberServiceImpl implements MobileNumberService {
 
     @Autowired
     private Environment environment;
+
+    @Autowired
+    private CustomerMarketSettingService customerMarketSettingService;
+
+    @Autowired
+    private MarketSettingService marketSettingService;
 
     @Override
     @Transactional
@@ -260,6 +265,12 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     @Override
     @Transactional
     public boolean buyPhone(String phoneNumber, Boolean automaticRenewal) {
+        Long customerId = Current.get().getId();
+        CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customerId);
+        MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+        if (marketSetting!=null){
+            ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_NUMBER"));
+        }
         ServiceException.hasText(phoneNumber, returnMsgUtil.msg("PHONE_NOT_EMPTY"));
         BigDecimal price = null;
         if (phoneNumber.startsWith("+18")){
@@ -267,7 +278,6 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         }else{
             price = ordinaryMobilePrice;
         }
-        Long customerId = Current.get().getId();
         /**
          * 扣钱，账单
          */
