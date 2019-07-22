@@ -149,13 +149,13 @@ public class KeywordServiceImpl implements KeywordService {
         keyword.setContent(keywordForm.getContent());
         Long num = keywordDao.countByCustomerIdAndGiftKeyword(customerId, true);
         CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customerId);
-        MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
-        if (marketSetting!=null){
-            ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_KEYWORDS"));
-        }
         if (customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis()))&&customerMarketSetting.getKeywordTotal() - num>0){
             keyword.setGiftKeyword(true);
         }else {
+            MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+            if (marketSetting!=null){
+                ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_KEYWORDS"));
+            }
             paymentComponent.realTimePayment(customerId, new BigDecimal(keywordPrice).negate(),returnMsgUtil.msg("KEYWORD_PURCHASE"));
             keyword.setGiftKeyword(false);
         }
