@@ -302,7 +302,7 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         smsBill.setCustomerId(messageRecord.getCustomerId());
         smsBill.setInfoDescribe(bundle.getString("KEYWORD_REPLY"));
         smsBillComponent.save(smsBill);
-        PreSendMsg preSendMsg = new PreSendMsg(messageRecord);
+        PreSendMsg preSendMsg = new PreSendMsg(messageRecord, viewFileUrl);
         Message message = twilioUtil.sendMessage(preSendMsg);
         messageRecord.setSid(message.getSid());
         messageRecordDao.save(messageRecord);

@@ -9,6 +9,9 @@ public enum CreditBillType {
     
     ADJUST_MAX_CREDIT(0, "ADJUST_MAX_CREDIT"),  // 调整最大信用额度
     MESSAGE_PLAN(1, "MESSAGE_PLAN"),  // 任务消费
+    KEYWORD(2, "KEYWORD"),  // 购买关键字
+    CUSTOMER_MOBILE(3, "CUSTOMER_MOBILE"),  // 购买手机号
+    RESUME_AVAILABLE_CREDIT(4, "RESUME_AVAILABLE_CREDIT"),  // 恢复可用信用额度
     ;
     
     

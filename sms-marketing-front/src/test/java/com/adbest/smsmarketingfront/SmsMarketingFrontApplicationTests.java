@@ -51,7 +51,7 @@ public class SmsMarketingFrontApplicationTests {
         record.setContactsNumber("+12144051403");
         record.setCustomerNumber("+16782758458");
         record.setContent("From twilio -- test message");
-        PreSendMsg preSendMsg = new PreSendMsg(record);
+        PreSendMsg preSendMsg = new PreSendMsg(record, "host:");
         Message message = twilioUtil.sendMessage(preSendMsg);
         System.out.println(message);
     }

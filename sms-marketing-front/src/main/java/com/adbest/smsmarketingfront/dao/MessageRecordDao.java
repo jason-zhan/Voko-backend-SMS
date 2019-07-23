@@ -20,6 +20,11 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     
     @Transactional
     @Modifying
+    @Query("update MessageRecord set returnCode = ?2, status = ?3, arrivedTime = current_timestamp where sid = ?1 and planId is not null ")
+    int updateMsgForDelivered(String sid, int deliveredCode, int deliveredStatus);
+    
+    @Transactional
+    @Modifying
     @Query("update MessageRecord set returnCode = ?2 where sid = ?1 and planId is not null")
     int updateReturnCodeBySid(String sid, int returnCode);
     

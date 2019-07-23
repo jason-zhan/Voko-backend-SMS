@@ -233,8 +233,8 @@ public class MessagePlanServiceImpl implements MessagePlanService {
         }
         // 无论是否套餐周期内，都须返还信用消费
         if (found.getCreditPayCost().compareTo(BigDecimal.ZERO) > 0) {
+            customerDao.paymentByCredit(cur.getId(), found.getCreditPayCost());
             creditBillComponent.savePlanConsume(cur.getId(), found.getId(), found.getCreditPayCost(), bundle.getString("bill-cancel-plan"));
-            customerDao.updateCredit(cur.getId(), found.getCreditPayCost());
         }
         saveMsgBill(cur.getId(), found.getIsSms(), found.getMsgTotal(), bundle.getString("bill-cancel-plan"));
         // 更新任务 - 变更为编辑中
