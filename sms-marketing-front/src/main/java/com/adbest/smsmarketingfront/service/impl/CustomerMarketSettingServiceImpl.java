@@ -151,7 +151,7 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         /**
          * 扣费，账单
          */
-        paymentComponent.realTimePayment(customerId, price.negate(),resourceBundle.getString("PACKAGE_PURCHASE"));
+        paymentComponent.realTimePayment(customerId, price,resourceBundle.getString("PACKAGE_PURCHASE"));
         Customer customer = customerService.findById(customerId);
         BigDecimal credit = new BigDecimal(paymentCredit);
         if (customer.getMaxCredit().doubleValue()==0){

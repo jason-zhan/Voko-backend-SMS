@@ -45,7 +45,7 @@ public class KeywordServiceImpl implements KeywordService {
     private String keywordPrice;
 
     @Autowired
-    private PaymentComponent paymentComponent;
+    private CreditBillComponent creditBillComponent;
 
     @Autowired
     private RedisTemplate redisTemplate;
@@ -156,7 +156,7 @@ public class KeywordServiceImpl implements KeywordService {
             if (marketSetting!=null){
                 ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_KEYWORDS"));
             }
-            paymentComponent.realTimePayment(customerId, new BigDecimal(keywordPrice).negate(),returnMsgUtil.msg("KEYWORD_PURCHASE"));
+            creditBillComponent.saveKeywordConsume(customerId, new BigDecimal(keywordPrice).negate(),returnMsgUtil.msg("KEYWORD_PURCHASE"));
             keyword.setGiftKeyword(false);
         }
         keyword = keywordDao.save(keyword);

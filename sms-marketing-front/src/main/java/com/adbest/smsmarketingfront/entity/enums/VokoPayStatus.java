@@ -46,7 +46,7 @@ public enum VokoPayStatus{
         this.msg = msg;
     }
 
-    public static VokoPayStatus getText(String code){
+    public static VokoPayStatus getVokoPayStatus(String code){
         for(VokoPayStatus s : VokoPayStatus.values()){
             if(s.getStatusCode().equals(code)){
                 return s;

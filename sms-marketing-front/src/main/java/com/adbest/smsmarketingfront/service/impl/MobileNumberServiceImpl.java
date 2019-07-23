@@ -56,7 +56,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
     private CustomerSettingsService customerSettingsService;
 
     @Autowired
-    private PaymentComponent paymentComponent;
+    private CreditBillComponent creditBillComponent;
 
     @Value("${mobilePrice.free}")
     private BigDecimal freeMobilePrice;
@@ -281,7 +281,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         /**
          * 扣钱，账单
          */
-        paymentComponent.realTimePayment(customerId, price.negate(),returnMsgUtil.msg("MOBILE_PURCHASE"));
+        creditBillComponent.saveCustomerMobileConsume(customerId, -1l, price.negate(),returnMsgUtil.msg("MOBILE_PURCHASE"));
 
         IncomingPhoneNumber incomingPhoneNumber = null;
         try {
