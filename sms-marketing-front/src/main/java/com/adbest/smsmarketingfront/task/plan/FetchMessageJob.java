@@ -6,6 +6,7 @@ import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.service.MessageComponent;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
+import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -36,11 +37,11 @@ public class FetchMessageJob implements Job {
         do {
             messagePage = messageRecordDao.findByPlanIdAndStatusAndDisableIsFalse(plan.getId(), OutboxStatus.SENT.getValue(), PageRequest.of(page, 1000));
             for (MessageRecord message : messagePage.getContent()) {
-                messageComponent.updateMessageStatus(message.getSid(), "delivered");
-//                Message fetchedMsg = twilioUtil.fetchMessage(message.getSid());
-//                if (fetchedMsg != null) {
-//                    messageComponent.updateMessageStatus(message.getSid(), fetchedMsg.getStatus().toString());
-//                }
+//                messageComponent.updateMessageStatus(message.getSid(), "delivered");
+                Message fetchedMsg = twilioUtil.fetchMessage(message.getSid());
+                if (fetchedMsg != null) {
+                    messageComponent.updateMessageStatus(message.getSid(), fetchedMsg.getStatus().toString());
+                }
             }
             page++;
         } while (messagePage.hasNext());

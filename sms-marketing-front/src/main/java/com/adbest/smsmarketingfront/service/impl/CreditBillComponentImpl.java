@@ -6,6 +6,7 @@ import com.adbest.smsmarketingfront.dao.CreditBillDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CreditBillComponent;
+import com.adbest.smsmarketingfront.util.Current;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
@@ -29,7 +30,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
     
     @Override
     @Transactional
-    public boolean adjustCustomerMaxCredit(Long customerId, BigDecimal amount) {
+    public void adjustCustomerMaxCredit(Long customerId, BigDecimal amount) {
         log.info("enter adjustCustomerMaxCredit, customerId={}, amount={}", customerId, amount);
         Assert.isTrue(amount.compareTo(BigDecimal.ZERO) != 0, "amount must not be zero.");
         int updateMaxCredit = customerDao.updateMaxCredit(customerId, amount);
@@ -42,12 +43,11 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         creditBill.setRemark(bundle.getString("adjust-max-credit"));
         creditBillDao.save(creditBill);
         log.info("leave adjustCustomerMaxCredit");
-        return true;
     }
     
     @Transactional
     @Override
-    public boolean savePlanConsume(Long customerId, Long planId, BigDecimal amount, String remark) {
+    public void savePlanConsume(Long customerId, Long planId, BigDecimal amount, String remark) {
         log.info("enter savePlanConsume, customerId={}, planId={}, amount={}, remark={}", customerId, planId, amount, remark);
         Assert.notNull(customerId, "customerId is null");
         Assert.notNull(planId, "planId is null");
@@ -61,6 +61,54 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         bill.setRemark(remark);
         creditBillDao.save(bill);
         log.info("leave savePlanConsume");
-        return true;
+    }
+    
+    @Override
+    public void saveKeywordConsume(Long keywordId, BigDecimal amount, String remark) {
+        log.info("enter saveKeywordConsume, keywordId={}, amount={}, remark={}", keywordId, amount, remark);
+        Assert.notNull(keywordId, "keywordId is null");
+        Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) < 0, "amount must be less than zero.");
+        Assert.hasText(remark, "remark is empty");
+        CreditBill bill = new CreditBill();
+        bill.setCustomerId(Current.get().getId());
+        bill.setType(CreditBillType.KEYWORD.getValue());
+        bill.setReferId(keywordId);
+        bill.setAmount(amount);
+        bill.setRemark(remark);
+        creditBillDao.save(bill);
+        log.info("leave saveKeywordConsume");
+    }
+    
+    @Override
+    public void saveCustomerMobileConsume(Long customerId, Long mobileNumberId, BigDecimal amount, String remark) {
+        log.info("enter saveCustomerMobileConsume, customerId={}, mobileNumberId={}, amount={}, remark={}", customerId, mobileNumberId, amount, remark);
+        Assert.notNull(customerId, "customerId is null");
+        Assert.notNull(mobileNumberId, "mobileNumberId is null");
+        Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) < 0, "amount must be less than zero.");
+        Assert.hasText(remark, "remark is empty");
+        CreditBill bill = new CreditBill();
+        bill.setCustomerId(customerId);
+        bill.setType(CreditBillType.CUSTOMER_MOBILE.getValue());
+        bill.setReferId(mobileNumberId);
+        bill.setAmount(amount);
+        bill.setRemark(remark);
+        creditBillDao.save(bill);
+        log.info("leave saveCustomerMobileConsume");
+    }
+    
+    @Override
+    public void resumeAvailableCredit(Long customerId, BigDecimal amount, String remark) {
+        log.info("enter resumeAvailableCredit, customerId={}, amount={}", customerId, amount);
+        Assert.notNull(customerId, "customerId is null");
+        Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) > 0, "amount must be greater than zero.");
+        Assert.notNull(remark, "remark can't be null.");
+        CreditBill bill = new CreditBill();
+        bill.setCustomerId(customerId);
+        bill.setType(CreditBillType.RESUME_AVAILABLE_CREDIT.getValue());
+        bill.setReferId(customerId);
+        bill.setAmount(amount);
+        bill.setRemark(remark);
+        creditBillDao.save(bill);
+        log.info("leave resumeAvailableCredit");
     }
 }

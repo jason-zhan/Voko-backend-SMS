@@ -97,7 +97,7 @@ public class MessageComponentImpl implements MessageComponent {
             return messageRecordDao.updateReturnCodeBySid(sid, MessageReturnCode.SENT.getValue());
         }
         if (Status.DELIVERED.toString().equals(status)) {
-            return messageRecordDao.updateReturnCodeAndStatusBySid(sid, MessageReturnCode.DELIVERED.getValue(), OutboxStatus.DELIVERED.getValue());
+            return messageRecordDao.updateMsgForDelivered(sid, MessageReturnCode.DELIVERED.getValue(), OutboxStatus.DELIVERED.getValue());
         }
         if (Status.UNDELIVERED.toString().equals(status)) {
             return messageRecordDao.updateReturnCodeAndStatusBySid(sid, MessageReturnCode.UNDELIVERED.getValue(), OutboxStatus.UNDELIVERED.getValue());

@@ -7,6 +7,7 @@ import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
 import com.adbest.smsmarketingfront.util.EasyTime;
 import com.adbest.smsmarketingfront.util.TimeTools;
+import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,5 +81,14 @@ public class MessageRecordServiceTest {
         getOutboxPage.setKeyword("4");
         Page<OutboxMessageVo> messageVoPage = messageRecordService.findOutboxByConditions(getOutboxPage);
         System.out.println(messageVoPage.getTotalElements());
+    }
+    
+    @Test
+    public void testPreMsg(){
+        MessageRecord record = new MessageRecord();
+        record.setContactsNumber("1231112222");
+        record.setMediaList("/a/bc/c");
+        PreSendMsg msg = new PreSendMsg(record, "home:");
+        System.out.println(msg.getMediaUriList());
     }
 }

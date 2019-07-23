@@ -6,7 +6,10 @@ import com.adbest.smsmarketingentity.OutboxStatus;
 import com.adbest.smsmarketingfront.dao.MessagePlanDao;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingfront.util.EasyTime;
+import com.adbest.smsmarketingfront.util.StrSegTools;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
+import com.adbest.smsmarketingfront.util.twilio.param.PreSendMsg;
+import com.twilio.rest.api.v2010.account.Message;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobDataMap;
@@ -65,9 +68,9 @@ public class SendMessageJob implements Job {
         List<MessageRecord> sentMessageList = new ArrayList<>();
         for (MessageRecord message : messageList) {
             try {
-//                PreSendMsg preSendMsg = new PreSendMsg(message, StrSegTools.getUriList(viewFileUrl, message.getMediaList()));
-//                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
-//                message.setSid(sentMsg.getSid());
+                PreSendMsg preSendMsg = new PreSendMsg(message, viewFileUrl);
+                Message sentMsg = twilioUtil.sendMessage(preSendMsg);
+                message.setSid(sentMsg.getSid());
                 message.setSid(UUID.randomUUID().toString());
                 message.setStatus(OutboxStatus.SENT.getValue());
                 message.setSendTime(EasyTime.now());
