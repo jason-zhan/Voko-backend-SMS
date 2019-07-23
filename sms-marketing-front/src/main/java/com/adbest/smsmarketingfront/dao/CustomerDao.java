@@ -25,7 +25,12 @@ public interface CustomerDao extends JpaRepository<Customer, Long>, JpaSpecifica
     @Transactional
     @Modifying
     @Query("update Customer set availableCredit = availableCredit+?2 where id = ?1 and availableCredit+?2 >= 0")
-    int updateCredit(Long customerId, BigDecimal cost);
+    int paymentByCredit(Long customerId, BigDecimal cost);
+    
+    @Transactional
+    @Modifying
+    @Query("update Customer set availableCredit = availableCredit+?2 where id = ?1 and ?2 > 0")
+    int resumeCredit(Long customerId, BigDecimal cost);
 
     @Transactional
     @Modifying

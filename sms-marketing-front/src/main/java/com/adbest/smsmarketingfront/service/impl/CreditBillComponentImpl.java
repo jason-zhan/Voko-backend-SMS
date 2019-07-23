@@ -4,7 +4,6 @@ import com.adbest.smsmarketingentity.CreditBill;
 import com.adbest.smsmarketingentity.CreditBillType;
 import com.adbest.smsmarketingfront.dao.CreditBillDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
-import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.CreditBillComponent;
 import com.adbest.smsmarketingfront.util.Current;
 import lombok.extern.slf4j.Slf4j;
@@ -69,6 +68,8 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         Assert.notNull(keywordId, "keywordId is null");
         Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) < 0, "amount must be less than zero.");
         Assert.hasText(remark, "remark is empty");
+        int updateResult = customerDao.paymentByCredit(Current.get().getId(), amount);
+        Assert.isTrue(updateResult > 0, "The available credit of customer is less than zero.");
         CreditBill bill = new CreditBill();
         bill.setCustomerId(Current.get().getId());
         bill.setType(CreditBillType.KEYWORD.getValue());
@@ -86,6 +87,8 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         Assert.notNull(mobileNumberId, "mobileNumberId is null");
         Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) < 0, "amount must be less than zero.");
         Assert.hasText(remark, "remark is empty");
+        int updateResult = customerDao.paymentByCredit(customerId, amount);
+        Assert.isTrue(updateResult > 0, "customer is not exists, or the available credit of customer is less than zero.");
         CreditBill bill = new CreditBill();
         bill.setCustomerId(customerId);
         bill.setType(CreditBillType.CUSTOMER_MOBILE.getValue());
@@ -102,6 +105,8 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         Assert.notNull(customerId, "customerId is null");
         Assert.isTrue(amount != null && amount.compareTo(BigDecimal.ZERO) > 0, "amount must be greater than zero.");
         Assert.notNull(remark, "remark can't be null.");
+        int updateResult = customerDao.resumeCredit(customerId, amount);
+        Assert.isTrue(updateResult > 0, "customer is not exists");
         CreditBill bill = new CreditBill();
         bill.setCustomerId(customerId);
         bill.setType(CreditBillType.RESUME_AVAILABLE_CREDIT.getValue());

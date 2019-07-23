@@ -197,6 +197,7 @@ public class MessageComponentImpl implements MessageComponent {
             mmsBillComponent.saveMmsBill(plan.getCustomerId(), bundle.getString("bill-verify-exec-plan"), mmsChange);
         }
         if (creditChange != null && creditChange.compareTo(BigDecimal.ZERO) > 0) {
+            customerDao.paymentByCredit(plan.getCustomerId(), creditChange);
             creditBillComponent.savePlanConsume(plan.getCustomerId(), plan.getId(), creditChange, bundle.getString("bill-verify-exec-plan"));
         }
     }
@@ -430,7 +431,7 @@ public class MessageComponentImpl implements MessageComponent {
         } else {
             Assert.isTrue(message.getCost().compareTo(BigDecimal.ZERO) > 0, "the cost of message must be greater than zero.");
             // 信用支付，更新用户信用额度并保存金融账单
-            customerDao.updateCredit(message.getCustomerId(), message.getCost());
+            customerDao.paymentByCredit(message.getCustomerId(), message.getCost());
             financeBillComponent.saveFinanceBill(message.getCustomerId(), message.getCost(), remark);
         }
         saveMsgBill(message.getCustomerId(), message.getSms(), message.getSegments(), remark);
@@ -471,7 +472,7 @@ public class MessageComponentImpl implements MessageComponent {
         }
         // 返还信用额度和套餐余量
         if (creditChange.compareTo(BigDecimal.ZERO) > 0) {
-            customerDao.updateCredit(plan.getCustomerId(), creditChange);
+            customerDao.paymentByCredit(plan.getCustomerId(), creditChange);
             creditBillComponent.savePlanConsume(plan.getCustomerId(), plan.getId(), creditChange, bundle.getString("bill-return-failed"));
         }
         if (msgChange > 0) {
@@ -523,7 +524,7 @@ public class MessageComponentImpl implements MessageComponent {
      */
     private BigDecimal purchaseWithCredit(Long customerId, boolean isSms, int amount, CustomerMarketSetting marketSetting) {
         BigDecimal payCredit = BigDecimal.valueOf(amount).multiply(isSms ? marketSetting.getSmsPrice() : marketSetting.getMmsPrice());
-        int result = customerDao.updateCredit(customerId, payCredit.negate());
+        int result = customerDao.paymentByCredit(customerId, payCredit.negate());
         ServiceException.isTrue(result > 0, bundle.getString("credit-not-enough"));
         return payCredit;
     }
