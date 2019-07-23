@@ -2,10 +2,13 @@ package com.adbest.smsmarketingfront;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
+import com.adbest.smsmarketingfront.entity.enums.VokoPayStatus;
+import com.adbest.smsmarketingfront.entity.vo.VokoPayVo;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.ObjectConvertUtils;
+import com.adbest.smsmarketingfront.util.VokophonePayUtils;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -15,6 +18,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.junit4.SpringRunner;
+
+import java.math.BigDecimal;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
@@ -37,6 +42,9 @@ public class InboxApplicationTests {
 
     @Autowired
     private CustomerDao customerDao;
+
+    @Autowired
+    VokophonePayUtils vokophonePayUtils;
 
     @Test
     public void test() throws Exception {
