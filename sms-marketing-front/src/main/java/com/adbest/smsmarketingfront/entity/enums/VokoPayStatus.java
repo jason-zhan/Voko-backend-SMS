@@ -20,7 +20,8 @@ public enum VokoPayStatus{
     AMOUNT_DIGITS_ONLY_TWO_ALLOWED("-621","amount digits only two allowed"),
     VALUE_VISIBLE_COMMENT_TOO_LONG("-622","value visible comment too long"),
     VALUE_TOO_LONG("-623","value too long"),
-    UNKNOWN_ERROR("-630","unknown error"),;
+    UNKNOWN_ERROR("-630","unknown error"),
+    ABNORMAL_DEDUCTION("-1","abnormal deduction"),;
 
 
     private String statusCode;
@@ -52,6 +53,6 @@ public enum VokoPayStatus{
                 return s;
             }
         }
-        return null;
+        return ABNORMAL_DEDUCTION;
     }
 }

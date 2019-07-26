@@ -46,7 +46,6 @@ public class DbImportCustomerTask {
         do {
             PageRequest pageRequest = PageRequest.of(page,size);
             List<VkCustomers> list = vkCustomersService.findByInLeadinIsNull(pageRequest);
-            page++;
             if (list.size()<=0){break;}
             Map<String, VkCustomers> map = list.stream().collect(Collectors.toMap(VkCustomers::getLogin, vkCustomers -> vkCustomers, (vc, newVc) -> vc));
             List<Customer> customers = customerService.findByCustomerLoginIn(new ArrayList<>(map.keySet()));

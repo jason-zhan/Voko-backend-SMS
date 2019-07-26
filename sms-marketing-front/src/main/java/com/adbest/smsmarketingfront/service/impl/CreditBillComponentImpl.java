@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.CreditBill;
+import com.adbest.smsmarketingentity.CreditBillChargingStatus;
 import com.adbest.smsmarketingentity.CreditBillType;
 import com.adbest.smsmarketingfront.dao.CreditBillDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
@@ -41,6 +42,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         creditBill.setReferId(customerId);
         creditBill.setAmount(amount);
         creditBill.setRemark(bundle.getString("adjust-max-credit"));
+        creditBill.setChargingStatus(CreditBillChargingStatus.NO_PUSH_REQUIRED.getValue());
         creditBillDao.save(creditBill);
         log.info("leave adjustCustomerMaxCredit");
     }
@@ -58,6 +60,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
                 creditBill.setType(CreditBillType.ADJUST_MAX_CREDIT.getValue());
                 creditBill.setReferId(customerId);
                 creditBill.setAmount(amount);
+                creditBill.setChargingStatus(CreditBillChargingStatus.UNPUSHED.getValue());
                 creditBill.setRemark(bundle.getString("adjust-max-credit"));
                 creditBillDao.save(creditBill);
             }
@@ -80,6 +83,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         bill.setReferId(planId);
         bill.setAmount(amount);
         bill.setRemark(remark);
+        bill.setChargingStatus(CreditBillChargingStatus.UNPUSHED.getValue());
         creditBillDao.save(bill);
         log.info("leave savePlanConsume");
     }
@@ -97,6 +101,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         bill.setType(CreditBillType.KEYWORD.getValue());
         bill.setReferId(keywordId);
         bill.setAmount(amount);
+        bill.setChargingStatus(CreditBillChargingStatus.UNPUSHED.getValue());
         bill.setRemark(remark);
         creditBillDao.save(bill);
         log.info("leave saveKeywordConsume");
@@ -116,6 +121,7 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         bill.setType(CreditBillType.CUSTOMER_MOBILE.getValue());
         bill.setReferId(mobileNumberId);
         bill.setAmount(amount);
+        bill.setChargingStatus(CreditBillChargingStatus.UNPUSHED.getValue());
         bill.setRemark(remark);
         creditBillDao.save(bill);
         log.info("leave saveCustomerMobileConsume");
@@ -135,7 +141,14 @@ public class CreditBillComponentImpl implements CreditBillComponent {
         bill.setReferId(customerId);
         bill.setAmount(amount);
         bill.setRemark(remark);
+        bill.setChargingStatus(CreditBillChargingStatus.NO_PUSH_REQUIRED.getValue());
         creditBillDao.save(bill);
         log.info("leave resumeAvailableCredit");
+    }
+
+    @Override
+    @Transactional
+    public void saveAll(List<CreditBill> cBills) {
+        creditBillDao.saveAll(cBills);
     }
 }

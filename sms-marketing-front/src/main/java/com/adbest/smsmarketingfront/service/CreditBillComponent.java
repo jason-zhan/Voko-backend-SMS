@@ -65,4 +65,6 @@ public interface CreditBillComponent {
      */
     void resumeAvailableCredit(Long customerId, BigDecimal amount, String remark);
 
+    void saveAll(List<CreditBill> cBills);
+
 }

@@ -38,4 +38,14 @@ public class CreditBill implements Serializable {
     @CreationTimestamp
     @Column(nullable = false)
     private Timestamp time;  // 创建时间
+    /**
+     * 扣费状态
+     * @see CreditBillChargingStatus
+     */
+    @Column(nullable = false, columnDefinition="int default 0")
+    private Integer chargingStatus;
+    /**
+     * 备注
+     */
+    private String payRemarks;
 }

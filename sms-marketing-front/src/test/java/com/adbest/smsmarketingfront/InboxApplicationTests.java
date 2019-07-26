@@ -1,10 +1,12 @@
 package com.adbest.smsmarketingfront;
 
 import com.adbest.smsmarketingentity.*;
+import com.adbest.smsmarketingfront.dao.ContactsDao;
 import com.adbest.smsmarketingfront.dao.CustomerDao;
 import com.adbest.smsmarketingfront.entity.enums.VokoPayStatus;
 import com.adbest.smsmarketingfront.entity.vo.VokoPayVo;
 import com.adbest.smsmarketingfront.service.ContactsGroupService;
+import com.adbest.smsmarketingfront.service.FinanceBillComponent;
 import com.adbest.smsmarketingfront.service.KeywordService;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.ObjectConvertUtils;
@@ -46,6 +48,9 @@ public class InboxApplicationTests {
     @Autowired
     VokophonePayUtils vokophonePayUtils;
 
+    @Autowired
+    FinanceBillComponent financeBillComponent;
+
     @Test
     public void test() throws Exception {
 //        InboundMsg inboundMsg = new InboundMsg();
@@ -75,5 +80,6 @@ public class InboxApplicationTests {
 
 //        List<?> objects = vkCDRAccountsDao.selectNeedToSend(Arrays.asList(4673510, 4673509, 4673508, 4673507, 4673506, 4673505, 4673504));
 //        System.out.println(objects.size());
+
     }
 }

@@ -46,7 +46,6 @@ public class AutoReplyMessageCheckTask {
         List<MessageRecord> failedMsg = new ArrayList();
         do {
             pageable = PageRequest.of(i, size);
-            i++;
             list = messageRecordService.findByReturnCodeAndDisableAndPlanIdIsNull(MessageReturnCode.SENT.getValue(), false, pageable);
             if (list.size()==0){return;}
             length = list.size();
