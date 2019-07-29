@@ -69,7 +69,7 @@ public class CustomerMarketSettingTask {
         List<MarketSetting> settings = marketSettingService.findAll();
         Map<Long, MarketSetting> settingMap = settings.stream().collect(Collectors.toMap(MarketSetting::getId, s -> s));
         MarketSetting marketSetting = null;
-        Timestamp invalidTime = TimeTools.addDay(TimeTools.now(), marketSetting.getDaysNumber());
+        Timestamp invalidTime = null;
         List<Long> cancellationQuotaCustomerIds = new ArrayList();
         for (CustomerMarketSetting cms : list) {
             if (cms.getSmsTotal() > 0) {
@@ -80,6 +80,7 @@ public class CustomerMarketSettingTask {
             }
             if (cms.getAutomaticRenewal()) {
                 marketSetting = settingMap.get(cms.getMarketSettingId());
+                invalidTime = TimeTools.addDay(TimeTools.now(), marketSetting.getDaysNumber());
                 if (marketSetting.getPrice().doubleValue() == 0) {
                     cms.setInvalidStatus(true);
                     cms.setSmsTotal(0);
