@@ -268,6 +268,7 @@ public class MobileNumberServiceImpl implements MobileNumberService {
         Long customerId = Current.get().getId();
         CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customerId);
         MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+        ServiceException.isTrue( customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis())), returnMsgUtil.msg("PACKAGE_HAS_EXPIRED"));
         if (marketSetting!=null){
             ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_NUMBER"));
         }

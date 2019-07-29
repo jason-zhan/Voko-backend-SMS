@@ -12,6 +12,7 @@ import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.util.ObjectConvertUtils;
 import com.adbest.smsmarketingfront.util.VokophonePayUtils;
 import com.adbest.smsmarketingfront.util.twilio.TwilioUtil;
+import com.twilio.rest.api.v2010.account.Message;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -80,6 +81,7 @@ public class InboxApplicationTests {
 
 //        List<?> objects = vkCDRAccountsDao.selectNeedToSend(Arrays.asList(4673510, 4673509, 4673508, 4673507, 4673506, 4673505, 4673504));
 //        System.out.println(objects.size());
-
+        Message message = twilioUtil.fetchMessage("SMd466f94148324abc98de524495bdee8c");
+        System.out.println(message.getSid());
     }
 }

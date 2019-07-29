@@ -43,6 +43,8 @@ public class CustomerMarketSettingVo implements Serializable {
      */
     private BigDecimal mmsPrice;
 
+    private Boolean free;
+
     public CustomerMarketSettingVo(CustomerMarketSetting customerMarketSetting) {
         this.title = customerMarketSetting.getTitle();
         this.smsTotal = customerMarketSetting.getSmsTotal();

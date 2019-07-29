@@ -3,6 +3,7 @@ package com.adbest.smsmarketingfront.web;
 import com.adbest.smsmarketingentity.CustomerMarketSetting;
 import com.adbest.smsmarketingentity.MarketSetting;
 import com.adbest.smsmarketingfront.entity.form.KeywordForm;
+import com.adbest.smsmarketingfront.entity.vo.CustomerMarketSettingVo;
 import com.adbest.smsmarketingfront.entity.vo.KeywordVo;
 import com.adbest.smsmarketingfront.entity.vo.MarketSettingVo;
 import com.adbest.smsmarketingfront.service.CustomerMarketSettingService;
@@ -29,7 +30,7 @@ public class MarketSettingController {
     public ReturnEntity list(){
         Long customerId = Current.get().getId();
         MarketSettingVo vo = marketSettingService.list();
-        CustomerMarketSetting customerMarketSetting = customerMarketSettingService.findByCustomerId(customerId);
+        CustomerMarketSettingVo customerMarketSetting = customerMarketSettingService.details();
         vo.setCustomerMarketSetting(customerMarketSetting);
         return ReturnEntity.success(vo);
     }

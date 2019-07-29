@@ -152,6 +152,7 @@ public class KeywordServiceImpl implements KeywordService {
         if (customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis()))&&customerMarketSetting.getKeywordTotal() - num>0){
             keyword.setGiftKeyword(true);
         }else {
+            ServiceException.isTrue( customerMarketSetting.getInvalidTime().after(new Timestamp(System.currentTimeMillis())), returnMsgUtil.msg("PACKAGE_HAS_EXPIRED"));
             MarketSetting marketSetting = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
             if (marketSetting!=null){
                 ServiceException.isTrue( marketSetting.getPrice().doubleValue()!=0, returnMsgUtil.msg("CAN_NOT_BUY_KEYWORDS"));

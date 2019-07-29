@@ -12,5 +12,5 @@ public class MarketSettingVo implements Serializable {
 
     private List<MarketSetting> marketSettings;
 
-    private CustomerMarketSetting customerMarketSetting;
+    private CustomerMarketSettingVo customerMarketSetting;
 }

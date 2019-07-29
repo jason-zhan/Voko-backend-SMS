@@ -71,7 +71,7 @@ public class SendMessageJob implements Job {
                 PreSendMsg preSendMsg = new PreSendMsg(message, viewFileUrl);
                 Message sentMsg = twilioUtil.sendMessage(preSendMsg);
                 message.setSid(sentMsg.getSid());
-                message.setSid(UUID.randomUUID().toString());
+//                message.setSid(UUID.randomUUID().toString());
                 message.setStatus(OutboxStatus.SENT.getValue());
                 message.setSendTime(EasyTime.now());
                 sentMessageList.add(message);

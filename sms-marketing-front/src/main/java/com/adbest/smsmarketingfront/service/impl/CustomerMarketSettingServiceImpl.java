@@ -70,6 +70,8 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
         Long customerId = Current.get().getId();
         CustomerMarketSetting customerMarketSetting = findByCustomerId(customerId);
         CustomerMarketSettingVo customerMarketSettingVo = new CustomerMarketSettingVo(customerMarketSetting);
+        MarketSetting ms = marketSettingService.findById(customerMarketSetting.getMarketSettingId());
+        if (ms!=null){customerMarketSettingVo.setFree(ms.getPrice().doubleValue()<=0);}
         return customerMarketSettingVo;
     }
 
