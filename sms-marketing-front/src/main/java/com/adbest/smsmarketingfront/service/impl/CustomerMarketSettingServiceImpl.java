@@ -2,6 +2,7 @@ package com.adbest.smsmarketingfront.service.impl;
 
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.CustomerMarketSettingDao;
+import com.adbest.smsmarketingfront.entity.enums.CustomerSource;
 import com.adbest.smsmarketingfront.entity.vo.CustomerMarketSettingVo;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
@@ -93,6 +94,8 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
     @Transactional
     public CustomerMarketSettingVo buy(Long id, Boolean automaticRenewal) {
         Long customerId = Current.get().getId();
+        Customer customer = customerService.findById(customerId);
+        ServiceException.isTrue(customer.getSource()!= CustomerSource.REGISTER.getValue(),resourceBundle.getString("ONLY_OFFLINE_RECHARGE"));
         ServiceException.notNull(id, resourceBundle.getString("NO_Market_Setting_SELECTED"));
         MarketSetting marketSetting  = marketSettingService.findById(id);
         ServiceException.notNull(marketSetting, resourceBundle.getString("MARKET_SETTING_NOT_EXISTS"));
@@ -154,7 +157,6 @@ public class CustomerMarketSettingServiceImpl implements CustomerMarketSettingSe
          * 扣费，账单
          */
         paymentComponent.realTimePayment(customerId, price,resourceBundle.getString("PACKAGE_PURCHASE"));
-        Customer customer = customerService.findById(customerId);
         BigDecimal credit = new BigDecimal(paymentCredit);
         if (customer.getMaxCredit().doubleValue()==0){
             creditBillComponent.adjustCustomerMaxCredit(customerId, credit);

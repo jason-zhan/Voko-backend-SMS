@@ -10,6 +10,7 @@ import com.querydsl.core.types.dsl.SimpleExpression;
 import com.querydsl.core.types.dsl.StringPath;
 import org.springframework.util.StringUtils;
 
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -36,7 +37,19 @@ public class QueryDslTools {
             builder.and(path.goe(0));
         }
     }
-    
+
+    public static <T extends Date>  void beforeNotNull(BooleanBuilder builder, DateTimePath<T> path, T end) {
+        if (end != null) {
+            builder.and(path.before(end));
+        }
+    }
+
+    public static <T extends Date>  void afterNotNull(BooleanBuilder builder, DateTimePath<T> path, T start) {
+        if (start != null) {
+            builder.and(path.after(start));
+        }
+    }
+
     public void isNull(SimpleExpression se) {
         this.builder.and(se.isNull());
     }
@@ -134,5 +147,13 @@ public class QueryDslTools {
     
     public void setBuilder(BooleanBuilder builder) {
         this.builder = builder;
+    }
+
+    public <T extends Date> void beforeNotNull(DateTimePath<T> path, T from) {
+        beforeNotNull(this.builder, path, from);
+    }
+
+    public <T extends Date> void afterNotNull(DateTimePath<T> path, T from) {
+        afterNotNull(this.builder, path, from);
     }
 }

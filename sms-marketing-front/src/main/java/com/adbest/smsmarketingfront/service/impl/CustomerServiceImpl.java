@@ -132,7 +132,6 @@ public class CustomerServiceImpl implements  CustomerService {
         ServiceException.notNull(rCode, returnMsgUtil.msg("VERIFICATION_INFO_EXPIRED"));
         ServiceException.isTrue(createSysUser.getCode().equals(rCode), returnMsgUtil.msg("VERIFICATION_CODE_ERROR"));
         redisTemplate.delete("code:"+sessionId);
-
         ServiceException.notNull(createSysUser, returnMsgUtil.msg("PARAM_IS_NULL"));
         ServiceException.hasText(createSysUser.getUsername(), returnMsgUtil.msg("LOGIN_NOT_EMPTY"));
         ServiceException.hasText(createSysUser.getPassword(), returnMsgUtil.msg("PASSWORD_NOT_EMPTY"));
@@ -148,8 +147,6 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setPassword(encryptTools.encrypt(createSysUser.getPassword()));
         customer.setDisable(false);
         customer.setEmail(createSysUser.getEmail());
-//        if (createSysUser.getCity()!=null)customer.setCity(usAreaService.findById(Long.valueOf(createSysUser.getCity())));
-//        if (createSysUser.getState()!=null)customer.setState(usAreaService.findById(Long.valueOf(createSysUser.getState())));
         customer.setFirstName(createSysUser.getFirstName());
         customer.setLastName(createSysUser.getLastName());
         customer.setIndustry(createSysUser.getIndustry());
@@ -157,6 +154,7 @@ public class CustomerServiceImpl implements  CustomerService {
         customer.setSource(CustomerSource.REGISTER.getValue());
         customer.setAvailableCredit(BigDecimal.valueOf(0));
         customer.setMaxCredit(BigDecimal.valueOf(0));
+        customer.setCustomerLogin(createSysUser.getUsername());
         String realIp = getRealIp(request);
         String key = "register:" + realIp;
         Boolean is = redisTemplate.opsForValue().setIfAbsent(key, "1", 60*60, TimeUnit.SECONDS);
@@ -171,7 +169,6 @@ public class CustomerServiceImpl implements  CustomerService {
             }
         }
         customerDao.save(customer);
-
         CustomerSettings customerSettings = new CustomerSettings(false, customer.getId(), false);
         customerSettingsService.save(customerSettings);
         initCustomerData(customer);
@@ -184,6 +181,7 @@ public class CustomerServiceImpl implements  CustomerService {
     }
 
     @Override
+    @Transactional
     public void initCustomerData(Customer customer){
         List<MarketSetting> marketSettings = marketSettingService.findByPrice(BigDecimal.valueOf(0));
         if (marketSettings.size()<=0)return;
@@ -198,12 +196,10 @@ public class CustomerServiceImpl implements  CustomerService {
         customerMarketSettingService.save(customerMarketSetting);
 
         String infoDescribe ="experience gift";
-        //初始化短信条数
         if (marketSetting.getSmsTotal()>0){
             SmsBill smsBill = new SmsBill(customer.getId(),infoDescribe,marketSetting.getSmsTotal());
             smsBillComponent.save(smsBill);
         }
-        //初始化彩信条数
         if (marketSetting.getMmsTotal()>0){
             MmsBill mmsBill = new MmsBill(customer.getId(),infoDescribe,marketSetting.getMmsTotal());
             mmsBillComponent.save(mmsBill);

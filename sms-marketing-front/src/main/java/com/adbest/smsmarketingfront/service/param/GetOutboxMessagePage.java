@@ -37,7 +37,9 @@ public class GetOutboxMessagePage extends PageBase {
         dslTools.eqNotNull(qMessageRecord.sms, isSms);
         dslTools.eqNotNull(qMessageRecord.status, status);
 //        dslTools.eqNotNull(qMessageRecord.planId, planId);
-        dslTools.betweenNotNull(qMessageRecord.sendTime, start, end);
+//        dslTools.betweenNotNull(qMessageRecord.sendTime, start, end);
+        dslTools.beforeNotNull(qMessageRecord.sendTime, end);
+        dslTools.afterNotNull(qMessageRecord.sendTime, start);
         dslTools.containsNotEmpty(false, keyword, qContacts.firstName, qContacts.lastName, qMessageRecord.contactsNumber);
     }
     

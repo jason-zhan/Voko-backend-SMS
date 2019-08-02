@@ -29,7 +29,7 @@ public class LoginController {
         return ReturnEntity.fail(ResponseCode.T401.getStauts(),returnMsgUtil.msg("T401"));
     }
 
-//    @PostMapping("/register")
+    @PostMapping("/register")
     public ReturnEntity register(CustomerForm vo, HttpServletRequest request) {
         CustomerVo customerVo = customerService.register(vo, request);
         return ReturnEntity.success(customerVo);

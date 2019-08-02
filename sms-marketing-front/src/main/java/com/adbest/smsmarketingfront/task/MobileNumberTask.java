@@ -15,6 +15,7 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.ResourceBundle;
 import java.util.stream.Collectors;
 
@@ -50,7 +51,26 @@ public class MobileNumberTask {
         List<MobileNumber> mobiles = mobileNumberService.findInvalidMobile(time);
         List<MobileNumber> chargeMobiles = mobileNumberService.findByDisableAndInvalidTimeBefore(false, time);
         mobiles.addAll(chargeMobiles);
-        mobiles.forEach(mobileNumber -> {mobileNumberService.delete(mobileNumber);});
+        Map<String, MobileNumber> mobileNumberMap = mobiles.stream().collect(Collectors.toMap(MobileNumber::getNumber, mn -> mn, (mobile1, mobile2) -> mobile1));
+        for (MobileNumber mobileNumber : mobileNumberMap.values()) {
+            if (!mobileNumber.getGiftNumber() && mobileNumber.getAutomaticRenewal()){
+                BigDecimal price = null;
+                if (mobileNumber.getNumber().startsWith("+18")){
+                    price = freeMobilePrice;
+                }else{
+                    price = ordinaryMobilePrice;
+                }
+                try {
+                    creditBillComponent.saveCustomerMobileConsume(mobileNumber.getCustomerId(), mobileNumber.getId(), price.negate(),resourceBundle.getString("MOBILE_RENEWAL"));
+                    mobileNumber.setInvalidTime(TimeTools.addDay(mobileNumber.getInvalidTime(), 30));
+                    mobileNumberService.save(mobileNumber);
+                    continue;
+                }catch (Exception e){
+                    log.error("Renewal fee failed when deleting phone number,{},{}",mobileNumber.getNumber(),e);
+                }
+            }
+            mobileNumberService.delete(mobileNumber);
+        }
     }
 
     @Scheduled(cron = "20 31 0 * * ?")

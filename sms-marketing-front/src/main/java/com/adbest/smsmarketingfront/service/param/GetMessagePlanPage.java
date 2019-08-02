@@ -34,7 +34,9 @@ public class GetMessagePlanPage extends PageBase {
         builder.and(qMessagePlan.disable.isFalse());
         QueryDslTools dslTools = new QueryDslTools(builder);
         dslTools.eqNotNull(qMessagePlan.status, this.status);
-        dslTools.betweenNotNull(qMessagePlan.createTime, this.start, this.end);
+//        dslTools.betweenNotNull(qMessagePlan.createTime, this.start, this.end);
+        dslTools.beforeNotNull(qMessagePlan.createTime, this.end);
+        dslTools.afterNotNull(qMessagePlan.createTime, this.start);
         dslTools.containsNotEmpty(false, qMessagePlan.title, this.keyword);
     }
     

@@ -297,11 +297,6 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         messageRecord.setSegments(MessageTools.calcSmsSegments(messageRecord.getContent()));
         messageComponent.autoReplySettlement(messageRecord, msg);
         messageRecordDao.save(messageRecord);
-        SmsBill smsBill = new SmsBill();
-        smsBill.setAmount(-messageRecord.getSegments());
-        smsBill.setCustomerId(messageRecord.getCustomerId());
-        smsBill.setInfoDescribe(bundle.getString("KEYWORD_REPLY"));
-        smsBillComponent.save(smsBill);
         PreSendMsg preSendMsg = new PreSendMsg(messageRecord, viewFileUrl);
         Message message = twilioUtil.sendMessage(preSendMsg);
         messageRecord.setSid(message.getSid());

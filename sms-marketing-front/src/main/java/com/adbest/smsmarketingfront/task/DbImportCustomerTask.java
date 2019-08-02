@@ -67,13 +67,11 @@ public class DbImportCustomerTask {
         for (String login : map.keySet()) {
             VkCustomers vkCustomers = map.get(login);
             customer = new Customer();
-            customer.setPassword(UUID.randomUUID().toString());
             customer.setDisable(false);
             customer.setEmail(vkCustomers.getEmail());
             customer.setFirstName(vkCustomers.getFirstname());
             customer.setLastName(vkCustomers.getLastname());
             customer.setSource(CustomerSource.API_Added.getValue());
-            customer.setCustomerLogin(vkCustomers.getLogin());
             customer.setAvailableCredit(BigDecimal.valueOf(0));
             customer.setMaxCredit(BigDecimal.valueOf(0));
             customer.setCustomerLogin(vkCustomers.getLogin());

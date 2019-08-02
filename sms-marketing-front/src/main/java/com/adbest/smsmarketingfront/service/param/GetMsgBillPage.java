@@ -24,7 +24,9 @@ public class GetMsgBillPage extends PageBase {
     
     public void fillConditions(BooleanBuilder builder, QSmsBill qSmsBill) {
         builder.and(qSmsBill.customerId.eq(Current.get().getId()));
-        QueryDslTools.betweenNotNull(builder, qSmsBill.time, this.start, this.end);
+//        QueryDslTools.betweenNotNull(builder, qSmsBill.time, this.start, this.end);
+        QueryDslTools.beforeNotNull(builder, qSmsBill.time, this.end);
+        QueryDslTools.afterNotNull(builder, qSmsBill.time, this.start);
     }
     
     public void fillConditions(BooleanBuilder builder, QMmsBill qMmsBill) {
