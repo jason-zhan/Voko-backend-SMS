@@ -56,7 +56,6 @@ public class SpringInitializer implements InitializingBean {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.setSerializationInclusion(JsonInclude.Include.ALWAYS);
         objectMapper.configure(SerializationFeature.FAIL_ON_EMPTY_BEANS, false);
-        objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         return objectMapper;
     }
     
@@ -145,6 +144,8 @@ public class SpringInitializer implements InitializingBean {
             marketSetting.setSmsTotal(Integer.valueOf(environment.getProperty("marketSetting.smsTotal")));
             marketSetting.setPrice(BigDecimal.valueOf(0));
             marketSetting.setMmsTotal(Integer.valueOf(environment.getProperty("marketSetting.mmsTotal")));
+            marketSetting.setMmsPrice(BigDecimal.valueOf(0));
+            marketSetting.setSmsPrice(BigDecimal.valueOf(0));
             marketSettingService.save(marketSetting);
         }
     }

@@ -43,6 +43,6 @@ public class MarketSetting implements Serializable {
     /**
      * 套餐外彩信单价
      */
-    @Column(name = "mmsPrice", columnDefinition = "decimal(5,3)",nullable = false)
+    @Column(name = "mmsPrice", columnDefinition = "decimal(5,3)",nullable = true)
     private BigDecimal mmsPrice;
 }
