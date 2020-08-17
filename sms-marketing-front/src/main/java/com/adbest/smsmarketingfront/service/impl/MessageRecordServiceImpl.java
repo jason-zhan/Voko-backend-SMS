@@ -3,9 +3,7 @@ package com.adbest.smsmarketingfront.service.impl;
 import com.adbest.smsmarketingentity.*;
 import com.adbest.smsmarketingfront.dao.MessageRecordDao;
 import com.adbest.smsmarketingentity.ContactsSource;
-import com.adbest.smsmarketingfront.entity.vo.CustomerVo;
-import com.adbest.smsmarketingfront.entity.vo.InboxMessageVo;
-import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
+import com.adbest.smsmarketingfront.entity.vo.*;
 import com.adbest.smsmarketingfront.handler.ServiceException;
 import com.adbest.smsmarketingfront.service.*;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
@@ -26,17 +24,19 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.redis.core.ListOperations;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer;
 import org.springframework.stereotype.Service;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import javax.transaction.Transactional;
 import java.sql.Timestamp;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.ResourceBundle;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -79,6 +79,9 @@ public class MessageRecordServiceImpl implements MessageRecordService {
     
     @Autowired
     private CustomerService customerService;
+
+    @Autowired
+    private RedisTemplate<String, Object> redisTemplate;
     
     @Value("${twilio.viewFileUrl}")
     private String viewFileUrl;
@@ -197,7 +200,63 @@ public class MessageRecordServiceImpl implements MessageRecordService {
         log.info("leave findOutboxByConditions");
         return messagePage;
     }
-    
+
+    @Override
+    public Page<InboxReport> findInboxReport(GetInboxMessagePage getInboxPage) {
+        log.info("enter findInboxReport, param={}", getInboxPage);
+        Assert.notNull(getInboxPage, CommonMessage.PARAM_IS_NULL);
+        QMessageRecord qMessageRecord = QMessageRecord.messageRecord;
+        QContacts qContacts = QContacts.contacts;
+        BooleanBuilder builder = new BooleanBuilder();
+        builder.and(qMessageRecord.customerId.eq(Current.get().getId()));
+        builder.and(qMessageRecord.disable.isFalse());
+        builder.and(qMessageRecord.inbox.isTrue());
+        getInboxPage.fillConditions(builder, qMessageRecord, qContacts);
+        QueryResults<InboxReport> queryResults = jpaQueryFactory.select(
+                Projections.constructor(InboxReport.class))
+                .from(qMessageRecord)
+                .where(builder)
+                .orderBy(qMessageRecord.sendTime.desc())
+                .fetchResults();
+        Page<InboxReport> inReport = getInboxPage.toPageEntity(queryResults);
+        log.info("leave findInboxReport");
+        return inReport;
+    }
+
+    @Override
+    public List<OutboxReport> findOutboxReport(GetOutboxMessagePage getOutboxPage) {
+        log.info("enter findOutboxReport, param={}", getOutboxPage);
+        String str = new SimpleDateFormat("yyyy-MM").format(getOutboxPage.getStart());
+        List<OutboxReport> list = new ArrayList<>();
+        for(int i = 1; i < 31; i++){
+            String strKey = str ;
+            if(i < 10) {
+                strKey +=  "-0" + i;
+            } else {
+                strKey += "-" + i;
+            }
+            if(redisTemplate.hasKey(strKey)) {
+                OutboxReport out = new OutboxReport(strKey, (long)redisTemplate.opsForValue().get(strKey));
+                list.add(out);
+            }
+        }
+        if(list.size() > 0) {
+            return list;
+        }
+
+        Timestamp startT = getOutboxPage.getStart();
+        Timestamp endT = getOutboxPage.getEnd();
+        int page = 0;
+        List<OutboxReport> outReport = messageRecordDao.findGroupBySendTimeAndCustomerId(startT,endT,Current.get().getId(), PageRequest.of(page, 100));
+
+        for(int i = 0; i < outReport.size(); i++) {
+            redisTemplate.opsForValue().set(outReport.get(i).getSendTime(), outReport.get(i).getCount());
+        }
+
+        log.info("leave findOutboxReport");
+        log.info(String.valueOf(outReport));
+        return outReport;
+    }
     @Override
     public Map<Integer, String> inboxStatusMap() {
         log.info("enter inboxStatusMap");

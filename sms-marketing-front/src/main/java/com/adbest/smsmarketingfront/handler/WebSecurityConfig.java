@@ -76,7 +76,9 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
                 "/customer/getCode",
                 "/customer/password",
                 "/xls/**",
-                "/verifyCode"
+                "/verifyCode",
+                "/api/ShortLink/longURL",
+                "/api/ShortLink/shortURL"
         );
     }
 

@@ -1,6 +1,7 @@
 package com.adbest.smsmarketingfront.dao;
 
 import com.adbest.smsmarketingentity.MessageRecord;
+import com.adbest.smsmarketingfront.entity.vo.OutboxReport;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -8,6 +9,8 @@ import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.transaction.annotation.Transactional;
+import java.sql.Timestamp;
+
 
 import java.util.List;
 
@@ -63,4 +66,11 @@ public interface MessageRecordDao extends JpaRepository<MessageRecord, Long>, Jp
     Page<MessageRecord> findByPlanIdAndStatusAndDisableIsFalse(Long planId, int status, Pageable pageable);
 
     List<MessageRecord> findByReturnCodeAndDisableAndPlanIdIsNull(Integer returnCode, Boolean disable, Pageable pageable);
+
+
+
+    @Query("select new com.adbest.smsmarketingfront.entity.vo.OutboxReport(date_format(c.sendTime, '%Y-%m-%d'),count(distinct c.id)) from MessageRecord c \n" +
+            "where c.sendTime > ?1 and c.sendTime < ?2 and c.customerId = ?3 \n" +
+            "group by date_format(c.sendTime, '%Y-%m-%d')")
+    List<OutboxReport> findGroupBySendTimeAndCustomerId(Timestamp startD, Timestamp endD, Long customerId, Pageable pageable);
 }

@@ -2,7 +2,9 @@ package com.adbest.smsmarketingfront.web;
 
 import com.adbest.smsmarketingentity.MessageRecord;
 import com.adbest.smsmarketingfront.entity.vo.InboxMessageVo;
+import com.adbest.smsmarketingfront.entity.vo.InboxReport;
 import com.adbest.smsmarketingfront.entity.vo.OutboxMessageVo;
+import com.adbest.smsmarketingfront.entity.vo.OutboxReport;
 import com.adbest.smsmarketingfront.service.MessageRecordService;
 import com.adbest.smsmarketingfront.service.param.GetInboxMessagePage;
 import com.adbest.smsmarketingfront.service.param.GetOutboxMessagePage;
@@ -62,4 +64,18 @@ public class MessageRecordController {
         Map<Integer, String> map = messageRecordService.outboxStatusMap();
         return ReturnEntity.success(map);
     }
+    // add by jason for report
+    @RequestMapping("/inbox-report")
+    @ResponseBody
+    public ReturnEntity findInboxReport(@RequestBody GetInboxMessagePage getInboxPage) {
+        Page<InboxReport> messagePage = messageRecordService.findInboxReport(getInboxPage);
+        return ReturnEntity.success(messagePage);
+    }
+    @RequestMapping("/outbox-report")
+    @ResponseBody
+    public ReturnEntity findOutboxReport(@RequestBody GetOutboxMessagePage getOutboxPage) {
+        List<OutboxReport> list = messageRecordService.findOutboxReport(getOutboxPage);
+        return ReturnEntity.success(list);
+    }
+
 }
